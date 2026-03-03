@@ -1,13 +1,4 @@
-## Hi there 👋
-
-<!--
-**SoGeRiEn/SoGeRiEn** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-
-Here are some ideas to get you started:
-
-# SoGeRiEn
-
-SoGeRiEn - это моё ядро.
+## SoGeRiEn - это моё ядро.
 
 Это не фреймворк.
 Это не библиотека.
@@ -57,4 +48,13 @@ SoGeRiEn - это моё ядро.
 
 ## ⚡ Факт
 Я упрощаю системы до состояния, когда они становятся мощнее.
+
+<!--
+**SoGeRiEn/SoGeRiEn** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+
+Here are some ideas to get you started:
+
+# SoGeRiEn
+
+
 -->
