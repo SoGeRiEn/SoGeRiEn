@@ -1,0 +1,92 @@
+﻿.sog-ui .hint {
+    margin-top: 6px;
+}
+
+.sog-ui .hidden {
+    display: none !important;
+}
+
+.sog-ui .modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.sog-ui .modal[aria-hidden="false"] {
+    display: flex;
+}
+
+.pm-admin-body .modal-backdrop,
+.pm-admin-body .modal-backdrop.fade,
+.pm-admin-body .modal-backdrop.show,
+.pm-admin-body .modal-backdrop.fade.show {
+    z-index: 1000 !important;
+}
+
+.pm-admin-body .sog-ui .modal,
+.pm-admin-body .sog-ui .modal.fade,
+.pm-admin-body .sog-ui .modal.show,
+.pm-admin-body .sog-ui .modal.fade.show {
+    z-index: 1001 !important;
+}
+
+.sog-ui .panel {
+    width: min(94vw, 760px);
+    overflow: hidden;
+}
+
+.sog-ui .head {
+    padding: 14px;
+    display: flex;
+    gap: 10px;
+}
+
+.sog-ui .head input {
+    flex: 1;
+    padding: 0.7rem 0.9rem;
+}
+
+.sog-ui .head .close {
+    padding: 0 0.95rem;
+}
+
+.sog-ui .list {
+    max-height: 60vh;
+    overflow: auto;
+}
+
+.sog-ui .modal .list .pal-row {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    box-sizing: border-box;
+}
+
+.sog-ui .modal .list .pal-row small {
+    margin-left: auto;
+}
+
+.sog-ui table.sog-lines {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 14px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.sog-ui table.sog-lines th,
+.sog-ui table.sog-lines td {
+    padding: 10px 12px;
+}
+
+.sog-ui table.sog-lines td .row-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+

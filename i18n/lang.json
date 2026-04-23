@@ -1,0 +1,1379 @@
+{
+    "app.name":  {
+                     "ru":  "Proxymint",
+                     "en":  "Proxymint"
+                 },
+    "lang.ru":  {
+                    "ru":  "Русский",
+                    "en":  "Russian",
+                    "de":  "Russisch"
+                },
+    "lang.en":  {
+                    "ru":  "Английский",
+                    "en":  "English",
+                    "de":  "Englisch"
+                },
+    "lang.de":  {
+                    "ru":  "Немецкий",
+                    "en":  "German",
+                    "de":  "Deutsch"
+                },
+    "menu.language":  {
+                          "ru":  "Язык",
+                          "en":  "Language",
+                          "de":  "Sprache"
+                      },
+    "menu.toggle_navigation":  {
+                                   "ru":  "Открыть меню",
+                                   "en":  "Toggle navigation",
+                                   "de":  "Navigation umschalten"
+                               },
+    "menu.admin":  {
+                       "ru":  "Админ",
+                       "en":  "Admin",
+                       "de":  "Admin"
+                   },
+    "menu.users":  {
+                       "ru":  "Пользователи",
+                       "en":  "Users",
+                       "de":  "Benutzer"
+                   },
+    "menu.rules":  {
+                       "ru":  "Группы прав",
+                       "en":  "Role Groups",
+                       "de":  "Rollen-Gruppen"
+                   },
+    "menu.rules_access":  {
+                              "ru":  "Прямые права доступа",
+                              "en":  "Direct Access Rules",
+                              "de":  "Direkte Zugriffsregeln"
+                          },
+    "menu.proxy":  {
+                       "ru":  "Прокси",
+                       "en":  "Proxy",
+                       "de":  "Proxy"
+                   },
+    "menu.proxy_catalog":  {
+                               "ru":  "Каталог",
+                               "en":  "Catalog",
+                               "de":  "Katalog"
+                           },
+    "menu.proxy_catalog_infatica":  {
+                                        "ru":  "Каталог Infatica IO",
+                                        "en":  "Infatica IO Catalog",
+                                        "de":  "Infatica IO Katalog"
+                                    },
+    "menu.my_proxies":  {
+                            "ru":  "Мои прокси",
+                            "en":  "My Proxies",
+                            "de":  "Meine Proxys"
+                        },
+    "menu.manage_proxy":  {
+                              "ru":  "Управление прокси",
+                              "en":  "Manage Proxy",
+                              "de":  "Proxy-Verwaltung"
+                          },
+    "menu.demo_purchase":  {
+                               "ru":  "Демо покупка",
+                               "en":  "Demo Purchase",
+                               "de":  "Demokauf"
+                           },
+    "menu.logout":  {
+                        "ru":  "Выйти",
+                        "en":  "Logout",
+                        "de":  "Abmelden"
+                    },
+    "common.id":  {
+                      "ru":  "ИД",
+                      "en":  "ID"
+                  },
+    "common.key":  {
+                       "ru":  "Ключ",
+                       "en":  "Key"
+                   },
+    "common.name":  {
+                        "ru":  "Название",
+                        "en":  "Name"
+                    },
+    "common.description":  {
+                               "ru":  "Описание",
+                               "en":  "Description"
+                           },
+    "common.user":  {
+                        "ru":  "Пользователь",
+                        "en":  "User"
+                    },
+    "common.users":  {
+                         "ru":  "Пользователи",
+                         "en":  "Users"
+                     },
+    "common.login":  {
+                         "ru":  "Логин",
+                         "en":  "Login"
+                     },
+    "common.password":  {
+                            "ru":  "Пароль",
+                            "en":  "Password"
+                        },
+    "common.email":  {
+                         "ru":  "Эл. почта",
+                         "en":  "Email"
+                     },
+    "common.phone":  {
+                         "ru":  "Телефон",
+                         "en":  "Phone"
+                     },
+    "common.status":  {
+                          "ru":  "Статус",
+                          "en":  "Status"
+                      },
+    "common.status_active":  {
+                                 "ru":  "Активный",
+                                 "en":  "Active"
+                             },
+    "common.status_archive":  {
+                                  "ru":  "Архивный",
+                                  "en":  "Archived"
+                              },
+    "common.status_delete":  {
+                                 "ru":  "Удалённый",
+                                 "en":  "Deleted"
+                             },
+    "common.actions":  {
+                           "ru":  "Действия",
+                           "en":  "Actions"
+                       },
+    "common.add":  {
+                       "ru":  "Добавить",
+                       "en":  "Add"
+                   },
+    "common.edit":  {
+                        "ru":  "Изменить",
+                        "en":  "Edit"
+                    },
+    "common.delete":  {
+                          "ru":  "Удалить",
+                          "en":  "Delete"
+                      },
+    "common.save":  {
+                        "ru":  "Сохранить",
+                        "en":  "Save"
+                    },
+    "common.cancel":  {
+                          "ru":  "Отмена",
+                          "en":  "Cancel"
+                      },
+    "common.close":  {
+                         "ru":  "Закрыть",
+                         "en":  "Close"
+                     },
+    "common.search":  {
+                          "ru":  "Поиск",
+                          "en":  "Search"
+                      },
+    "common.filters":  {
+                           "ru":  "Фильтры",
+                           "en":  "Filters"
+                       },
+    "common.fields":  {
+                          "ru":  "Поля",
+                          "en":  "Fields"
+                      },
+    "common.columns":  {
+                           "ru":  "Колонки",
+                           "en":  "Columns"
+                       },
+    "common.all":  {
+                       "ru":  "Все",
+                       "en":  "All"
+                   },
+    "common.selected":  {
+                            "ru":  "Выбрано",
+                            "en":  "Selected"
+                        },
+    "common.reset_filters":  {
+                                 "ru":  "Сбросить фильтры",
+                                 "en":  "Reset filters"
+                             },
+    "common.apply":  {
+                         "ru":  "Применить",
+                         "en":  "Apply"
+                     },
+    "common.reset":  {
+                         "ru":  "Сбросить",
+                         "en":  "Reset"
+                     },
+    "common.order":  {
+                         "ru":  "Заказать",
+                         "en":  "Order"
+                     },
+    "common.type":  {
+                        "ru":  "Тип",
+                        "en":  "Type"
+                    },
+    "common.country":  {
+                           "ru":  "Страна",
+                           "en":  "Country"
+                       },
+    "common.loading":  {
+                           "ru":  "Загрузка...",
+                           "en":  "Loading..."
+                       },
+    "common.no_results":  {
+                              "ru":  "Ничего не найдено",
+                              "en":  "Nothing found"
+                          },
+    "common.no_data":  {
+                           "ru":  "Нет данных",
+                           "en":  "No data"
+                       },
+    "common.yes":  {
+                       "ru":  "Да",
+                       "en":  "Yes"
+                   },
+    "common.no":  {
+                      "ru":  "Нет",
+                      "en":  "No"
+                  },
+    "common.network_error":  {
+                                 "ru":  "Ошибка сети",
+                                 "en":  "Network error"
+                             },
+    "common.response_error":  {
+                                  "ru":  "Ошибка ответа",
+                                  "en":  "Response error"
+                              },
+    "common.invalid_id":  {
+                              "ru":  "Неверный id",
+                              "en":  "Invalid id"
+                          },
+    "common.unknown_action":  {
+                                  "ru":  "Неизвестное действие",
+                                  "en":  "Unknown action"
+                              },
+    "common.access_denied":  {
+                                 "ru":  "Доступ запрещен",
+                                 "en":  "Access denied"
+                             },
+    "forms.select":  {
+                         "ru":  "Выбор",
+                         "en":  "Select"
+                     },
+    "forms.start_typing":  {
+                               "ru":  "Начните вводить запрос...",
+                               "en":  "Start typing..."
+                           },
+    "forms.search":  {
+                         "ru":  "Поиск",
+                         "en":  "Search"
+                     },
+    "forms.close":  {
+                        "ru":  "Закрыть",
+                        "en":  "Close"
+                    },
+    "forms.select_hint":  {
+                              "ru":  "Enter - выбрать, Esc - закрыть",
+                              "en":  "Enter - select, Esc - close"
+                          },
+    "forms.button":  {
+                         "ru":  "Кнопка",
+                         "en":  "Button"
+                     },
+    "forms.empty":  {
+                        "ru":  "Пусто",
+                        "en":  "Empty"
+                    },
+    "forms.duplicate_row":  {
+                                "ru":  "Такая строка уже существует",
+                                "en":  "This row already exists"
+                            },
+    "forms.delete_row":  {
+                             "ru":  "Удалить",
+                             "en":  "Delete"
+                         },
+    "forms.add_to_table":  {
+                               "ru":  "Добавить в таблицу",
+                               "en":  "Add to table"
+                           },
+    "forms.ajax_hint":  {
+                            "ru":  "Форма поддерживает AJAX-отправку. Правила видимости и калькулятор работают в реальном времени.",
+                            "en":  "This form supports AJAX. Visibility rules and calculator are updated in real time."
+                        },
+    "forms.server_response":  {
+                                  "ru":  "Ответ сервера",
+                                  "en":  "Server response"
+                              },
+    "forms.send_error":  {
+                             "ru":  "Ошибка отправки",
+                             "en":  "Send error"
+                         },
+    "forms.edit_hint":  {
+                            "ru":  "Нажмите для редактирования",
+                            "en":  "Click to edit"
+                        },
+    "forms.list_empty":  {
+                             "ru":  "Список пуст. Нажмите «Добавить».",
+                             "en":  "List is empty. Click \"Add\"."
+                         },
+    "forms.saved":  {
+                        "ru":  "Сохранено.",
+                        "en":  "Saved."
+                    },
+    "forms.deleted":  {
+                          "ru":  "Удалено.",
+                          "en":  "Deleted."
+                      },
+    "forms.status_changed":  {
+                                 "ru":  "Статус изменён. Обновление страницы...",
+                                 "en":  "Status updated. Reloading page..."
+                             },
+    "forms.changes_saved":  {
+                                "ru":  "Изменения сохранены.",
+                                "en":  "Changes saved."
+                            },
+    "forms.added":  {
+                        "ru":  "Добавлено.",
+                        "en":  "Added."
+                    },
+    "table.filters":  {
+                          "ru":  "Фильтры",
+                          "en":  "Filters"
+                      },
+    "table.search":  {
+                         "ru":  "Поиск",
+                         "en":  "Search"
+                     },
+    "table.search_placeholder":  {
+                                     "ru":  "Введите текст...",
+                                     "en":  "Type text..."
+                                 },
+    "table.fields":  {
+                         "ru":  "Поля",
+                         "en":  "Fields"
+                     },
+    "table.columns":  {
+                          "ru":  "Колонки",
+                          "en":  "Columns"
+                      },
+    "table.all":  {
+                      "ru":  "Все",
+                      "en":  "All"
+                  },
+    "table.clear":  {
+                        "ru":  "Очистить",
+                        "en":  "Clear"
+                    },
+    "table.range_from":  {
+                             "ru":  "От",
+                             "en":  "From"
+                         },
+    "table.range_to":  {
+                           "ru":  "До",
+                           "en":  "To"
+                       },
+    "table.reset_filters":  {
+                                "ru":  "Сбросить фильтры",
+                                "en":  "Reset filters"
+                            },
+    "table.modal_title":  {
+                              "ru":  "Подтверждение",
+                              "en":  "Confirmation"
+                          },
+    "table.export_excel":  {
+                               "ru":  "Экспорт в Excel",
+                               "en":  "Excel"
+                           },
+    "table.export_print":  {
+                               "ru":  "Печать",
+                               "en":  "Print"
+                           },
+    "table.dt.length_menu":  {
+                                 "ru":  "На страницу _MENU_",
+                                 "en":  "Rows per page _MENU_"
+                             },
+    "table.dt.search":  {
+                            "ru":  "Поиск:",
+                            "en":  "Search:"
+                        },
+    "table.dt.zero_records":  {
+                                  "ru":  "Ничего не найдено",
+                                  "en":  "Nothing found"
+                              },
+    "table.dt.info":  {
+                          "ru":  "Показано _START_-_END_ из _TOTAL_",
+                          "en":  "Showing _START_ to _END_ of _TOTAL_"
+                      },
+    "table.dt.info_empty":  {
+                                "ru":  "Нет данных",
+                                "en":  "No data"
+                            },
+    "table.dt.info_filtered":  {
+                                   "ru":  "(отфильтровано из _MAX_)",
+                                   "en":  "(filtered from _MAX_)"
+                               },
+    "table.dt.previous":  {
+                              "ru":  "Назад",
+                              "en":  "Previous"
+                          },
+    "table.dt.next":  {
+                          "ru":  "Далее",
+                          "en":  "Next"
+                      },
+    "table.dt.processing":  {
+                                "ru":  "Подождите...",
+                                "en":  "Processing..."
+                            },
+    "auth.title_login":  {
+                             "ru":  "Вход",
+                             "en":  "Sign in"
+                         },
+    "auth.title_ready":  {
+                             "ru":  "Готово",
+                             "en":  "Done"
+                         },
+    "auth.access_denied":  {
+                               "ru":  "Доступ запрещен",
+                               "en":  "Access denied"
+                           },
+    "auth.enter_credentials":  {
+                                   "ru":  "Введите логин и пароль",
+                                   "en":  "Enter login and password"
+                               },
+    "auth.invalid_credentials":  {
+                                     "ru":  "Неверный логин или пароль",
+                                     "en":  "Invalid login or password"
+                                 },
+    "auth.session_create_error":  {
+                                      "ru":  "Ошибка создания сессии",
+                                      "en":  "Session creation failed"
+                                  },
+    "auth.session_save_error":  {
+                                    "ru":  "Ошибка сохранения сессии",
+                                    "en":  "Session save failed"
+                                },
+    "auth.already_logged_in":  {
+                                   "ru":  "Вы уже в системе",
+                                   "en":  "You are already signed in"
+                               },
+    "auth.session_active":  {
+                                "ru":  "Сессия активна. Если нужно - выйдите.",
+                                "en":  "Session is active. Logout if needed."
+                            },
+    "auth.logout_from_system":  {
+                                    "ru":  "Выйти из системы",
+                                    "en":  "Logout"
+                                },
+    "auth.login_to_system":  {
+                                 "ru":  "Вход в систему",
+                                 "en":  "Sign in"
+                             },
+    "auth.enter_login":  {
+                             "ru":  "Введите логин",
+                             "en":  "Enter login"
+                         },
+    "auth.enter_password":  {
+                                "ru":  "Введите пароль",
+                                "en":  "Enter password"
+                            },
+    "auth.sign_in":  {
+                         "ru":  "Войти",
+                         "en":  "Sign in"
+                     },
+    "auth.authorize":  {
+                           "ru":  "Авторизоваться",
+                           "en":  "Authorize",
+                           "de":  "Anmelden"
+                       },
+    "users.title":  {
+                        "ru":  "Пользователи",
+                        "en":  "Users"
+                    },
+    "users.show":  {
+                       "ru":  "Показывать",
+                       "en":  "Show"
+                   },
+    "users.filter_active":  {
+                                "ru":  "Активные",
+                                "en":  "Active"
+                            },
+    "users.filter_archive":  {
+                                 "ru":  "Архивные",
+                                 "en":  "Archived"
+                             },
+    "users.filter_deleted":  {
+                                 "ru":  "Удалённые",
+                                 "en":  "Deleted"
+                             },
+    "users.filter_all":  {
+                             "ru":  "Все",
+                             "en":  "All"
+                         },
+    "users.help":  {
+                       "ru":  "Список пользователей в табличном виде. Клик по логину или кнопке «Изменить» - редактирование.",
+                       "en":  "Users list in table format. Click login or \"Edit\" to update user."
+                   },
+    "users.login_email_required":  {
+                                       "ru":  "Логин и email обязательны",
+                                       "en":  "Login and email are required"
+                                   },
+    "users.password_required":  {
+                                    "ru":  "Задайте пароль",
+                                    "en":  "Password is required"
+                                },
+    "users.add_user":  {
+                           "ru":  "Добавить пользователя",
+                           "en":  "Add user"
+                       },
+    "users.edit_user":  {
+                            "ru":  "Редактировать пользователя",
+                            "en":  "Edit user"
+                        },
+    "users.new_password_hint":  {
+                                    "ru":  "Новый пароль (пусто - не менять)",
+                                    "en":  "New password (leave empty to keep)"
+                                },
+    "users.balance_usd":  {
+                              "ru":  "Баланс USD",
+                              "en":  "Balance USD"
+                          },
+    "users.timezone":  {
+                           "ru":  "Часовой пояс",
+                           "en":  "Timezone"
+                       },
+    "users.language":  {
+                           "ru":  "Язык",
+                           "en":  "Language"
+                       },
+    "users.phone_confirmed":  {
+                                  "ru":  "Телефон подтверждён",
+                                  "en":  "Phone confirmed"
+                              },
+    "users.email_confirmed":  {
+                                  "ru":  "Email подтверждён",
+                                  "en":  "Email confirmed"
+                              },
+    "roles.title":  {
+                        "ru":  "Группы прав",
+                        "en":  "Role Groups"
+                    },
+    "roles.help":  {
+                       "ru":  "Список ролей (user, admin, guest и т.д.) в табличном виде. Клик по названию - переименование.",
+                       "en":  "Roles list (user, admin, guest, etc.). Click role name to rename."
+                   },
+    "roles.role":  {
+                       "ru":  "Роль",
+                       "en":  "Role"
+                   },
+    "roles.add_role":  {
+                           "ru":  "Добавить роль",
+                           "en":  "Add role"
+                       },
+    "roles.rename_role":  {
+                              "ru":  "Переименовать роль",
+                              "en":  "Rename role"
+                          },
+    "roles.role_name":  {
+                            "ru":  "Название роли",
+                            "en":  "Role name"
+                        },
+    "roles.delete_confirm":  {
+                                 "ru":  "Удалить роль «{role}»?",
+                                 "en":  "Delete role \"{role}\"?"
+                             },
+    "roles.enter_name":  {
+                             "ru":  "Введите название.",
+                             "en":  "Enter name."
+                         },
+    "rules_access.title":  {
+                               "ru":  "Прямые права доступа",
+                               "en":  "Direct Access Rules"
+                           },
+    "rules_access.help":  {
+                              "ru":  "Редактирование прав на методы: колонка notes, роли и прямые users_id.",
+                              "en":  "Edit method permissions: notes, roles and direct users_id."
+                          },
+    "rules_access.add_right":  {
+                                   "ru":  "Добавить право",
+                                   "en":  "Add permission"
+                               },
+    "rules_access.edit_right":  {
+                                    "ru":  "Редактировать право доступа",
+                                    "en":  "Edit permission"
+                                },
+    "rules_access.key":  {
+                             "ru":  "Название права доступа (key)",
+                             "en":  "Permission key"
+                         },
+    "rules_access.key_invalid":  {
+                                     "ru":  "Недопустимый ключ",
+                                     "en":  "Invalid key"
+                                 },
+    "rules_access.right_description":  {
+                                           "ru":  "Описание прав доступа",
+                                           "en":  "Permission description"
+                                       },
+    "rules_access.users_ids":  {
+                                   "ru":  "Пользователи (ID через запятую)",
+                                   "en":  "Users (IDs comma-separated)"
+                               },
+    "proxy.catalog_title":  {
+                                "ru":  "Каталог прокси",
+                                "en":  "Proxy Catalog"
+                            },
+    "proxy.my_title":  {
+                           "ru":  "Мои прокси",
+                           "en":  "My Proxies"
+                       },
+    "proxy.user_id":  {
+                          "ru":  "ИД пользователя",
+                          "en":  "user_id"
+                      },
+    "proxy.manage_title":  {
+                               "ru":  "Управление прокси",
+                               "en":  "Proxy Manage"
+                           },
+    "proxy.view_title":  {
+                             "ru":  "Просмотр прокси",
+                             "en":  "Proxy View"
+                         },
+    "proxy.invalid_proxy_id":  {
+                                   "ru":  "Неверный proxy_id.",
+                                   "en":  "Invalid proxy_id."
+                               },
+    "proxy.action_done":  {
+                              "ru":  "Действие выполнено.",
+                              "en":  "Action completed."
+                          },
+    "proxy.action_failed":  {
+                                "ru":  "Ошибка выполнения действия",
+                                "en":  "Action failed"
+                            },
+    "proxy.not_authorized":  {
+                                 "ru":  "Пользователь не авторизован.",
+                                 "en":  "User is not authorized."
+                             },
+    "proxy.not_found":  {
+                            "ru":  "Прокси не найден.",
+                            "en":  "Proxy not found."
+                        },
+    "proxy.load":  {
+                       "ru":  "Загрузить",
+                       "en":  "Load"
+                   },
+    "proxy.change_ip":  {
+                            "ru":  "Сменить IP",
+                            "en":  "Change IP"
+                        },
+    "proxy.reset_proxy":  {
+                              "ru":  "Сброс прокси",
+                              "en":  "Reset Proxy"
+                          },
+    "proxy.update_auth":  {
+                              "ru":  "Обновить авторизацию",
+                              "en":  "Update Auth"
+                          },
+    "proxy.update_whitelist":  {
+                                   "ru":  "Обновить whitelist",
+                                   "en":  "Update Whitelist"
+                               },
+    "proxy.whitelist":  {
+                            "ru":  "Белый список",
+                            "en":  "Whitelist"
+                        },
+    "proxy.api_response":  {
+                               "ru":  "Ответ API",
+                               "en":  "API response"
+                           },
+    "proxy.uptime_history":  {
+                                 "ru":  "История uptime",
+                                 "en":  "Uptime History"
+                             },
+    "proxy.load_block":  {
+                             "ru":  "Нагрузка",
+                             "en":  "Load"
+                         },
+    "proxy.order_button":  {
+                               "ru":  "Заказать",
+                               "en":  "Order"
+                           },
+    "proxy.order_created":  {
+                                "ru":  "Заказ создан.",
+                                "en":  "Order created."
+                            },
+    "proxy.order_create_failed":  {
+                                      "ru":  "Ошибка создания заказа",
+                                      "en":  "Order create failed"
+                                  },
+    "proxy.countries":  {
+                            "ru":  "Страны",
+                            "en":  "Countries"
+                        },
+    "proxy.category":  {
+                           "ru":  "Категория",
+                           "en":  "Category"
+                       },
+    "proxy.stock":  {
+                        "ru":  "Наличие",
+                        "en":  "Stock"
+                    },
+    "proxy.days":  {
+                       "ru":  "Дни",
+                       "en":  "Days"
+                   },
+    "proxy.access":  {
+                         "ru":  "Доступ",
+                         "en":  "Access"
+                     },
+    "proxy.access_short":  {
+                               "ru":  "доступ",
+                               "en":  "access",
+                               "de":  "access"
+                           },
+    "proxy.auto_renewal":  {
+                               "ru":  "автопродление",
+                               "en":  "auto renewal",
+                               "de":  "auto renewal"
+                           },
+    "proxy.api_type":  {
+                           "ru":  "Тип API",
+                           "en":  "API Type"
+                       },
+    "proxy.price_usd":  {
+                            "ru":  "Цена USD",
+                            "en":  "Price USD"
+                        },
+    "proxy.price_per_day":  {
+                                "ru":  "Цена за 1 день",
+                                "en":  "Price per day"
+                            },
+    "proxy.price_per_gb":  {
+                               "ru":  "Цена за 1 ГБ",
+                               "en":  "Price per 1 GB"
+                           },
+    "proxy.traffic_price_usd":  {
+                                    "ru":  "Цена трафика USD",
+                                    "en":  "Traffic price USD"
+                                },
+    "proxy.pricing_info":  {
+                               "ru":  "Прайс (B2B и реселлеры)",
+                               "en":  "Pricing (B2B \u0026 Resellers)"
+                           },
+    "proxy.pricing_residential":  {
+                                      "ru":  "Резидентские (от 500 ГБ)",
+                                      "en":  "Residential (from 500 GB)"
+                                  },
+    "proxy.pricing_mobile":  {
+                                 "ru":  "Мобильные (от 200 ГБ)",
+                                 "en":  "Mobile (from 200 GB)"
+                             },
+    "proxy.pricing_dc":  {
+                             "ru":  "DC (за IP)",
+                             "en":  "DC (per IP)"
+                         },
+    "proxy.pricing_isp":  {
+                              "ru":  "ISP (за IP)",
+                              "en":  "ISP (per IP)"
+                          },
+    "proxy.traffic_price_hint":  {
+                                     "ru":  "Цена трафика USD = базовая цена × 1.5",
+                                     "en":  "Traffic price USD = base price ?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦??Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,?T?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????? 1.5"
+                                 },
+    "proxy.traffic_gb":  {
+                             "ru":  "Трафик ГБ",
+                             "en":  "Traffic GB"
+                         },
+    "proxy.unlimited":  {
+                            "ru":  "Безлимит",
+                            "en":  "Unlimited"
+                        },
+    "stripe.demo_purchase":  {
+                                 "ru":  "Демо покупка Stripe",
+                                 "en":  "Stripe demo purchase",
+                                 "de":  "Stripe-Demokauf"
+                             },
+    "stripe.success_title":  {
+                                 "ru":  "Вы успешно оплатили заказ",
+                                 "en":  "Payment completed successfully",
+                                 "de":  "Zahlung erfolgreich abgeschlossen"
+                             },
+    "stripe.order_id":  {
+                            "ru":  "ID заказа",
+                            "en":  "Order ID",
+                            "de":  "Bestell-ID"
+                        },
+    "stripe.service":  {
+                           "ru":  "Услуга",
+                           "en":  "Service",
+                           "de":  "Dienstleistung"
+                       },
+    "stripe.currency":  {
+                            "ru":  "Валюта",
+                            "en":  "Currency",
+                            "de":  "W?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,?\"??Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦hrung"
+                        },
+    "stripe.amount":  {
+                          "ru":  "Сумма",
+                          "en":  "Amount",
+                          "de":  "Betrag"
+                      },
+    "stripe.pay":  {
+                       "ru":  "Купить",
+                       "en":  "Pay",
+                       "de":  "Bezahlen"
+                   },
+    "stripe.new_demo":  {
+                            "ru":  "Новая демо покупка",
+                            "en":  "New demo purchase",
+                            "de":  "Neuer Demokauf"
+                        },
+    "stripe.card_hint":  {
+                             "ru":  "Тестовая карта Stripe: 4242 4242 4242 4242, срок любой в будущем, CVC любой.",
+                             "en":  "Stripe test card: 4242 4242 4242 4242, any future expiry date, any CVC.",
+                             "de":  "Stripe-Testkarte: 4242 4242 4242 4242, beliebiges zuk?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u003c?Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦nftiges Ablaufdatum, beliebiger CVC."
+                         },
+    "stripe.redirecting":  {
+                               "ru":  "Авто-переход на Stripe Checkout...",
+                               "en":  "Redirecting to Stripe Checkout...",
+                               "de":  "Weiterleitung zu Stripe Checkout..."
+                           },
+    "stripe.go_now":  {
+                          "ru":  "Перейти сейчас",
+                          "en":  "Go now",
+                          "de":  "Jetzt ?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,?\"??Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦ffnen"
+                      },
+    "stripe.debug":  {
+                         "ru":  "Отладка Stripe",
+                         "en":  "Stripe debug",
+                         "de":  "Stripe-Debug"
+                     },
+    "test.api_infatica_title":  {
+                                    "ru":  "Проверка API-ключей Infatica",
+                                    "en":  "Infatica API keys check"
+                                },
+    "test.run_tests":  {
+                           "ru":  "Запустить тесты",
+                           "en":  "Run tests"
+                       },
+    "test.no_json_response":  {
+                                  "ru":  "Нет JSON ответа.",
+                                  "en":  "No JSON response."
+                              },
+    "roles.page_stub":  {
+                            "ru":  "Страница управления группами ролей.",
+                            "en":  "Role groups management page."
+                        },
+    "roles.name_required":  {
+                                "ru":  "Название роли обязательно",
+                                "en":  "Role name is required"
+                            },
+    "roles.rename_required":  {
+                                  "ru":  "Старое и новое название обязательны",
+                                  "en":  "Current and new names are required"
+                              },
+    "roles.rename_error":  {
+                               "ru":  "Ошибка переименования",
+                               "en":  "Rename error"
+                           },
+    "roles.add_error":  {
+                            "ru":  "Ошибка добавления",
+                            "en":  "Add error"
+                        },
+    "roles.delete_error":  {
+                               "ru":  "Ошибка удаления",
+                               "en":  "Delete error"
+                           },
+    "roles.renamed":  {
+                          "ru":  "Роль переименована.",
+                          "en":  "Role renamed."
+                      },
+    "roles.added":  {
+                        "ru":  "Роль добавлена.",
+                        "en":  "Role added."
+                    },
+    "users.add_error":  {
+                            "ru":  "Ошибка добавления",
+                            "en":  "Add error"
+                        },
+    "users.invalid_user_id":  {
+                                  "ru":  "Неверный id пользователя",
+                                  "en":  "Invalid user id"
+                              },
+    "users.save_error":  {
+                             "ru":  "Ошибка сохранения",
+                             "en":  "Save error"
+                         },
+    "users.invalid_status":  {
+                                 "ru":  "Неверный статус",
+                                 "en":  "Invalid status"
+                             },
+    "users.status_change_error":  {
+                                      "ru":  "Ошибка смены статуса",
+                                      "en":  "Status change error"
+                                  },
+    "users.delete_error":  {
+                               "ru":  "Ошибка удаления",
+                               "en":  "Delete error"
+                           },
+    "users.archive_error":  {
+                                "ru":  "Ошибка архивирования",
+                                "en":  "Archive error"
+                            },
+    "users.not_found":  {
+                            "ru":  "Пользователь не найден",
+                            "en":  "User not found"
+                        },
+    "users.full_name":  {
+                            "ru":  "ФИО",
+                            "en":  "Full name"
+                        },
+    "users.code":  {
+                       "ru":  "Код",
+                       "en":  "Code"
+                   },
+    "users.utm_source":  {
+                             "ru":  "UTM источник",
+                             "en":  "UTM source"
+                         },
+    "users.utm_campaign":  {
+                               "ru":  "UTM кампания",
+                               "en":  "UTM campaign"
+                           },
+    "users.partner_id":  {
+                             "ru":  "ИД партнера",
+                             "en":  "Partner ID"
+                         },
+    "users.credit_limit_mode":  {
+                                    "ru":  "Режим кредитного лимита",
+                                    "en":  "Credit limit mode"
+                                },
+    "users.credit_limit_currency":  {
+                                        "ru":  "Кредитный лимит по валютам (JSON)",
+                                        "en":  "Credit limit by currency (JSON)"
+                                    },
+    "users.partner_percent":  {
+                                  "ru":  "Партнер %",
+                                  "en":  "Partner %"
+                              },
+    "users.discount_percent":  {
+                                   "ru":  "Скидка %",
+                                   "en":  "Discount %"
+                               },
+    "rules_access.groups":  {
+                                "ru":  "Группы прав",
+                                "en":  "Role groups"
+                            },
+    "rules_access.update_error":  {
+                                      "ru":  "Ошибка обновления",
+                                      "en":  "Update error"
+                                  },
+    "rules_access.add_error":  {
+                                   "ru":  "Ошибка добавления",
+                                   "en":  "Add error"
+                               },
+    "rules_access.delete_error":  {
+                                      "ru":  "Ошибка удаления",
+                                      "en":  "Delete error"
+                                  },
+    "stripe.session_id_missing":  {
+                                      "ru":  "Не передан session_id после оплаты.",
+                                      "en":  "session_id is missing after payment.",
+                                      "de":  "session_id fehlt nach der Zahlung."
+                                  },
+    "stripe.fetch_error":  {
+                               "ru":  "Ошибка получения данных оплаты:",
+                               "en":  "Error getting payment data:",
+                               "de":  "Fehler beim Abrufen der Zahlungsdaten:"
+                           },
+    "stripe.cancelled":  {
+                             "ru":  "Оплата отменена на стороне Stripe Checkout.",
+                             "en":  "Payment was cancelled on Stripe Checkout side.",
+                             "de":  "Die Zahlung wurde auf der Stripe-Checkout-Seite abgebrochen."
+                         },
+    "stripe.amount_validation":  {
+                                     "ru":  "Сумма должна быть числом от 0.50 и выше (до 2 знаков после точки).",
+                                     "en":  "Amount must be a number \u003e= 0.50 with up to 2 decimal places.",
+                                     "de":  "Der Betrag muss eine Zahl ab 0.50 mit bis zu 2 Nachkommastellen sein."
+                                 },
+    "stripe.create_session_failed":  {
+                                         "ru":  "Stripe не создал checkout session:",
+                                         "en":  "Stripe failed to create checkout session:",
+                                         "de":  "Stripe konnte keine Checkout-Session erstellen:"
+                                     },
+    "stripe.no_redirect_url":  {
+                                   "ru":  "Stripe вернул session без URL для редиректа.",
+                                   "en":  "Stripe returned session without redirect URL.",
+                                   "de":  "Stripe hat eine Session ohne Weiterleitungs-URL zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u003c?Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦ckgegeben."
+                               },
+    "stripe.session_created":  {
+                                   "ru":  "Checkout session создан. Выполняю редирект на тестовую страницу Stripe...",
+                                   "en":  "Checkout session created. Redirecting to Stripe page...",
+                                   "de":  "Checkout-Session erstellt. Weiterleitung zur Stripe-Testseite..."
+                               },
+    "stripe.page_title_success":  {
+                                      "ru":  "Stripe: успешная оплата",
+                                      "en":  "Stripe: successful payment",
+                                      "de":  "Stripe: erfolgreiche Zahlung"
+                                  },
+    "stripe.page_title_demo":  {
+                                   "ru":  "Stripe: демо покупка",
+                                   "en":  "Stripe: demo purchase",
+                                   "de":  "Stripe: Demokauf"
+                               },
+    "stripe.payment_confirmed":  {
+                                     "ru":  "Платеж подтвержден.",
+                                     "en":  "Payment confirmed.",
+                                     "de":  "Zahlung best?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦?\u0027?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???Р С—РЎвЂ”Р вЂ¦??????T?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,?\"??Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦tigt."
+                                 },
+    "stripe.payment_not_paid":  {
+                                    "ru":  "Платеж не в статусе paid.",
+                                    "en":  "Payment status is not paid.",
+                                    "de":  "Zahlungsstatus ist nicht paid."
+                                },
+    "stripe.payment_info":  {
+                                "ru":  "Информация о платеже",
+                                "en":  "Payment information",
+                                "de":  "Zahlungsinformationen"
+                            },
+    "stripe.checkout_session":  {
+                                    "ru":  "Сессия Checkout",
+                                    "en":  "Checkout Session",
+                                    "de":  "Checkout-Session"
+                                },
+    "stripe.payment_status":  {
+                                  "ru":  "Статус платежа",
+                                  "en":  "Payment status",
+                                  "de":  "Zahlungsstatus"
+                              },
+    "stripe.session_status":  {
+                                  "ru":  "Статус сессии",
+                                  "en":  "Session status",
+                                  "de":  "Session-Status"
+                              },
+    "stripe.email":  {
+                         "ru":  "Эл. почта",
+                         "en":  "Email",
+                         "de":  "E-Mail"
+                     },
+    "stripe.line_items":  {
+                              "ru":  "Позиции оплаты",
+                              "en":  "Payment line items",
+                              "de":  "Zahlungspositionen"
+                          },
+    "stripe.item_name":  {
+                             "ru":  "Название",
+                             "en":  "Name",
+                             "de":  "Name"
+                         },
+    "stripe.item_qty":  {
+                            "ru":  "Кол-во",
+                            "en":  "Qty",
+                            "de":  "Menge"
+                        },
+    "stripe.min_amount":  {
+                              "ru":  "Минимум: 0.50 USD",
+                              "en":  "Minimum: 0.50 USD",
+                              "de":  "Minimum: 0.50 USD"
+                          },
+    "stripe.order_params":  {
+                                "ru":  "Параметры заказа",
+                                "en":  "Order parameters",
+                                "de":  "Bestellparameter"
+                            },
+    "test.request_failed":  {
+                                "ru":  "Ошибка запроса",
+                                "en":  "Request failed"
+                            },
+    "test.infatica_base":  {
+                               "ru":  "Проверка базового ключа: GET /keys",
+                               "en":  "Base key test: GET /keys"
+                           },
+    "test.infatica_residential":  {
+                                      "ru":  "Проверка residential ключа: proxiesList(type=residential)",
+                                      "en":  "Residential key test: proxiesList(type=residential)"
+                                  },
+    "test.infatica_mobile":  {
+                                 "ru":  "Проверка mobile ключа: proxiesList(type=mobile)",
+                                 "en":  "Mobile key test: proxiesList(type=mobile)"
+                             },
+    "test.infatica_isp":  {
+                              "ru":  "Проверка isp ключа: proxiesList(type=isp)",
+                              "en":  "ISP key test: proxiesList(type=isp)"
+                          },
+    "test.all_passed":  {
+                            "ru":  "Все тесты API-ключей пройдены.",
+                            "en":  "All API key tests passed."
+                        },
+    "test.failed_count":  {
+                              "ru":  "Не пройдено тестов:",
+                              "en":  "Failed tests:"
+                          },
+    "test.api_infatica_subtitle":  {
+                                       "ru":  "Проверка API-ключей для APIInfaticaIo.php",
+                                       "en":  "API key checks for APIInfaticaIo.php"
+                                   },
+    "test.leave_empty_use_default":  {
+                                         "ru":  "Оставьте пустым для использования значения из конфигурации",
+                                         "en":  "Leave empty to use configured value"
+                                     },
+    "common.back":  {
+                        "ru":  "Назад",
+                        "en":  "Back"
+                    },
+    "common.example":  {
+                           "ru":  "Например",
+                           "en":  "Example"
+                       },
+    "common.db_alias_not_set":  {
+                                    "ru":  "db_alias не задан",
+                                    "en":  "db_alias not set"
+                                },
+    "common.access_denied_admin_only":  {
+                                            "ru":  "Доступ запрещен. Разрешена только роль: admin.",
+                                            "en":  "Access denied. Allowed role: admin."
+                                        },
+    "common.access_denied_admin_user":  {
+                                            "ru":  "Доступ запрещен. Разрешены роли: admin, user.",
+                                            "en":  "Access denied. Allowed roles: admin, user."
+                                        },
+    "proxy.catalog_title_proxysmart":  {
+                                           "ru":  "Каталог прокси (Proxysmart)",
+                                           "en":  "Proxy Catalog (Proxysmart)"
+                                       },
+    "proxy.show_available_only":  {
+                                      "ru":  "Показаны только доступные прокси.",
+                                      "en":  "Showing only available proxies."
+                                  },
+    "proxy.show_all_hint":  {
+                                "ru":  "Добавьте ?show_all=1, чтобы показать все.",
+                                "en":  "Add ?show_all=1 to see all."
+                            },
+    "proxy.api_request_failed":  {
+                                     "ru":  "Ошибка запроса списка прокси",
+                                     "en":  "Proxy list request failed"
+                                 },
+    "proxy.order_title_proxysmart":  {
+                                         "ru":  "Заказ прокси (Proxysmart)",
+                                         "en":  "Proxy Order (Proxysmart)"
+                                     },
+    "proxy.port_pair_free_ports":  {
+                                       "ru":  "PORT_PAIR (свободные порты)",
+                                       "en":  "PORT_PAIR (free ports)"
+                                   },
+    "proxy.portid_label":  {
+                               "ru":  "Portid (`proxymintcom` + SOCKS_PORT + `rand` + случайный суффикс, буквы и цифры)",
+                               "en":  "Portid (`proxymintcom` + SOCKS_PORT + `rand` + random, alphanumeric)"
+                           },
+    "proxy.portname":  {
+                           "ru":  "Имя порта",
+                           "en":  "Portname"
+                       },
+    "proxy.debager_log":  {
+                              "ru":  "Лог Debager (отправка/ответ)",
+                              "en":  "Debager log (sent/response)"
+                          },
+    "proxy.order_submitted":  {
+                                  "ru":  "Заказ отправлен (store_port ok, apply_port ok).",
+                                  "en":  "Order submitted (store_port ok, apply_port ok)."
+                              },
+    "proxy.order_failed":  {
+                               "ru":  "Ошибка заказа",
+                               "en":  "Order failed"
+                           },
+    "stripe.live_key_not_configured":  {
+                                           "ru":  "Stripe live key не настроен для",
+                                           "en":  "Stripe live key is not configured for"
+                                       },
+    "stripe.live_profile_llc":  {
+                                    "ru":  "LLC БОЕВОЙ",
+                                    "en":  "LLC LIVE"
+                                },
+    "stripe.live_profile_ltd":  {
+                                    "ru":  "LTD БОЕВОЙ",
+                                    "en":  "LTD LIVE"
+                                },
+    "stripe.account_label":  {
+                                 "ru":  "Аккаунт Stripe",
+                                 "en":  "Stripe Account"
+                             },
+    "stripe.mode_live":  {
+                             "ru":  "БОЕВОЙ",
+                             "en":  "LIVE"
+                         },
+    "stripe.live_mode":  {
+                             "ru":  "LIVE режим:",
+                             "en":  "LIVE mode:"
+                         },
+    "stripe.live_mode_warning":  {
+                                     "ru":  "на этой странице включены реальные списания с карты.",
+                                     "en":  "real card charges are enabled for this page."
+                                 },
+    "forms.edrpou":  {
+                         "ru":  "ЄДРПОУ",
+                         "en":  "EDRPOU"
+                     },
+    "auth.title_register":  {
+                                "ru":  "Регистрация",
+                                "en":  "Registration",
+                                "de":  "Registrierung"
+                            },
+    "auth.title_forgot":  {
+                              "ru":  "Сброс пароля",
+                              "en":  "Password reset",
+                              "de":  "Passwort zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦cksetzen"
+                          },
+    "auth.title_reset":  {
+                             "ru":  "Новый пароль",
+                             "en":  "New password",
+                             "de":  "Neues Passwort"
+                         },
+    "auth.register":  {
+                          "ru":  "Регистрация",
+                          "en":  "Register",
+                          "de":  "Registrieren"
+                      },
+    "auth.create_account":  {
+                                "ru":  "Создать аккаунт",
+                                "en":  "Create account",
+                                "de":  "Konto erstellen"
+                            },
+    "auth.forgot_password":  {
+                                 "ru":  "Забыли пароль",
+                                 "en":  "Forgot password",
+                                 "de":  "Passwort vergessen"
+                             },
+    "auth.forgot_password_title":  {
+                                       "ru":  "Восстановление пароля",
+                                       "en":  "Password recovery",
+                                       "de":  "Passwort-Wiederherstellung"
+                                   },
+    "auth.reset_password_title":  {
+                                      "ru":  "Введите новый пароль",
+                                      "en":  "Enter new password",
+                                      "de":  "Neues Passwort eingeben"
+                                  },
+    "auth.repeat_password":  {
+                                 "ru":  "Повторите пароль",
+                                 "en":  "Repeat password",
+                                 "de":  "Passwort wiederholen"
+                             },
+    "auth.enter_email":  {
+                             "ru":  "Введите email",
+                             "en":  "Enter email",
+                             "de":  "E-Mail eingeben"
+                         },
+    "auth.or":  {
+                    "ru":  "ИЛИ",
+                    "en":  "OR",
+                    "de":  "ODER"
+                },
+    "auth.send_reset_link":  {
+                                 "ru":  "Отправить ссылку сброса пароля",
+                                 "en":  "Send password reset link",
+                                 "de":  "Link zum Zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦cksetzen senden"
+                             },
+    "auth.forgot_login_or_email_required":  {
+                                                "ru":  "Введите логин или email",
+                                                "en":  "Enter login or email",
+                                                "de":  "Login oder E-Mail eingeben"
+                                            },
+    "auth.invalid_email":  {
+                               "ru":  "Некорректный email",
+                               "en":  "Invalid email",
+                               "de":  "Ung?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦ltige E-Mail"
+                           },
+    "auth.user_not_found":  {
+                                "ru":  "Пользователь не найден",
+                                "en":  "User not found",
+                                "de":  "Benutzer nicht gefunden"
+                            },
+    "auth.reset_link_create_error":  {
+                                         "ru":  "Не удалось создать ссылку сброса",
+                                         "en":  "Failed to create reset link",
+                                         "de":  "Reset-Link konnte nicht erstellt werden"
+                                     },
+    "auth.reset_link_send_error":  {
+                                       "ru":  "Не удалось отправить письмо со ссылкой сброса",
+                                       "en":  "Failed to send reset link email",
+                                       "de":  "E-Mail mit Reset-Link konnte nicht gesendet werden"
+                                   },
+    "auth.reset_link_sent":  {
+                                 "ru":  "Отправили клиенту ссылку на сброс пароля",
+                                 "en":  "Password reset link sent to the client",
+                                 "de":  "Link zum Zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦cksetzen wurde gesendet"
+                             },
+    "auth.reset_token_invalid":  {
+                                     "ru":  "Неверная ссылка сброса пароля",
+                                     "en":  "Invalid password reset link",
+                                     "de":  "Ung?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦ltiger Link zum Zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦cksetzen"
+                                 },
+    "auth.reset_token_expired":  {
+                                     "ru":  "Ссылка сброса пароля истекла",
+                                     "en":  "Password reset link expired",
+                                     "de":  "Link zum Zur?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦cksetzen ist abgelaufen"
+                                 },
+    "auth.new_password_required":  {
+                                       "ru":  "Введите новый пароль",
+                                       "en":  "Enter new password",
+                                       "de":  "Neues Passwort eingeben"
+                                   },
+    "auth.new_password_too_short":  {
+                                        "ru":  "Новый пароль должен быть не короче 8 символов",
+                                        "en":  "New password must be at least 8 characters",
+                                        "de":  "Neues Passwort muss mindestens 8 Zeichen lang sein"
+                                    },
+    "auth.password_update_error":  {
+                                       "ru":  "Не удалось обновить пароль",
+                                       "en":  "Failed to update password",
+                                       "de":  "Passwort konnte nicht aktualisiert werden"
+                                   },
+    "auth.password_reset_done":  {
+                                     "ru":  "Пароль успешно изменен. Войдите с новым паролем",
+                                     "en":  "Password changed successfully. Sign in with the new password",
+                                     "de":  "Passwort erfolgreich ge?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦ndert. Melden Sie sich mit dem neuen Passwort an"
+                                 },
+    "auth.enter_new_password":  {
+                                    "ru":  "Введите новый пароль",
+                                    "en":  "Enter new password",
+                                    "de":  "Neues Passwort eingeben"
+                                },
+    "auth.set_new_password":  {
+                                  "ru":  "Сохранить новый пароль",
+                                  "en":  "Set new password",
+                                  "de":  "Neues Passwort speichern"
+                              },
+    "auth.fill_all_fields":  {
+                                 "ru":  "Заполните все поля",
+                                 "en":  "Fill in all fields",
+                                 "de":  "Alle Felder ausf?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦llen"
+                             },
+    "auth.passwords_do_not_match":  {
+                                        "ru":  "Пароли не совпадают",
+                                        "en":  "Passwords do not match",
+                                        "de":  "Passw?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦??T?\u0027?Р С—РЎвЂ”Р вЂ¦rter stimmen nicht ?Р С—РЎвЂ”Р вЂ¦?Р С—РЎвЂ”Р вЂ¦???,???Р С—РЎвЂ”Р вЂ¦???\u0027?Р С—РЎвЂ”Р вЂ¦berein"
+                                    },
+    "auth.login_taken":  {
+                             "ru":  "Этот логин уже занят",
+                             "en":  "This login is already taken",
+                             "de":  "Dieser Login ist bereits vergeben"
+                         },
+    "auth.email_in_use":  {
+                              "ru":  "Этот email уже используется",
+                              "en":  "This email is already in use",
+                              "de":  "Diese E-Mail wird bereits verwendet"
+                          },
+    "auth.login_format_invalid":  {
+                                      "ru":  "Логин должен быть длиной 3-64 и содержать только буквы, цифры, точку, дефис и подчёркивание",
+                                      "en":  "Login must be 3-64 chars and use only letters, digits, dot, dash and underscore",
+                                      "de":  "Login muss 3-64 Zeichen lang sein und darf nur Buchstaben, Ziffern, Punkt, Bindestrich und Unterstrich enthalten"
+                                  },
+    "auth.password_min8":  {
+                               "ru":  "Пароль должен быть не короче 8 символов",
+                               "en":  "Password must be at least 8 characters",
+                               "de":  "Passwort muss mindestens 8 Zeichen lang sein"
+                           },
+    "auth.registration_failed":  {
+                                     "ru":  "Регистрация не удалась",
+                                     "en":  "Registration failed",
+                                     "de":  "Registrierung fehlgeschlagen"
+                                 }
+}

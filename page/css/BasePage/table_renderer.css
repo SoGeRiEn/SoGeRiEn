@@ -1,0 +1,1028 @@
+﻿/* =============================================================================
+   0) Base / Utilities
+   ========================================================================== */
+
+pre.mono {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.tr-cell-clip {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+}
+
+.tr-col-nowrap {
+    white-space: nowrap !important;
+}
+
+.tr-col-ellipsis {
+    overflow: hidden;
+    white-space: nowrap !important;
+    text-overflow: ellipsis;
+}
+
+.tr-col-ellipsis .proxy-country-list-link {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+    vertical-align: middle;
+}
+
+.tr-filters-unified {
+    padding: 10px 12px;
+}
+
+.tr-filters-unified-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tr-filters-unified-body > .tr-facets {
+    width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start;
+    gap: 10px !important;
+}
+
+.tr-filters-unified-body .tr-facet {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    justify-content: flex-start;
+}
+
+.tr-filters-unified-body .tr-facet > .small.text-muted {
+    min-height: 16px;
+    margin: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+}
+
+.tr-facet-search {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-right: 0;
+    align-items: center;
+}
+
+.tr-facets {
+    align-items: flex-start;
+    gap: 10px !important;
+}
+
+.tr-filters-unified-body .tr-search-group > .input-group-text,
+.tr-filters-unified-body .tr-search-group > .form-control,
+.tr-filters-unified-body .tr-dd-toggle,
+.tr-filters-unified-body .tr-cols-dd-toggle,
+.tr-filters-unified-body .tr-range-input-wrap .form-select,
+.tr-filters-unified-body .btn-group[role="group"] .btn,
+.tr-filters-unified-body .tr-facet > .btn.btn-sm {
+    min-height: 34px;
+}
+
+/* Range filters (number, date) */
+
+.tr-facet-range-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.tr-facet-range-number {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+}
+
+.tr-facet-range-number,
+.tr-facet-range-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.tr-facet-range-number {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tr-facet-range-number,
+.tr-facet-range-date {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 6px 10px;
+    /* border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--sidebar-line, var(--line))); */
+    border-radius: 14px;
+    /* background: transparent; */
+    /* box-shadow: 0 16px 34px color-mix(in srgb, var(--accent-2) 10%, transparent); */
+}
+
+.tr-facet-range-number .tr-range-group,
+.tr-facet-range-date .tr-range-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.tr-facet-range-number .tr-range-group {
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.tr-facet-range-number .tr-range-label,
+.tr-facet-range-date .tr-range-label {
+    margin: 0;
+    width: auto;
+    white-space: nowrap;
+}
+
+.tr-range-dd {
+    width: auto;
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.tr-range-dd .tr-range-dd-toggle {
+    display: inline-flex;
+    width: fit-content;
+    min-width: 0;
+    min-height: 32px;
+    max-width: 100%;
+    padding: 6px 8px;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tr-range-dd .tr-range-dd-label {
+    display: inline-flex;
+    align-items: center;
+    min-width: auto;
+    max-width: none;
+    overflow: visible;
+    white-space: nowrap;
+    text-overflow: clip;
+}
+
+/* Range fields (From/To) visual style aligned with active nav item */
+.tr-facet[data-type="range_number"] .tr-range-dd .tr-range-dd-toggle,
+.tr-facet[data-type="range_date"] .tr-range-input-wrap .form-control,
+.tr-facet[data-type="range_date"] .tr-range-input-wrap .form-select {
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--sidebar-line, var(--line)));
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 18%, var(--sidebar-soft, transparent)),
+        color-mix(in srgb, var(--accent-2) 14%, var(--sidebar-soft, transparent))
+    );
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--accent-2) 10%, transparent);
+}
+
+.tr-range-dd-menu {
+    min-width: 180px;
+    padding: .375rem !important;
+}
+
+.tr-range-dd-menu .btn {
+    min-height: 30px;
+    padding: 5px 10px;
+}
+
+.tr-range-options {
+    max-width: 100%;
+}
+
+.tr-range-option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.tr-facet-range-date .tr-range-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tr-facet-range-date .tr-range-input-wrap .form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.tr-facet-range-date .tr-range-input-wrap .form-select {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.tr-search-group .tr-search-icon {
+    border: 0;
+    border-right: 0;
+    padding-inline: 16px 10px;
+    min-width: 0;
+    justify-content: center;
+}
+
+.tr-search-group {
+    gap: 0;
+    padding-right: 0;
+    overflow: hidden;
+}
+
+.tr-search-group .form-control {
+    border: 0;
+    padding-left: 14px;
+}
+
+.chip {
+    display: inline-block;
+    padding: .2rem .5rem;
+    margin: .1rem;
+}
+
+/* =============================================================================
+   1) Navbar (Pastel)
+   ========================================================================== */
+
+/* =============================================================================
+   2) Theme Variables (facets / table head)
+   ========================================================================== */
+
+/* =============================================================================
+   3) Facet Buttons - base, hover, active/focus
+   ========================================================================== */
+
+.btn-group[role="group"][aria-label^="facet-"] .btn {
+    min-width: 88px;
+}
+
+.btn-group[role="group"][aria-label^="facet-"] .btn.active,
+.btn-group[role="group"][aria-label^="facet-"] .btn:focus-visible,
+.btn-group[role="group"][aria-label^="facet-"] .btn.active:focus {
+    position: relative;
+    z-index: 1;
+}
+
+/* =============================================================================
+   4) Table Row Striping + Hover
+   - Note: you intentionally have overlapping selectors
+   - Keep order to preserve current cascade behavior
+   ========================================================================== */
+
+/* Override: both ".odd" and ".tr-row-odd" go to the same blue */
+
+/* =============================================================================
+   5) Column-specific cell styles
+   ========================================================================== */
+
+/* =============================================================================
+   6) DataTables - header padding/border (sticky related note)
+   ========================================================================== */
+
+table.dataTable > thead > tr > th,
+table.dataTable > thead > tr > td {
+    padding: 10px;
+}
+
+.tr-th-label {
+    display: inline-block;
+    max-width: calc(100% - 10px);
+    vertical-align: middle;
+}
+
+/* =============================================================================
+   7) Minor spacing tweaks
+   ========================================================================== */
+
+.btn-group {
+    padding-right: 10px;
+}
+
+/* =============================================================================
+   8) Facets layout - wrapper + children
+   - Force flex + wrap; limit width; gap
+   ========================================================================== */
+
+.tr-facets,
+.tr-facets .facet-row,
+.tr-facets .facet-values,
+.tr-facets .btn-group,
+.tr-facets .btn-toolbar,
+.tr-facets .nav {
+    max-width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: .35rem;
+}
+
+.tr-facets .btn,
+.tr-facets .nav-link {
+    white-space: normal !important;
+    word-break: break-word;
+    flex: 0 1 auto;
+}
+
+/* =============================================================================
+   9) Facets layout - generic ID suffix selector
+   ========================================================================== */
+
+.tr-facets .btn-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    max-width: 100%;
+    gap: .35rem;
+}
+
+.tr-facets .btn-group .btn {
+    white-space: normal !important;
+    word-break: break-word;
+    flex: 0 1 auto;
+}
+
+/* =============================================================================
+   10) DataTables Buttons - base + variants (excel/print)
+   ========================================================================== */
+
+.dataTables_wrapper .dt-buttons .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .45rem .75rem;
+    border: 0;
+}
+
+/* =============================================================================
+   11) Page: /page_rules_access
+   - scoped only to .rules-access-page to avoid affecting other tables
+   ========================================================================== */
+
+.rules-access-page h1 {
+    margin-bottom: .75rem;
+}
+
+.rules-access-page > p.text-muted {
+    margin-bottom: 1.25rem;
+}
+
+.rules-access-page #rules_access_grid__panel {
+    margin: 0 0 10px !important;
+}
+
+.rules-access-page #rules_access_grid__panel .tr-panel-row {
+    gap: 10px !important;
+}
+
+.rules-access-page #rules_access_grid__panel .form-text {
+    display: none;
+}
+
+.rules-access-page #rules_access_grid__cols_btn,
+.rules-access-page #rules_access_grid__reset {
+    height: 40px;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .row:first-child {
+    align-items: center;
+    margin-bottom: .6rem;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .dataTables_length select {
+    min-width: 72px;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .dt-buttons {
+    display: inline-flex;
+    gap: .6rem;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .dt-buttons .btn {
+    min-height: 42px;
+    padding: .52rem 1rem;
+}
+
+.rules-access-page #rules_access_grid__scroll {
+    overflow: hidden;
+}
+
+.rules-access-page #rules_access_grid__tbl {
+    margin: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.rules-access-page #rules_access_grid__tbl thead th {
+    vertical-align: middle;
+    padding: 1rem 1.15rem;
+}
+
+.rules-access-page #rules_access_grid__tbl tbody td {
+    vertical-align: top;
+    padding: .8rem 1.1rem;
+}
+
+.rules-access-page #rules_access_grid__tbl .td-col-roles_name a,
+.rules-access-page #rules_access_grid__tbl .td-col-notes a {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: .45rem;
+}
+
+.rules-access-page #rules_access_grid__tbl .td-col-roles_name a::after,
+.rules-access-page #rules_access_grid__tbl .td-col-notes a::after {
+    display: inline-block;
+    margin-left: .55rem;
+}
+
+.rules-access-page #rules_access_grid__tbl .select2-container {
+    width: 100% !important;
+    min-width: 160px;
+}
+
+.rules-access-page #rules_access_grid__tbl .select2-container .select2-selection--multiple {
+    min-height: 40px;
+    padding: 2px 4px;
+}
+
+.rules-access-page #rules_access_grid__tbl .select2-container .select2-selection__choice {
+    margin-top: 4px !important;
+    margin-right: 4px !important;
+    padding: 2px 8px !important;
+}
+
+.rules-access-page #rules_access_grid__tbl .select2-container .select2-search--inline .select2-search__field {
+    margin-top: 4px !important;
+    min-height: 24px;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .dataTables_info {
+    padding-top: .9rem;
+}
+
+.rules-access-page #rules_access_grid__tbl_wrapper .dataTables_paginate .paginate_button {
+    min-width: 38px;
+    min-height: 38px;
+}
+
+.rules-access-page #rules_access_btn_add {
+    margin-top: 1rem !important;
+    padding: .5rem 1rem;
+}
+
+.rules-access-page #rules_access_debug {
+    display: none;
+}
+
+/* =============================================================================
+   11.1) Global inline editable blocks in tables
+   - shared style for Select2 multiselect cells (all pages)
+   ========================================================================== */
+
+table.dataTable td[data-col] .select2-container .select2-selection--multiple,
+table.table td[data-col] .select2-container .select2-selection--multiple {
+    min-height: 40px;
+    border: 1px solid var(--input-border) !important;
+    border-radius: 12px !important;
+    background: var(--input-bg) !important;
+    box-shadow: none !important;
+    padding: 2px 4px;
+}
+
+table.dataTable td[data-col] .select2-container .select2-selection__choice,
+table.table td[data-col] .select2-container .select2-selection__choice {
+    margin-top: 4px !important;
+    margin-right: 4px !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    color: var(--text) !important;
+}
+
+table.dataTable td[data-col] .select2-container .select2-selection__choice__remove,
+table.table td[data-col] .select2-container .select2-selection__choice__remove {
+    color: color-mix(in srgb, var(--text) 70%, var(--muted)) !important;
+}
+
+table.dataTable td[data-col] .select2-container .select2-search--inline .select2-search__field,
+table.table td[data-col] .select2-container .select2-search--inline .select2-search__field {
+    margin-top: 4px !important;
+    min-height: 24px;
+    color: var(--text) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted.select2-results__option--selectable {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+    color: var(--accent-text) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected:not(.select2-results__option--highlighted) {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-soft)) !important;
+    color: var(--text) !important;
+}
+
+/* Rules access page should use shared editable style, not page-local colors */
+.rules-access-page #rules_access_grid__tbl td[data-col="roles"] .select2-container .select2-selection--multiple,
+.rules-access-page #rules_access_grid__tbl td[data-col="users_id"] .select2-container .select2-selection--multiple {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+}
+
+.rules-access-page #rules_access_grid__tbl td[data-col="roles"] .select2-container .select2-selection__choice,
+.rules-access-page #rules_access_grid__tbl td[data-col="users_id"] .select2-container .select2-selection__choice {
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface-soft)) !important;
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--line)) !important;
+    color: var(--text) !important;
+}
+
+.rules-access-page #rules_access_grid__tbl td[data-col="roles"] .select2-container .select2-selection__choice__remove,
+.rules-access-page #rules_access_grid__tbl td[data-col="users_id"] .select2-container .select2-selection__choice__remove {
+    color: color-mix(in srgb, var(--text) 70%, var(--muted)) !important;
+}
+
+/* Hide Select2 inline search field in ACL grid multiselects */
+.rules-access-page #rules_access_grid__tbl td[data-col="roles"] .select2-container .select2-search--inline,
+.rules-access-page #rules_access_grid__tbl td[data-col="users_id"] .select2-container .select2-search--inline {
+    display: none !important;
+}
+
+/* =============================================================================
+   ProxyMint Dash 1.1 Admin Layer
+   ========================================================================== */
+
+.tr-grid {
+    margin-top: 16px;
+    width: 100%;
+}
+
+.tr-panel {
+    width: 100%;
+}
+
+.tr-panel-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.tr-filters-unified {
+    padding: 10px 12px;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+}
+
+.tr-filters-unified > .form-label {
+    margin-bottom: 12px !important;
+}
+
+.tr-filters-unified-body,
+.tr-filters-unified-body > .tr-facets {
+    gap: 10px !important;
+    width: 100%;
+    min-width: 0;
+}
+
+.tr-filters-unified-body > .tr-facets {
+    width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start;
+    gap: 10px !important;
+}
+
+.tr-filters-unified-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.tr-filters-unified-side {
+    flex: 0 0 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px;
+    order: -1;
+}
+
+.tr-facets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px !important;
+    width: 100%;
+    min-width: 0;
+}
+
+.tr-filters-unified-body .tr-facet {
+    min-width: 0;
+    flex: 1 1 0px;
+}
+
+.tr-filters-unified-body .tr-facet.tr-facet-search {
+    min-width: 0;
+    flex: 0 1 320px;
+}
+
+.tr-filters-unified-side .tr-facet {
+    min-width: 0;
+    flex: 0 0 auto;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) > .small.text-muted {
+    width: 100%;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) > .dropdown {
+    width: 100%;
+    align-self: stretch;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) .tr-dd-toggle,
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) .tr-cols-dd-toggle {
+    width: 100%;
+    max-width: 100%;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) > .btn-outline-danger {
+    width: 100%;
+    max-width: 100%;
+}
+
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) .tr-facet-range-number,
+.tr-filters-unified-body .tr-facet:not(.tr-facet-search) .tr-facet-range-date {
+    width: 100%;
+    max-width: 100%;
+}
+
+.tr-filters-unified-body .btn-group[role="group"][aria-label^="facet-"] .btn,
+.tr-filters-unified-body .tr-dd-toggle,
+.tr-filters-unified-body .tr-cols-dd-toggle,
+.tr-filters-unified-body .tr-facet > .btn,
+.tr-filters-unified-body .btn-outline-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 13px;
+}
+
+.tr-search-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 0;
+    width: min(100%, 340px);
+    max-width: 100%;
+    margin-inline: 0;
+}
+
+.tr-search-label {
+    min-height: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    flex: 0 0 auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.tr-search-group {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 37px;
+    margin-inline: 0;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.tr-search-group .input-group-text,
+.tr-search-group .form-control {
+    min-height: 37px;
+}
+
+.tr-search-group .input-group-text {
+    display: none !important;
+}
+
+.tr-search-group .form-control {
+    border: 0;
+    padding-left: 14px;
+}
+
+.tr-filters-unified .dropdown {
+    position: relative;
+}
+
+.tr-filters-unified .dropdown-menu {
+    position: absolute !important;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: 0;
+    z-index: 1085;
+    max-height: min(48vh, 360px);
+    overflow: auto;
+}
+
+.tr-filters-unified .tr-facet .dropdown > .tr-cols-dd-menu {
+    min-width: 100% !important;
+    max-width: min(420px, calc(100vw - 48px));
+}
+
+.tr-facet-search {
+    flex: 0 1 320px;
+    min-width: 0;
+    align-self: center;
+}
+
+.tr-facet-search .input-group,
+.tr-facet-search .tr-search-group {
+    width: min(100%, 260px) !important;
+    max-width: 100%;
+    margin-inline: auto;
+}
+
+.tr-facet-search .form-control {
+    min-width: 0;
+}
+
+.tr-facet-search .form-text {
+    max-width: 100%;
+}
+
+.tr-facet-range-number,
+.tr-facet-range-date {
+    border: 0;
+    padding: 0;
+}
+
+.tr-facet-range-date .form-control,
+.tr-facet-range-date .form-select {
+    min-height: 38px;
+    padding: 8px 13px;
+}
+
+.dataTables_wrapper {
+}
+
+.dataTables_wrapper .row {
+    align-items: center;
+    row-gap: 12px;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_paginate,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dt-buttons {
+    padding: 10px 14px;
+}
+
+.dataTables_wrapper .dt-buttons .btn {
+    min-height: 38px;
+}
+
+div.dataTables_wrapper div.dataTables_length select {
+    min-width: 84px !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    margin: 0 !important;
+    padding: 8px 28px 8px 12px !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--surface-soft) !important;
+    color: var(--text) !important;
+    font-family: var(--font-body) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
+    box-shadow: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, currentColor 50%),
+        linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+        calc(100% - 14px) 16px,
+        calc(100% - 9px) 16px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+div.dataTables_wrapper div.dataTables_length label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    color: var(--muted) !important;
+    font-family: var(--font-data) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.18 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap;
+}
+
+div.dataTables_wrapper div.dataTables_length select:focus {
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--line)) !important;
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container {
+    min-width: 84px !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single,
+.dataTables_wrapper .dataTables_length .select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px !important;
+    height: 38px !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--surface-soft) !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+    font-family: var(--font-body) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 0 34px 0 12px !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single .select2-selection__rendered {
+    color: var(--text) !important;
+    line-height: 36px !important;
+    padding: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single .select2-selection__arrow {
+    right: 9px !important;
+    height: 36px !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single {
+    position: relative;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single .select2-selection__arrow b {
+    display: none !important;
+}
+
+.dataTables_wrapper .dataTables_length .select2-container .select2-selection--single::after {
+    display: inline-block;
+    margin-left: .255em;
+    vertical-align: .255em;
+    content: "";
+    border-top: .3em solid currentColor;
+    border-right: .3em solid transparent;
+    border-bottom: 0;
+    border-left: .3em solid transparent;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-35%);
+    pointer-events: none;
+    opacity: .9;
+}
+
+.pm-dt-length-select2-dropdown {
+    border: 1px solid var(--line) !important;
+    border-radius: 16px !important;
+    background: var(--surface-float) !important;
+    box-shadow: var(--shadow) !important;
+    overflow: hidden;
+}
+
+.pm-dt-length-select2-dropdown .select2-results__option {
+    color: var(--text) !important;
+    font-family: var(--font-body) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+table.dataTable,
+table.table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+table.dataTable > thead > tr > th,
+table.dataTable > thead > tr > td,
+.table > thead > tr > th,
+.table > thead > tr > td {
+    padding: 14px 14px !important;
+}
+
+table.dataTable tbody tr td,
+table.table tbody tr td {
+    padding: 14px !important;
+    vertical-align: middle;
+}
+
+.dataTables_wrapper .dataTables_filter {
+    padding: 10px 14px;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting::before,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting::after,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_asc::before,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_asc::after,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_desc::before,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_desc::after,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_asc_disabled::before,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_asc_disabled::after,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_desc_disabled::before,
+body.pm-theme-midnight table.dataTable thead > tr > th.sorting_desc_disabled::after,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting::before,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting::after,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_asc::before,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_asc::after,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_desc::before,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_desc::after,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_asc_disabled::before,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_asc_disabled::after,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_desc_disabled::before,
+body.pm-theme-midnight table.dataTable thead > tr > td.sorting_desc_disabled::after {
+    position: absolute;
+    display: block;
+    right: 10px;
+}
+
+.dataTables_wrapper .dropdown-menu,
+.tr-filters-unified .dropdown-menu {
+    z-index: 1085;
+}
+
+/* =============================================================================
+   12) Unified Table Facet Sizing
+   - universal for all TableRenderer grids
+   ========================================================================== */
+
+.tr-panel .tr-filters-unified-body > .tr-facets .tr-facet {
+    min-width: 0;
+    flex: 1 1 130px;
+    max-width: 250px;
+}
+
+.tr-panel .tr-filters-unified-body > .tr-facets .tr-facet.tr-facet-search {
+    flex: 1 1 100px;
+    max-width: 420px;
+}
+
+.tr-panel .tr-filters-unified-body > .tr-facets .tr-facet.tr-facet--wide {
+    flex: 2 1 260px;
+}
+
+@media (max-width: 720px) {
+    .tr-panel .tr-filters-unified-body > .tr-facets .tr-facet.tr-facet-search {
+        max-width: none;
+    }
+}
+
+
