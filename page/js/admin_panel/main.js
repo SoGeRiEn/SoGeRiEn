@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     function cleanupInjectedNodes() {
         var lockScreens = document.querySelectorAll('veepn-lock-screen');
         for (var i = 0; i < lockScreens.length; i += 1) {

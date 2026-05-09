@@ -121,7 +121,7 @@ final class TemplateBasePage
     }
 
     /**
-     * @param array<int,array{label:string,url:string,tag?:string}> $items
+     * @param array<int,array{label:string,url:string,tag?:string,permission?:string}> $items
      */
     private function render_nav_items(array $items): string
     {
@@ -172,9 +172,12 @@ final class TemplateBasePage
 
         $adminItems = [
             ['label' => 'Main page', 'url' => '/', 'tag' => 'Landing'],
-            ['label' => $t('menu.users', 'Users'), 'url' => '/page_users', 'tag' => 'CRM'],
-            ['label' => $t('menu.rules', 'Rules'), 'url' => '/page_rules', 'tag' => 'Access'],
-            ['label' => $t('menu.rules_access', 'Rules Access'), 'url' => '/page_rules_access', 'tag' => 'ACL'],
+            ['label' => $t('menu.users', 'Users'), 'url' => '/page_users', 'tag' => 'CRM', 'permission' => 'page_users'],
+            ['label' => $t('menu.rules', 'Rules'), 'url' => '/page_rules', 'tag' => 'Access', 'permission' => 'page_rules'],
+            ['label' => $t('menu.rules_access', 'Rules Access'), 'url' => '/page_rules_access', 'tag' => 'ACL', 'permission' => 'page_rules_access'],
+            ['label' => 'User Balances', 'url' => '/user_balances', 'tag' => 'Finance', 'permission' => 'page_user_balances'],
+            ['label' => 'Ordered Services', 'url' => '/ordered_services', 'tag' => 'Finance', 'permission' => 'page_user_balances'],
+            ['label' => 'Admin Test1', 'url' => '/test1', 'tag' => 'Debug', 'permission' => 'page_user_balances'],
         ];
 
         $proxyItems = [
@@ -183,10 +186,16 @@ final class TemplateBasePage
             ['label' => 'All Proxy', 'url' => '/all_proxy', 'tag' => 'Table'],
             ['label' => 'Proxy Catalog Proxysmart', 'url' => '/proxies/proxysmartorg', 'tag' => 'Feed'],
             ['label' => $t('menu.my_proxies', 'My Proxies'), 'url' => '/my/proxies', 'tag' => 'Client'],
-            ['label' => 'Profile', 'url' => '/profile', 'tag' => 'Account'],
+            ['label' => 'My API', 'url' => '/my', 'tag' => 'Account'],
             ['label' => $t('menu.my_payments', 'My Payments'), 'url' => '/my/payments', 'tag' => 'Billing'],
             ['label' => $t('menu.manage_proxy', 'Manage Proxy'), 'url' => '/proxy/manage', 'tag' => 'Ops'],
+            ['label' => 'Proxy Order CyberYozh', 'url' => '/proxies/order/cyberyozh', 'tag' => 'Order'],
+            ['label' => 'Proxy Order Proxysmart', 'url' => '/proxies/order/proxysmartorg', 'tag' => 'Order'],
+            ['label' => 'Infatica API Test', 'url' => '/test_APIInfaticaIo', 'tag' => 'Debug', 'permission' => 'page_user_balances'],
+            ['label' => 'Infatica Balance', 'url' => '/infatica', 'tag' => 'Debug', 'permission' => 'page_user_balances'],
             ['label' => $t('menu.demo_purchase', 'Demo Purchase'), 'url' => '/demo/purchase', 'tag' => 'Checkout'],
+            ['label' => 'Live Purchase LLC', 'url' => '/demo/purchase/live/llc', 'tag' => 'Checkout'],
+            ['label' => 'Live Purchase LTD', 'url' => '/demo/purchase/live/ltd', 'tag' => 'Checkout'],
         ];
 
         echo '<div class="pm-admin-app">';
@@ -334,4 +343,9 @@ HTML;
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }
+
+
+
+
+
 
