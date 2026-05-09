@@ -8,51 +8,8 @@ final class ProxyCatalogCache
 
     public int $max_rows = 200;
 
-    public string $cyberyozh_cache_file = 'Cyberyozh_proxy_list_cache.json';
     public string $infatica_cache_file = 'InfaticaIo_proxy_list_cache_v2.json';
     public string $merged_cache_file = 'AllProxy_merged_api_cache_v1.json';
-
-    /**
-     * @return array<string,mixed>
-     */
-    public function refresh_cyberyozh_cache(int $limit = 200): array
-    {
-        $this->reset();
-
-        $safeLimit = $this->normalize_limit($limit);
-        $resp = Sogerien::API()->Cyberyozh()->proxiesList([
-            'limit' => $safeLimit,
-            'offset' => 0,
-        ]);
-
-        if (!$this->is_valid_provider_payload($resp)) {
-            $providerError = trim((string)($resp['error'] ?? ''));
-            return $this->fail_result('cyberyozh cache refresh failed' . ($providerError !== '' ? ': ' . $providerError : ''));
-        }
-
-        $resp = $this->trim_provider_payload($resp, $safeLimit);
-
-        if (!Sogerien::Cache()->save($resp, $this->cyberyozh_cache_file, time())) {
-            return $this->fail_result('failed to save cyberyozh cache: ' . Sogerien::Cache()->error);
-        }
-
-        $merged = $this->rebuild_merged_cache();
-        if (($merged['ok'] ?? false) !== true) {
-            return $this->fail_result('cyberyozh cache updated, but merged cache failed: ' . (string)($merged['error'] ?? ''));
-        }
-
-        $rowsCount = $this->extract_rows_count($resp);
-        $this->ok();
-        return [
-            'ok' => true,
-            'source' => 'cyberyozh',
-            'rows' => $rowsCount,
-            'limit' => $safeLimit,
-            'cache_file' => $this->cyberyozh_cache_file,
-            'merged_cache_file' => $this->merged_cache_file,
-            'updated_at' => time(),
-        ];
-    }
 
     /**
      * @return array<string,mixed>
@@ -62,7 +19,7 @@ final class ProxyCatalogCache
         $this->reset();
 
         $safeLimit = $this->normalize_limit($limit);
-        $resp = Sogerien::API()->InfaticaIo()->proxiesList([
+        $resp = Sogerien::API()->InfaticaIo()->Catalog()->proxies_list([
             'limit' => $safeLimit,
             'offset' => 0,
         ]);
@@ -103,12 +60,10 @@ final class ProxyCatalogCache
     {
         $this->reset();
 
-        $cyber = $this->load_source_rows($this->cyberyozh_cache_file, 'cyberyozh');
         $infatica = $this->load_source_rows($this->infatica_cache_file, 'infatica_io');
 
         $rows = $this->merge_rows_balanced(
             [
-                $cyber['rows'],
                 $infatica['rows'],
             ],
             $this->max_rows
@@ -116,17 +71,11 @@ final class ProxyCatalogCache
         $columns = $this->build_columns($rows);
 
         $warnings = [];
-        if ($cyber['warning'] !== '') {
-            $warnings[] = $cyber['warning'];
-        }
         if ($infatica['warning'] !== '') {
             $warnings[] = $infatica['warning'];
         }
 
         $errors = [];
-        if ($cyber['error'] !== '') {
-            $errors[] = $cyber['error'];
-        }
         if ($infatica['error'] !== '') {
             $errors[] = $infatica['error'];
         }
@@ -147,10 +96,6 @@ final class ProxyCatalogCache
                     'price_per_gb' => $this->collect_numeric_facet_values($rows, 'price_per_gb'),
                 ],
                 'sources' => [
-                    'cyberyozh' => [
-                        'ok' => $cyber['ok'],
-                        'rows' => count($cyber['rows']),
-                    ],
                     'infatica_io' => [
                         'ok' => $infatica['ok'],
                         'rows' => count($infatica['rows']),

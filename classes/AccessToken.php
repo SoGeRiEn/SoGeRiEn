@@ -5,6 +5,7 @@ final class AccessToken
 {
     public string $COOKIE_NAME = 'access_token';
     public string $COOKIE_NAME_SERVER = 'access_server_token';
+    public string $COOKIE_NAME_IMPERSONATE = 'impersonate_access_token';
 
     public bool $status = false;
     public string $error = '';
@@ -143,6 +144,44 @@ final class AccessToken
         return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);
 }
 
+    public function save_impersonation_token_for_cookie(string $token, int $hours = 8): bool
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
+        if ($hours > 24) $hours = 24;
+        if ($hours < 1) $hours = 1;
+
+        $this->fail('');
+
+        if ($token === '') {
+            $this->fail('Token is empty');
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+
+        if (strlen($token) > 3800) {
+            $this->fail('Token too large for cookie');
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+
+        $ok = setcookie(
+            $this->COOKIE_NAME_IMPERSONATE,
+            $token,
+            [
+                'expires' => time() + ($hours * 3600),
+                'path' => '/',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]
+        );
+
+        if (!$ok) {
+            $this->fail('setcookie failed');
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+
+        $this->ok();
+        return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);
+}
+
     public function load_token_for_cookie(): string
     { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
         $this->fail('');
@@ -163,9 +202,34 @@ final class AccessToken
         return   Sogerien::Debager()->capture_return($token, __CLASS__, __FUNCTION__);
 }
 
+    public function load_impersonation_token_for_cookie(): string
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
+        $this->fail('');
+        $merged = Sogerien::InputRequest()->request_post_get_cookie_json;
+
+        if (!isset($merged[$this->COOKIE_NAME_IMPERSONATE])) {
+            $this->fail('Impersonation token not found');
+            return   Sogerien::Debager()->capture_return('', __CLASS__, __FUNCTION__);
+        }
+
+        $token = (string)$merged[$this->COOKIE_NAME_IMPERSONATE];
+        if ($token === '') {
+            $this->fail('Impersonation token is empty');
+            return   Sogerien::Debager()->capture_return('', __CLASS__, __FUNCTION__);
+        }
+
+        $this->ok();
+        return   Sogerien::Debager()->capture_return($token, __CLASS__, __FUNCTION__);
+}
+
     public function delete_token_from_cookie(): bool
     { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
         return   Sogerien::Debager()->capture_return($this->delete_cookie_by_name($this->COOKIE_NAME), __CLASS__, __FUNCTION__);
+}
+
+    public function delete_impersonation_token_from_cookie(): bool
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
+        return   Sogerien::Debager()->capture_return($this->delete_cookie_by_name($this->COOKIE_NAME_IMPERSONATE), __CLASS__, __FUNCTION__);
 }
 
     /* =========================

@@ -91,6 +91,7 @@ final class TemplateBasePage
     public function render_body_close(): void
     {
         if ($this->shellOpened) {
+            $this->render_admin_view_user_id_bridge();
             echo '</div></div></div>';
             $this->shellOpened = false;
         }
@@ -121,7 +122,7 @@ final class TemplateBasePage
     }
 
     /**
-     * @param array<int,array{label:string,url:string,tag?:string}> $items
+     * @param array<int,array{label:string,url:string,tag?:string,permission?:string}> $items
      */
     private function render_nav_items(array $items): string
     {
@@ -135,6 +136,7 @@ final class TemplateBasePage
             }
 
             $active = $this->is_active_url($url) === 'active' ? ' is-active' : '';
+            $url = $this->append_admin_view_user_id($url);
             $tagHtml = $tag !== '' ? '<span class="pm-nav-tag">' . $this->h($tag) . '</span>' : '';
             $html .= '<a class="pm-nav-link' . $active . '" href="' . $this->h($url) . '"><span class="pm-nav-label">' . $this->h($label) . '</span>' . $tagHtml . '</a>';
         }
@@ -169,24 +171,55 @@ final class TemplateBasePage
         }
         $is_authenticated = $this->is_authenticated_user();
         $page_title = $this->template->title !== '' ? $this->template->title : $t('app.name', 'ProxyMint');
+        $currentPath = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
+        $isAdminSystem = $currentPath === 'admin' || str_starts_with($currentPath, 'admin/');
 
-        $adminItems = [
-            ['label' => 'Main page', 'url' => '/', 'tag' => 'Landing'],
-            ['label' => $t('menu.users', 'Users'), 'url' => '/page_users', 'tag' => 'CRM'],
-            ['label' => $t('menu.rules', 'Rules'), 'url' => '/page_rules', 'tag' => 'Access'],
-            ['label' => $t('menu.rules_access', 'Rules Access'), 'url' => '/page_rules_access', 'tag' => 'ACL'],
+        $homeItems = [
+            ['label' => 'Dashboard', 'url' => '/client/dashboard', 'tag' => 'Client'],
         ];
-
-        $proxyItems = [
-            ['label' => $t('menu.proxy_catalog', 'Proxy Catalog'), 'url' => '/proxies', 'tag' => 'Core'],
-            ['label' => $t('menu.proxy_catalog_infatica', 'Infatica'), 'url' => '/proxies/infatica_io', 'tag' => 'Feed'],
-            ['label' => 'All Proxy', 'url' => '/all_proxy', 'tag' => 'Table'],
-            ['label' => 'Proxy Catalog Proxysmart', 'url' => '/proxies/proxysmartorg', 'tag' => 'Feed'],
-            ['label' => $t('menu.my_proxies', 'My Proxies'), 'url' => '/my/proxies', 'tag' => 'Client'],
-            ['label' => 'Profile', 'url' => '/profile', 'tag' => 'Account'],
-            ['label' => $t('menu.my_payments', 'My Payments'), 'url' => '/my/payments', 'tag' => 'Billing'],
-            ['label' => $t('menu.manage_proxy', 'Manage Proxy'), 'url' => '/proxy/manage', 'tag' => 'Ops'],
-            ['label' => $t('menu.demo_purchase', 'Demo Purchase'), 'url' => '/demo/purchase', 'tag' => 'Checkout'],
+        $proxyProductItems = [
+            ['label' => 'Order Proxies', 'url' => '/client/all_proxy', 'tag' => 'Order'],
+            ['label' => 'My Services', 'url' => '/client/my/proxies', 'tag' => 'Client'],
+            ['label' => 'Service Detail', 'url' => '/client/proxy/manage', 'tag' => 'Ops'],
+            ['label' => 'Traffic Usage', 'url' => '/client/traffic', 'tag' => 'Stats'],
+            ['label' => 'Access Lists', 'url' => '/client/access-lists', 'tag' => 'Proxy'],
+            ['label' => 'Mobile Proxy', 'url' => '/client/proxies/mobile_proxy', 'tag' => 'GB'],
+            ['label' => 'Residential Proxy', 'url' => '/client/proxies/residential', 'tag' => 'GB'],
+            ['label' => 'Residential IPv6', 'url' => '/client/proxies/residential-ipv6', 'tag' => 'IPv6'],
+            ['label' => 'ISP Proxy', 'url' => '/client/proxies/isp', 'tag' => 'IP'],
+        ];
+        $scraperItems = [
+            ['label' => 'Scraper Pricing', 'url' => '/client/scraper/pricing', 'tag' => 'API'],
+            ['label' => 'My Scraper API', 'url' => '/client/scraper/my', 'tag' => 'Client'],
+            ['label' => 'Playground', 'url' => '/client/scraper/playground', 'tag' => 'Tools'],
+        ];
+        $billingItems = [
+            ['label' => 'Add Funds', 'url' => '/client/add-funds', 'tag' => 'Pay'],
+            ['label' => 'Invoices', 'url' => '/client/my/payments', 'tag' => 'Billing'],
+            ['label' => 'Payment Methods', 'url' => '/client/payment-methods', 'tag' => 'Billing'],
+            ['label' => 'Subscriptions', 'url' => '/client/subscriptions', 'tag' => 'Renew'],
+        ];
+        $supportItems = [
+            ['label' => 'Tickets', 'url' => '/client/support/tickets', 'tag' => 'Help'],
+            ['label' => 'Manuals', 'url' => '/client/manuals', 'tag' => 'Docs'],
+        ];
+        $accountItems = [
+            ['label' => 'Profile', 'url' => '/client/profile', 'tag' => 'Account'],
+            ['label' => 'Contacts', 'url' => '/client/contacts', 'tag' => 'Account'],
+            ['label' => 'Email History', 'url' => '/client/email-history', 'tag' => 'Account'],
+            ['label' => 'Users', 'url' => '/client/users', 'tag' => 'Team'],
+        ];
+        $adminItems = $this->is_admin_user() ? [
+            ['label' => 'Proxy Orders', 'url' => '/admin/orders', 'tag' => 'Admin'],
+            ['label' => 'Client Services', 'url' => '/admin/services', 'tag' => 'Admin'],
+            ['label' => 'Traffic', 'url' => '/admin/traffic', 'tag' => 'Admin'],
+            ['label' => 'Access Lists', 'url' => '/admin/access-lists', 'tag' => 'Admin'],
+            ['label' => 'Billing', 'url' => '/admin/billing', 'tag' => 'Admin'],
+            ['label' => 'Guard', 'url' => '/admin/guard', 'tag' => 'Admin'],
+            ['label' => 'Tickets', 'url' => '/admin/support/tickets', 'tag' => 'Admin'],
+        ] : [];
+        $adminHomeItems = [
+            ['label' => 'Provider Dashboard', 'url' => '/admin/provider', 'tag' => 'Admin'],
         ];
 
         echo '<div class="pm-admin-app">';
@@ -205,17 +238,41 @@ final class TemplateBasePage
         echo                    $this->admin_brand_logo_html();
         echo '                  <div class="pm-brand-copy">';
         echo '                      <div class="pm-brand-title">' . $h($t('app.name', 'ProxyMint')) . '</div>';
-        echo '                      <div class="pm-brand-sub">admin catalog</div>';
+        echo '                      <div class="pm-brand-sub">' . ($isAdminSystem ? 'admin system' : 'client system') . '</div>';
         echo '                  </div>';
         echo '              </div>';
-        echo '              <div class="pm-sidebar-section">';
-        echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.admin', 'Admin')) . '</div>';
-        echo                    $this->render_nav_items($adminItems);
-        echo '              </div>';
-        echo '              <div class="pm-sidebar-section">';
-        echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.proxy', 'Proxy')) . '</div>';
-        echo                    $this->render_nav_items($proxyItems);
-        echo '              </div>';
+        if ($isAdminSystem) {
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Admin</div>';
+            echo                    $this->render_nav_items($adminHomeItems);
+            echo                    $this->render_nav_items($adminItems);
+            echo '              </div>';
+        } else {
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.admin', 'Dashboard')) . '</div>';
+            echo                    $this->render_nav_items($homeItems);
+            echo '              </div>';
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Proxy</div>';
+            echo                    $this->render_nav_items($proxyProductItems);
+            echo '              </div>';
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Scraper</div>';
+            echo                    $this->render_nav_items($scraperItems);
+            echo '              </div>';
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Billing</div>';
+            echo                    $this->render_nav_items($billingItems);
+            echo '              </div>';
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Support</div>';
+            echo                    $this->render_nav_items($supportItems);
+            echo '              </div>';
+            echo '              <div class="pm-sidebar-section">';
+            echo '                  <div class="pm-sidebar-section-title">Account</div>';
+            echo                    $this->render_nav_items($accountItems);
+            echo '              </div>';
+        }
         echo '              <div class="pm-sidebar-foot"></div>';
         echo '          </div>';
         echo '      </aside>';
@@ -284,7 +341,67 @@ HTML;
 
     private function is_active_url(string $page): string
     {
+        $pagePath = (string)(parse_url($page, PHP_URL_PATH) ?: $page);
+        $currentPath = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
+        $pagePath = trim($pagePath, '/');
+        if ($pagePath !== '') {
+            return $pagePath === $currentPath ? 'active' : '';
+        }
+
         return $page === Sogerien::InputRequest()->url ? 'active' : '';
+    }
+
+    private function admin_view_user_id(): int
+    {
+        $path = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
+        if ($path !== 'client' && !str_starts_with($path, 'client/')) {
+            return 0;
+        }
+
+        $raw = trim((string)($_GET['user_id'] ?? ''));
+        if ($raw === '' || preg_match('/^[1-9]\d*$/', $raw) !== 1) {
+            return 0;
+        }
+
+        return (int)$raw;
+    }
+
+    private function append_admin_view_user_id(string $url): string
+    {
+        $userId = $this->admin_view_user_id();
+        if ($userId <= 0 || !str_starts_with($url, '/client')) {
+            return $url;
+        }
+
+        $parts = parse_url($url);
+        $path = (string)($parts['path'] ?? $url);
+        $query = [];
+        if (isset($parts['query']) && is_string($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+        $query['user_id'] = (string)$userId;
+        $queryString = http_build_query($query);
+
+        return $path . ($queryString !== '' ? '?' . $queryString : '');
+    }
+
+    private function render_admin_view_user_id_bridge(): void
+    {
+        $userId = $this->admin_view_user_id();
+        if ($userId <= 0) {
+            return;
+        }
+
+        $encodedUserId = json_encode((string)$userId, JSON_UNESCAPED_SLASHES);
+        if (!is_string($encodedUserId) || $encodedUserId === '') {
+            return;
+        }
+
+        echo '<script>(function(){var userId=' . $encodedUserId . ';';
+        echo 'function patchUrl(value){try{var url=new URL(value,location.origin);if(url.origin!==location.origin||!url.pathname.startsWith("/client"))return value;url.searchParams.set("user_id",userId);return url.pathname+url.search+url.hash;}catch(e){return value;}}';
+        echo 'document.querySelectorAll("a[href]").forEach(function(a){a.setAttribute("href",patchUrl(a.getAttribute("href")||""));});';
+        echo 'document.querySelectorAll("form[action]").forEach(function(f){f.setAttribute("action",patchUrl(f.getAttribute("action")||""));});';
+        echo '})();</script>';
     }
 
     private function build_url_with_lang(string $lang): string
@@ -319,6 +436,13 @@ HTML;
         return Sogerien::Users()->load_identity_from_token();
     }
 
+    private function is_admin_user(): bool
+    {
+        Sogerien::Users()->load_identity_from_token();
+        $groups = Sogerien::Users()->user_group;
+        return is_array($groups) && isset($groups['admin']);
+    }
+
     private function t(string $key, string $fallback = ''): string
     {
         $value = Sogerien::Lang()->get($key);
@@ -334,4 +458,9 @@ HTML;
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }
+
+
+
+
+
 

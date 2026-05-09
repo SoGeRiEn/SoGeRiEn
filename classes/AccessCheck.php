@@ -99,7 +99,15 @@ final class AccessCheck
         }
 
         if ($this->mustShowLoginFormForDeniedGuest($method_name, $user_id, $user_group)) {
-            $login_form_path = dirname(__DIR__) . '/page/admin_panel/login_form_v2.php';
+            $requestUri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+            $requestPath = (string)(parse_url($requestUri, PHP_URL_PATH) ?? '/');
+            if (!str_starts_with($requestPath, '/') || str_starts_with($requestPath, '//')) {
+                $requestUri = '/';
+            }
+            if (!isset($_GET['next']) || trim((string)$_GET['next']) === '') {
+                $_GET['next'] = $requestUri;
+            }
+            $login_form_path = dirname(__DIR__) . '/page/admin_panel/page_login_form.php';
             if (is_file($login_form_path)) {
                 require $login_form_path;
                 Sogerien::markDone();

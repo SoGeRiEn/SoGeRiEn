@@ -176,7 +176,7 @@
       typeof window.CosmicParticleNetwork.create !== "function"
     ) {
       throw new Error(
-        "ProxyMintBackgroundKit requires cosmic-particle-network.js to be loaded first.",
+        "ProxyMintBackgroundKit requires CosmicParticleNetwork to be loaded first.",
       )
     }
 

@@ -76,6 +76,9 @@ final class Users
     public string $db_alias = '';
     public int $user_id = 0;
 
+    /** @var array<string,mixed> */
+    public array $user_data = [];
+
     /** @var array<string,bool> */
     public array $user_group = [];
 
@@ -90,6 +93,7 @@ final class Users
     { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
         $this->fail('');
         $this->user_id = 0;
+        $this->user_data = [];
         $this->user_group = [];
 
         $keyFile = (string)(Sogerien::$patch_to_cookies_keyFile ?? '');
@@ -101,7 +105,9 @@ final class Users
         $at = Sogerien::AccessToken();
         $at->patch_to_keyFile = $keyFile;
 
-        $token = $at->load_token_for_cookie();
+        $adminViewUserId = $this->admin_view_user_id_from_request();
+        $useImpersonation = $adminViewUserId <= 0 && $this->should_use_impersonation_token();
+        $token = $useImpersonation ? $at->load_impersonation_token_for_cookie() : $at->load_token_for_cookie();
         if (!$at->status || $token === '') {
             $this->fail($at->error !== '' ? $at->error : 'load_token_for_cookie failed');
             return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
@@ -113,12 +119,21 @@ final class Users
             return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
         }
 
+        if ($useImpersonation) {
+            $purpose = (string)($payload['purpose'] ?? '');
+            $until = (int)($payload['impersonation_until'] ?? 0);
+            if ($purpose !== 'admin_impersonation' || $until < time()) {
+                $at->delete_impersonation_token_from_cookie();
+                $this->fail('Impersonation token expired');
+                return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+            }
+        }
+
         $uid = (int)($payload['user_id'] ?? 0);
         if ($uid <= 0) {
             $this->fail('user_id not found in token');
             return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
         }
-        $this->user_id = $uid;
 
         $groups = $payload['user_group'] ?? [];
         if (is_array($groups)) {
@@ -131,9 +146,89 @@ final class Users
             }
         }
 
+        if ($adminViewUserId > 0) {
+            if (!isset($this->user_group['admin'])) {
+                $this->fail('Admin access required for user_id view');
+                return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+            }
+
+            $targetRow = $this->get_user_by_id($adminViewUserId);
+            if (!is_array($targetRow)) {
+                $this->fail('User not found');
+                return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+            }
+
+            $targetData = $this->normalize_user_table_value($targetRow['table_value'] ?? []);
+            $targetGroups = $this->roles_to_group_set($targetData['roles'] ?? ['user']);
+            if ($targetGroups === []) {
+                $targetGroups['user'] = true;
+            }
+
+            $this->user_id = $adminViewUserId;
+            $this->user_data = $targetData;
+            $this->user_group = $targetGroups;
+            $this->ok();
+            return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);
+        }
+
+        $this->user_id = $uid;
         $this->ok();
         return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);
 }
+
+    private function should_use_impersonation_token(): bool
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
+        $path = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
+        return   Sogerien::Debager()->capture_return($path === 'client' || str_starts_with($path, 'client/'), __CLASS__, __FUNCTION__);
+}
+
+    private function admin_view_user_id_from_request(): int
+    {
+        $path = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
+        if ($path !== 'client' && !str_starts_with($path, 'client/')) {
+            return 0;
+        }
+
+        $raw = trim((string)($_GET['user_id'] ?? ''));
+        if ($raw === '' || preg_match('/^[1-9]\d*$/', $raw) !== 1) {
+            return 0;
+        }
+
+        return (int)$raw;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function normalize_user_table_value(mixed $tableValue): array
+    {
+        if (is_string($tableValue)) {
+            $decoded = json_decode($tableValue, true);
+            $tableValue = is_array($decoded) ? $decoded : [];
+        }
+
+        return is_array($tableValue) ? $tableValue : [];
+    }
+
+    /**
+     * @return array<string,bool>
+     */
+    private function roles_to_group_set(mixed $rolesRaw): array
+    {
+        if (!is_array($rolesRaw)) {
+            return [];
+        }
+
+        $groups = [];
+        foreach ($rolesRaw as $role) {
+            $role = trim((string)$role);
+            if ($role !== '') {
+                $groups[$role] = true;
+            }
+        }
+
+        return $groups;
+    }
 
     /**
      * Создать токен по твоему формату:

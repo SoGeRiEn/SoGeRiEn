@@ -20,9 +20,8 @@ final class Affects
     public static function get_head_js_urls(string $domain): array
     {
         return [
-            ['src' => $domain . '/page/effects/proxymint-background-kit/cosmic-particle-network.js', 'defer' => true],
+            ['src' => $domain . '/page/effects/proxymint-background-kit/cosmic-particle-network-fast.js', 'defer' => true],
             ['src' => $domain . '/page/effects/proxymint-background-kit/proxymint-background-kit.js', 'defer' => true],
         ];
     }
 }
-
