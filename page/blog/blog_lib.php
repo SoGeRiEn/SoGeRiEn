@@ -5,7 +5,7 @@ $DOC = rtrim((string)($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
 $candidates = [
     $DOC . '/sogerien/Sogerien.php',
     rtrim((string)dirname($DOC), '/') . '/sogerien/Sogerien.php',
-    rtrim((string)dirname(__DIR__), '/') . '/sogerien/Sogerien.php',
+    rtrim((string)dirname(dirname(__DIR__)), '/') . '/Sogerien.php',
 ];
 $bootstrap = '';
 foreach ($candidates as $candidate) {
@@ -19,27 +19,22 @@ if ($bootstrap === '') {
 }
 require_once $bootstrap;
 
-const BLOG_DB_ALIAS = 'blog';
-const BLOG_DB_HOST = '127.0.0.1';
-const BLOG_DB_PORT = '5432';
-const BLOG_DB_NAME = 'blog_db';
-const BLOG_DB_USER = 'blog_user';
-const BLOG_DB_PASS = 'change_me';
-const BLOG_SCHEMA = 'blog';
-
 function blog_db_connect(): APIPostgresql
 {
+    if (!defined('BLOG_DB_ALIAS') || !defined('BLOG_DB_HOST') || !defined('BLOG_DB_PORT') || !defined('BLOG_DB_NAME') || !defined('BLOG_DB_USER') || !defined('BLOG_DB_PASS')) {
+        throw new RuntimeException('Blog DB config is not defined in index.php');
+    }
     $db = Sogerien::DbController();
-    $db->DbConfig->DB_HOST = BLOG_DB_HOST;
-    $db->DbConfig->DB_PORT = BLOG_DB_PORT;
-    $db->DbConfig->DB_NAME = BLOG_DB_NAME;
-    $db->DbConfig->DB_USER = BLOG_DB_USER;
-    $db->DbConfig->DB_PASS = BLOG_DB_PASS;
+    $db->DbConfig->DB_HOST = (string)BLOG_DB_HOST;
+    $db->DbConfig->DB_PORT = (string)BLOG_DB_PORT;
+    $db->DbConfig->DB_NAME = (string)BLOG_DB_NAME;
+    $db->DbConfig->DB_USER = (string)BLOG_DB_USER;
+    $db->DbConfig->DB_PASS = (string)BLOG_DB_PASS;
     $db->DbConfig->DB_CHARSET = 'utf8mb4';
-    $db->connect(BLOG_DB_ALIAS, $db->DbConfig);
+    $db->connect((string)BLOG_DB_ALIAS, $db->DbConfig);
 
     $pg = Sogerien::API()->Postgresql();
-    $pg->set_db_alias(BLOG_DB_ALIAS);
+    $pg->set_db_alias((string)BLOG_DB_ALIAS);
     return $pg;
 }
 
@@ -61,7 +56,7 @@ function blog_db_query(APIPostgresql $pg, string $sql, array $params = []): arra
 
 function blog_ensure_schema(APIPostgresql $pg): void
 {
-    $s = BLOG_SCHEMA;
+    $s = defined('BLOG_SCHEMA') ? (string)BLOG_SCHEMA : 'blog';
     $ddl = [
         "CREATE SCHEMA IF NOT EXISTS {$s}",
         "CREATE TABLE IF NOT EXISTS {$s}.news_posts (
@@ -145,7 +140,7 @@ function blog_text_excerpt(string $html, int $max = 260): string
 
 function blog_unique_slug(APIPostgresql $pg, string $baseSlug, int $excludeId = 0): string
 {
-    $s = BLOG_SCHEMA;
+    $s = defined('BLOG_SCHEMA') ? (string)BLOG_SCHEMA : 'blog';
     $slug = $baseSlug;
     $n = 1;
     while (true) {
@@ -190,7 +185,7 @@ function blog_normalize_tags(mixed $tagsRaw): array
 
 function blog_sync_tags(APIPostgresql $pg, int $postId, array $tags): void
 {
-    $s = BLOG_SCHEMA;
+    $s = defined('BLOG_SCHEMA') ? (string)BLOG_SCHEMA : 'blog';
     blog_db_query($pg, "DELETE FROM {$s}.news_post_tags WHERE post_id = :post_id", [':post_id' => $postId]);
     foreach ($tags as $tag) {
         $name = blog_str($tag['name'] ?? '');

@@ -1,4 +1,4 @@
-﻿/* table_renderer.js
+/* table_renderer.js
  *
  * РўСЂРµР±РѕРІР°РЅРёСЏ:
  * - jQuery

@@ -127,6 +127,11 @@ final class TemplateBasePage
     {
         $html = '';
         foreach ($items as $item) {
+            if (($item['type'] ?? '') === 'title') {
+                $html .= '<div class="pm-sidebar-section-title">' . $this->h((string)($item['label'] ?? '')) . '</div>';
+                continue;
+            }
+
             $label = trim((string)($item['label'] ?? ''));
             $url = trim((string)($item['url'] ?? ''));
             $tag = trim((string)($item['tag'] ?? ''));
@@ -137,6 +142,33 @@ final class TemplateBasePage
             $active = $this->is_active_url($url) === 'active' ? ' is-active' : '';
             $tagHtml = $tag !== '' ? '<span class="pm-nav-tag">' . $this->h($tag) . '</span>' : '';
             $html .= '<a class="pm-nav-link' . $active . '" href="' . $this->h($url) . '"><span class="pm-nav-label">' . $this->h($label) . '</span>' . $tagHtml . '</a>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * @param array<int,array{label:string,url:string,tag?:string,level?:int,type?:string}> $items
+     */
+    private function render_infatica_nav(array $items): string
+    {
+        $html = '';
+        foreach ($items as $item) {
+            if (($item['type'] ?? '') === 'title') {
+                $html .= '<div class="pm-sidebar-section-title pm-infatica-title">' . $this->h((string)($item['label'] ?? '')) . '</div>';
+                continue;
+            }
+
+            $label = trim((string)($item['label'] ?? ''));
+            $url = trim((string)($item['url'] ?? ''));
+            if ($label === '' || $url === '') {
+                continue;
+            }
+            $tag = trim((string)($item['tag'] ?? ''));
+            $level = max(0, min(2, (int)($item['level'] ?? 0)));
+            $active = $this->is_active_url($url) === 'active' ? ' is-active' : '';
+            $tagHtml = $tag !== '' ? '<span class="pm-nav-tag">' . $this->h($tag) . '</span>' : '';
+            $html .= '<a class="pm-nav-link pm-nav-level-' . $level . $active . '" href="' . $this->h($url) . '"><span class="pm-nav-label">' . $this->h($label) . '</span>' . $tagHtml . '</a>';
         }
 
         return $html;
@@ -170,24 +202,40 @@ final class TemplateBasePage
         $is_authenticated = $this->is_authenticated_user();
         $page_title = $this->template->title !== '' ? $this->template->title : $t('app.name', 'ProxyMint');
 
-        $adminItems = [
-            ['label' => 'Main page', 'url' => '/', 'tag' => 'Landing'],
-            ['label' => $t('menu.users', 'Users'), 'url' => '/page_users', 'tag' => 'CRM'],
-            ['label' => $t('menu.rules', 'Rules'), 'url' => '/page_rules', 'tag' => 'Access'],
-            ['label' => $t('menu.rules_access', 'Rules Access'), 'url' => '/page_rules_access', 'tag' => 'ACL'],
+        $infaticaItems = [
+            ['label' => $t('menu.home', 'Home'), 'url' => '/my', 'tag' => ''],
+            ['type' => 'title', 'label' => $t('menu.proxy', 'Proxy'), 'url' => '#'],
+            ['label' => $t('menu.my_proxy_products', 'My Proxy Products'), 'url' => '/my/proxies', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.proxy_pricing', 'Proxy Pricing'), 'url' => '/all_proxy', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.proxy_residential', 'Residential Proxies'), 'url' => '/proxies', 'tag' => '', 'level' => 1],
+            ['label' => $t('menu.proxy_residential_ipv6', 'Residential IPv6 proxies'), 'url' => '/all_proxy', 'tag' => '', 'level' => 1],
+            ['label' => $t('menu.proxy_mobile', 'Mobile Proxies'), 'url' => '/proxies/infatica_io', 'tag' => '', 'level' => 1],
+            ['label' => $t('menu.proxy_isp', 'ISP proxies'), 'url' => '/proxies/isp', 'tag' => '', 'level' => 1],
+            ['label' => $t('menu.proxy_dc', 'DC Proxy'), 'url' => '/proxies/proxysmartorg', 'tag' => '', 'level' => 1],
+            ['label' => $t('menu.proxy_dedicated_dc', 'Dedicated Datacenter Proxy'), 'url' => '/proxies/proxysmartorg', 'tag' => '', 'level' => 2],
+            ['label' => $t('menu.proxy_shared_dc', 'Shared Datacenter Proxy'), 'url' => '/proxies/proxysmartorg', 'tag' => '', 'level' => 2],
+            ['type' => 'title', 'label' => $t('menu.scraper', 'Scraper'), 'url' => '#'],
+            ['label' => $t('menu.web_scraping_api_pricing', 'Web Scraping API Pricing'), 'url' => '/demo/purchase', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.api_playground', 'API Playground'), 'url' => '/my', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.my_scraping_api', 'My Scraping API'), 'url' => '/my', 'tag' => '', 'level' => 0],
+            ['type' => 'title', 'label' => $t('menu.billing', 'Billing'), 'url' => '#'],
+            ['label' => $t('menu.my_invoices', 'My Invoices'), 'url' => '/my/payments', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.add_funds', 'Add Funds'), 'url' => '/my/payments', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.payment_methods', 'Payment Methods'), 'url' => '/my/payments', 'tag' => '', 'level' => 0],
+            ['type' => 'title', 'label' => $t('menu.support', 'Support'), 'url' => '#'],
+            ['label' => $t('menu.support_tickets', 'Tickets'), 'url' => '/support/tickets', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.support_open_ticket', 'Open Ticket'), 'url' => '/support/tickets/create', 'tag' => '', 'level' => 0],
+            ['type' => 'title', 'label' => $t('menu.documentation', 'Documentation'), 'url' => '#'],
+            ['label' => $t('menu.manuals', 'Manuals'), 'url' => '/manuals', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.partners', 'Partners'), 'url' => '/partners', 'tag' => '', 'level' => 0],
+            ['label' => $t('menu.marketplace', 'Marketplace'), 'url' => '/marketplace', 'tag' => '', 'level' => 0],
         ];
 
-        $proxyItems = [
-            ['label' => $t('menu.proxy_catalog', 'Proxy Catalog'), 'url' => '/proxies', 'tag' => 'Core'],
-            ['label' => $t('menu.proxy_catalog_infatica', 'Infatica'), 'url' => '/proxies/infatica_io', 'tag' => 'Feed'],
-            ['label' => 'All Proxy', 'url' => '/all_proxy', 'tag' => 'Table'],
-            ['label' => 'Proxy Catalog Proxysmart', 'url' => '/proxies/proxysmartorg', 'tag' => 'Feed'],
-            ['label' => $t('menu.my_proxies', 'My Proxies'), 'url' => '/my/proxies', 'tag' => 'Client'],
-            ['label' => 'Profile', 'url' => '/profile', 'tag' => 'Account'],
-            ['label' => $t('menu.my_payments', 'My Payments'), 'url' => '/my/payments', 'tag' => 'Billing'],
-            ['label' => $t('menu.manage_proxy', 'Manage Proxy'), 'url' => '/proxy/manage', 'tag' => 'Ops'],
-            ['label' => $t('menu.demo_purchase', 'Demo Purchase'), 'url' => '/demo/purchase', 'tag' => 'Checkout'],
-        ];
+        if ($is_authenticated && isset(Sogerien::Users()->user_group['admin'])) {
+            $infaticaItems[] = ['type' => 'title', 'label' => $t('menu.admin_tickets', 'Admin tickets'), 'url' => '#'];
+            $infaticaItems[] = ['label' => $t('menu.admin_tickets_all', 'All tickets'), 'url' => '/admin/tickets', 'tag' => '', 'level' => 0];
+            $infaticaItems[] = ['label' => $t('menu.admin_tickets_pending', 'Tickets requiring reply'), 'url' => '/admin/tickets/pending', 'tag' => '', 'level' => 0];
+        }
 
         echo '<div class="pm-admin-app">';
         echo '  <div class="pm-admin-bg" aria-hidden="true">';
@@ -208,13 +256,8 @@ final class TemplateBasePage
         echo '                      <div class="pm-brand-sub">admin catalog</div>';
         echo '                  </div>';
         echo '              </div>';
-        echo '              <div class="pm-sidebar-section">';
-        echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.admin', 'Admin')) . '</div>';
-        echo                    $this->render_nav_items($adminItems);
-        echo '              </div>';
-        echo '              <div class="pm-sidebar-section">';
-        echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.proxy', 'Proxy')) . '</div>';
-        echo                    $this->render_nav_items($proxyItems);
+        echo '              <div class="pm-sidebar-section pm-infatica-nav">';
+        echo                    $this->render_infatica_nav($infaticaItems);
         echo '              </div>';
         echo '              <div class="pm-sidebar-foot"></div>';
         echo '          </div>';
@@ -254,7 +297,19 @@ final class TemplateBasePage
         echo '                      </div>';
         echo '                  </div>';
         if ($is_authenticated) {
-            echo '                  <a class="pm-cta pm-cta-danger" href="' . $h($this->build_logout_url()) . '">' . $h($t('menu.logout', 'Logout')) . '</a>';
+            echo '                  <div class="dropdown pm-user-menu">';
+            echo '                      <button class="pm-user-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">';
+            echo '                          <span class="pm-user-avatar">' . $h($this->get_user_initials()) . '</span>';
+            echo '                          <span class="pm-user-name">' . $h($this->get_user_label()) . '</span>';
+            echo '                      </button>';
+            echo '                      <div class="dropdown-menu dropdown-menu-end pm-user-dropdown">';
+            echo '                          <a class="dropdown-item" href="/profile">' . $h($t('menu.profile', 'Profile')) . '</a>';
+            echo '                          <a class="dropdown-item" href="/my/payments">' . $h($t('menu.my_payments', 'My Payments')) . '</a>';
+            echo '                          <a class="dropdown-item" href="/support/tickets">' . $h($t('menu.support_tickets', 'Tickets')) . '</a>';
+            echo '                          <div class="dropdown-divider"></div>';
+            echo '                          <a class="dropdown-item pm-user-logout" href="' . $h($this->build_logout_url()) . '">' . $h($t('menu.logout', 'Logout')) . '</a>';
+            echo '                      </div>';
+            echo '                  </div>';
         } else {
             echo '                  <a class="pm-cta pm-cta-primary" href="' . $h($this->build_login_url()) . '">' . $h($t('auth.authorize', 'Authorize')) . '</a>';
         }
@@ -317,6 +372,31 @@ HTML;
     private function is_authenticated_user(): bool
     {
         return Sogerien::Users()->load_identity_from_token();
+    }
+
+    private function get_user_label(): string
+    {
+        $userId = (int)(Sogerien::Users()->user_id ?? 0);
+        if ($userId <= 0) {
+            return $this->t('common.user', 'User');
+        }
+        $user = Sogerien::Users()->get_user_for_edit($userId);
+        if (is_array($user)) {
+            foreach (['fio', 'login', 'email', 'name'] as $key) {
+                $value = trim((string)($user[$key] ?? ''));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+        return $this->t('common.user', 'User');
+    }
+
+    private function get_user_initials(): string
+    {
+        $label = $this->get_user_label();
+        $first = mb_substr(trim($label), 0, 1);
+        return $first !== '' ? mb_strtoupper($first) : 'U';
     }
 
     private function t(string $key, string $fallback = ''): string
