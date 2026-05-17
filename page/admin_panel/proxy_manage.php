@@ -397,10 +397,38 @@ Sogerien::Page()->mainmenu();
                                     <td><?= pm_h($list['created_at'] ?? '-') ?></td>
                                     <td>
                                         <?php $detailId = 'pmProxyListDetails' . preg_replace('/[^A-Za-z0-9_:-]/', '', pm_s($list['vendor_list_id'] ?? $list['id'] ?? md5(pm_s($list['name'] ?? '')))); ?>
+                                        <?php
+                                            $host = pm_s($service['connection_host'] ?? '');
+                                            if ($host === '') { $host = 'pool.infatica.io'; }
+                                            $basePort = (int)pm_s($service['connection_port'] ?? '');
+                                            if ($basePort < 10000 || $basePort > 10999) { $basePort = 10000; }
+                                            $login = pm_s($list['login'] ?? '');
+                                            $password = pm_s($list['password'] ?? '');
+                                            $portCount = match ($category) {
+                                                'mobile' => 100,
+                                                'residential', 'residential_ipv6' => 1000,
+                                                default => 100,
+                                            };
+                                            $endPort = min(10999, $basePort + $portCount - 1);
+                                            $accessLines = [];
+                                            if ($login !== '' && $password !== '') {
+                                                for ($p = $basePort; $p <= $endPort; $p++) {
+                                                    $accessLines[] = $login . ':' . $password . '@' . $host . ':' . $p;
+                                                }
+                                            }
+                                            $accessText = implode("\n", $accessLines);
+                                        ?>
                                         <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#<?= pm_h($detailId) ?>" aria-expanded="false">Details</button>
                                         <div class="collapse mt-2" id="<?= pm_h($detailId) ?>">
-                                            <?php $host = pm_s($service['connection_host'] ?? ''); $port = pm_s($service['connection_port'] ?? ''); $login = pm_s($list['login'] ?? ''); $password = pm_s($list['password'] ?? ''); ?>
-                                            <pre class="mb-0 small"><?= pm_h("http://{$login}:{$password}@{$host}:{$port}\nsocks5://{$login}:{$password}@{$host}:{$port}\n{$host}:{$port}:{$login}:{$password}") ?></pre>
+                                            <?php if ($accessText === ''): ?>
+                                                <div class="alert alert-warning mb-0 small">Login or password is missing for this proxy list.</div>
+                                            <?php else: ?>
+                                                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                                    <span class="small text-muted"><?= pm_h((string)count($accessLines)) ?> ports - <code><?= pm_h($host) ?>:<?= pm_h((string)$basePort) ?>..<?= pm_h((string)$endPort) ?></code></span>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="(function(b){var t=b.closest('div').parentElement.querySelector('textarea');t.select();document.execCommand('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy all';},1500);})(this)">Copy all</button>
+                                                </div>
+                                                <textarea class="form-control small font-monospace" rows="10" readonly style="white-space:pre;overflow:auto;"><?= pm_h($accessText) ?></textarea>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                     <td>
