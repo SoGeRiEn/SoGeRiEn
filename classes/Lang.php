@@ -7,7 +7,7 @@ final class Lang
     public string $error = '';
 
     private const COOKIE_NAME = 'sogerien_lang';
-    private const DEFAULT_LANG = 'ru';
+    private const DEFAULT_LANG = 'en';
     private const FALLBACK_LANG = 'en';
     private const CHECK_INTERVAL_SECONDS = 900;
 
@@ -263,25 +263,9 @@ final class Lang
 
     private function resolve_current_lang(): string
     {
-        $input = Sogerien::InputRequest();
-
-        $requested_lang = $this->normalize_lang((string)($input->request_post_get_cookie_json['lang'] ?? ''));
-        $cookie_lang = $this->normalize_lang((string)($input->_COOKIE[self::COOKIE_NAME] ?? ''));
-
+        $requested_lang = $this->normalize_lang((string)($_GET['lang'] ?? ''));
         if ($requested_lang !== '') {
-            if ($requested_lang !== $cookie_lang) {
-                $this->write_lang_cookie($requested_lang);
-            }
             return $requested_lang;
-        }
-
-        if ($cookie_lang !== '') {
-            return $cookie_lang;
-        }
-
-        $browser_lang = $this->detect_browser_lang((string)$input->HTTP_ACCEPT_LANGUAGE);
-        if ($browser_lang !== '') {
-            return $browser_lang;
         }
 
         return self::DEFAULT_LANG;

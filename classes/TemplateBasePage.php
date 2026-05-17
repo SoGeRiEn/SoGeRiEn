@@ -182,6 +182,7 @@ final class TemplateBasePage
 
             $active = $this->is_active_url($url) === 'active' ? ' is-active' : '';
             $url = $this->append_admin_view_user_id($url);
+            $url = $this->append_current_lang($url);
             $tagHtml = $tag !== '' ? '<span class="pm-nav-tag">' . $this->h($tag) . '</span>' : '';
             $html .= '<a class="pm-nav-link' . $active . '" href="' . $this->h($url) . '"><span class="pm-nav-label">' . $this->h($label) . '</span>' . $tagHtml . '</a>';
         }
@@ -367,7 +368,7 @@ final class TemplateBasePage
         echo '                  </div>';
         if (!$isAdminSystem) {
             $clientTopbar = $this->client_topbar_context();
-            echo '                  <a class="pm-client-add-funds" href="' . $h($this->append_admin_view_user_id('/client/add-funds')) . '">Add Funds</a>';
+            echo '                  <a class="pm-client-add-funds" href="' . $h($this->append_current_lang($this->append_admin_view_user_id('/client/add-funds'))) . '">Add Funds</a>';
             echo '                  <div class="pm-client-balance" title="Account balance"><span>Balance</span><strong>' . $h((string)$clientTopbar['balance']) . '</strong></div>';
             echo '                  <div class="dropdown pm-client-icon-dropdown">';
             echo '                      <button class="pm-client-icon-btn" type="button" id="pm_notify_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" aria-label="Notifications">!</button>';
@@ -375,7 +376,7 @@ final class TemplateBasePage
             echo '                          <div class="pm-client-empty">No notifications.</div>';
             echo '                      </div>';
             echo '                  </div>';
-            echo '                  <a class="pm-client-icon-btn" href="' . $h($this->append_admin_view_user_id('/client/proxy/checkout')) . '" title="Cart" aria-label="Cart">$</a>';
+            echo '                  <a class="pm-client-icon-btn" href="' . $h($this->append_current_lang($this->append_admin_view_user_id('/client/proxy/checkout'))) . '" title="Cart" aria-label="Cart">$</a>';
             echo '                  <div class="dropdown pm-client-account-dropdown">';
             echo '                      <button class="pm-client-account-btn" type="button" id="pm_personal_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false">';
             echo '                          <span class="pm-client-avatar" aria-hidden="true">U</span>';
@@ -383,19 +384,19 @@ final class TemplateBasePage
             echo '                      </button>';
             echo '                      <div class="dropdown-menu dropdown-menu-end pm-client-account-menu" aria-labelledby="pm_personal_dropdown_toggle">';
             foreach ($accountDropItems as $item) {
-                $url = $this->append_admin_view_user_id((string)$item['url']);
+                $url = $this->append_current_lang($this->append_admin_view_user_id((string)$item['url']));
                 echo '<a class="dropdown-item pm-client-account-item" href="' . $h($url) . '"><span class="pm-client-menu-icon">' . $h((string)$item['icon']) . '</span><span>' . $h((string)$item['label']) . '</span></a>';
             }
             echo '<div class="dropdown-divider"></div>';
-            echo '<a class="dropdown-item pm-client-account-item" href="' . $h($this->append_admin_view_user_id('/client/support/tickets')) . '"><span class="pm-client-menu-icon">TK</span><span>Tickets</span></a>';
-            echo '<a class="dropdown-item pm-client-account-item pm-client-logout" href="' . $h($this->build_logout_url()) . '"><span class="pm-client-menu-icon">LO</span><span>Logout</span></a>';
+            echo '<a class="dropdown-item pm-client-account-item" href="' . $h($this->append_current_lang($this->append_admin_view_user_id('/client/support/tickets'))) . '"><span class="pm-client-menu-icon">TK</span><span>Tickets</span></a>';
+            echo '<a class="dropdown-item pm-client-account-item pm-client-logout" href="' . $h($this->append_current_lang($this->build_logout_url())) . '"><span class="pm-client-menu-icon">LO</span><span>Logout</span></a>';
             echo '                      </div>';
             echo '                  </div>';
         }
         if ($is_authenticated && $isAdminSystem) {
-            echo '                  <a class="pm-cta pm-cta-danger" href="' . $h($this->build_logout_url()) . '">' . $h($t('menu.logout', 'Logout')) . '</a>';
+            echo '                  <a class="pm-cta pm-cta-danger" href="' . $h($this->append_current_lang($this->build_logout_url())) . '">' . $h($t('menu.logout', 'Logout')) . '</a>';
         } elseif (!$is_authenticated) {
-            echo '                  <a class="pm-cta pm-cta-primary" href="' . $h($this->build_login_url()) . '">' . $h($t('auth.authorize', 'Authorize')) . '</a>';
+            echo '                  <a class="pm-cta pm-cta-primary" href="' . $h($this->append_current_lang($this->build_login_url())) . '">' . $h($t('auth.authorize', 'Authorize')) . '</a>';
         }
         echo '              </div>';
         echo '          </header>';
@@ -465,6 +466,35 @@ HTML;
         $queryString = http_build_query($query);
 
         return $path . ($queryString !== '' ? '?' . $queryString : '');
+    }
+
+    private function append_current_lang(string $url): string
+    {
+        $requested_lang = strtolower(trim((string)($_GET['lang'] ?? '')));
+        if ($requested_lang === '') {
+            return $url;
+        }
+
+        $supported = Sogerien::Lang()->get_supported_langs();
+        if (!in_array($requested_lang, $supported, true)) {
+            return $url;
+        }
+
+        if (!str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        $parts = parse_url($url);
+        $path = (string)($parts['path'] ?? $url);
+        $query = [];
+        if (isset($parts['query']) && is_string($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+        $query['lang'] = $requested_lang;
+        $queryString = http_build_query($query);
+        $fragment = isset($parts['fragment']) ? '#' . (string)$parts['fragment'] : '';
+
+        return $path . ($queryString !== '' ? '?' . $queryString : '') . $fragment;
     }
 
     private function render_admin_view_user_id_bridge(): void
