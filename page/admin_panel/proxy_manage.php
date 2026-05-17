@@ -55,6 +55,21 @@ $serviceId = pm_s($request['service_id'] ?? '');
 $alertType = '';
 $alertText = '';
 
+$isAjaxRequest = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+if ($isAjaxRequest && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
+    $ajaxAction = pm_s($request['action'] ?? '');
+    $ajaxServiceId = pm_s($request['service_id'] ?? '');
+    if ($ajaxAction === 'view_proxy_list' && $ajaxServiceId !== '') {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        $result = $shop->service_action($userId, $ajaxServiceId, 'view_proxy_list', is_array($request) ? $request : []);
+        echo json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        Sogerien::markDone();
+        return;
+    }
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
     $serviceId = pm_s($request['service_id'] ?? '');
     $action = pm_s($request['action'] ?? '');
@@ -306,8 +321,10 @@ Sogerien::Page()->mainmenu();
                             <input class="form-control" id="pmListIsp" name="isp" placeholder="All or provider id">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="pmListZip">ZIP code</label>
-                            <input class="form-control" id="pmListZip" name="zip" placeholder="10001">
+                            <?php $defaultPortCount = ($category === 'residential' || $category === 'residential_ipv6') ? 1000 : 100; ?>
+                            <label class="form-label" for="pmListPortCount">Quantity</label>
+                            <input class="form-control" id="pmListPortCount" name="port_count" type="number" min="1" max="1000" value="<?= (int)$defaultPortCount ?>">
+                            <div class="form-text">Ports per access list (max 1000).</div>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label" for="pmRotation">Rotation</label>
@@ -396,40 +413,11 @@ Sogerien::Page()->mainmenu();
                                     <td><?= pm_h($list['traffic_used_gb'] ?? '0.0000') ?> GB</td>
                                     <td><?= pm_h($list['created_at'] ?? '-') ?></td>
                                     <td>
-                                        <?php $detailId = 'pmProxyListDetails' . preg_replace('/[^A-Za-z0-9_:-]/', '', pm_s($list['vendor_list_id'] ?? $list['id'] ?? md5(pm_s($list['name'] ?? '')))); ?>
-                                        <?php
-                                            $host = pm_s($service['connection_host'] ?? '');
-                                            if ($host === '') { $host = 'pool.infatica.io'; }
-                                            $basePort = (int)pm_s($service['connection_port'] ?? '');
-                                            if ($basePort < 10000 || $basePort > 10999) { $basePort = 10000; }
-                                            $login = pm_s($list['login'] ?? '');
-                                            $password = pm_s($list['password'] ?? '');
-                                            $portCount = match ($category) {
-                                                'mobile' => 100,
-                                                'residential', 'residential_ipv6' => 1000,
-                                                default => 100,
-                                            };
-                                            $endPort = min(10999, $basePort + $portCount - 1);
-                                            $accessLines = [];
-                                            if ($login !== '' && $password !== '') {
-                                                for ($p = $basePort; $p <= $endPort; $p++) {
-                                                    $accessLines[] = $login . ':' . $password . '@' . $host . ':' . $p;
-                                                }
-                                            }
-                                            $accessText = implode("\n", $accessLines);
-                                        ?>
-                                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#<?= pm_h($detailId) ?>" aria-expanded="false">Details</button>
-                                        <div class="collapse mt-2" id="<?= pm_h($detailId) ?>">
-                                            <?php if ($accessText === ''): ?>
-                                                <div class="alert alert-warning mb-0 small">Login or password is missing for this proxy list.</div>
-                                            <?php else: ?>
-                                                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                    <span class="small text-muted"><?= pm_h((string)count($accessLines)) ?> ports - <code><?= pm_h($host) ?>:<?= pm_h((string)$basePort) ?>..<?= pm_h((string)$endPort) ?></code></span>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="(function(b){var t=b.closest('div').parentElement.querySelector('textarea');t.select();document.execCommand('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy all';},1500);})(this)">Copy all</button>
-                                                </div>
-                                                <textarea class="form-control small font-monospace" rows="10" readonly style="white-space:pre;overflow:auto;"><?= pm_h($accessText) ?></textarea>
-                                            <?php endif; ?>
-                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary pm-proxy-details-btn" type="button"
+                                            data-list-id="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>"
+                                            data-list-name="<?= pm_h($list['name'] ?? '') ?>"
+                                            data-login="<?= pm_h($list['login'] ?? '') ?>"
+                                            data-password="<?= pm_h($list['password'] ?? '') ?>">Details</button>
                                     </td>
                                     <td>
                                         <?php if (pm_s($list['status'] ?? 'active') === 'active'): ?>
@@ -454,6 +442,204 @@ Sogerien::Page()->mainmenu();
         <?php endif; ?>
 
     <?php endif; ?>
+
+    <div id="pmDetailsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pmDetailsTitle" data-service-id="<?= pm_h($serviceId) ?>">
+        <div class="panel" tabindex="-1">
+            <div class="head">
+                <strong id="pmDetailsTitle">Details</strong>
+                <input id="pmDetailsSearch" type="text" placeholder="Start typing..." aria-label="Search">
+                <button class="close" id="pmDetailsClose" type="button" aria-label="Close">Esc</button>
+            </div>
+            <div class="list" id="pmDetailsList" style="padding:6px 12px"></div>
+            <div class="hint" style="padding:8px 12px">Click row or Copy to copy. Esc - close</div>
+        </div>
+    </div>
 </main>
+<script>
+(function(){
+    var modal    = document.getElementById('pmDetailsModal');
+    if (!modal) return;
+    var titleEl  = document.getElementById('pmDetailsTitle');
+    var searchEl = document.getElementById('pmDetailsSearch');
+    var listEl   = document.getElementById('pmDetailsList');
+    var closeEl  = document.getElementById('pmDetailsClose');
+    var serviceId = modal.getAttribute('data-service-id') || '';
+
+    var allRows = [];
+
+    function esc(s){
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+    }
+
+    function openModal(name){
+        titleEl.textContent = name ? ('Details - ' + name) : 'Details';
+        searchEl.value = '';
+        modal.setAttribute('aria-hidden', 'false');
+        document.documentElement.style.overflow = 'hidden';
+        window.setTimeout(function(){ searchEl.focus(); }, 0);
+    }
+
+    function closeModal(){
+        modal.setAttribute('aria-hidden', 'true');
+        document.documentElement.style.overflow = '';
+    }
+
+    function setMessage(html){ listEl.innerHTML = html; }
+
+    function renderRows(rows, filter){
+        var q = String(filter || '').trim().toLowerCase();
+        var visible = q ? rows.filter(function(r){ return String(r).toLowerCase().indexOf(q) !== -1; }) : rows;
+
+        if (!visible.length){
+            setMessage('<div class="text-muted small p-2">Nothing found.</div>');
+            return;
+        }
+        var html = '';
+        visible.forEach(function(line, i){
+            html += '<div class="pal-row pm-details-row" data-value="' + esc(line) + '" tabindex="0" style="padding:6px 8px;border-bottom:1px solid var(--line,#444);cursor:default;display:flex;align-items:center;gap:8px;">'
+                  + '<code style="flex:1;word-break:break-all;background:transparent;color:inherit;font-size:13px;padding:0">' + esc(line) + '</code>'
+                  + '<button class="btn btn-sm btn-outline-primary pm-copy-btn" type="button" data-value="' + esc(line) + '">Copy</button>'
+                  + '</div>';
+        });
+        listEl.innerHTML = html;
+    }
+
+    function extractRows(payload){
+        var resp = payload && payload.response;
+        var rows = [];
+        var pushRows = function(arr){
+            if (!Array.isArray(arr)) return;
+            arr.forEach(function(item){
+                if (item == null) return;
+                if (typeof item === 'string') rows.push(item);
+                else if (typeof item === 'object'){
+                    if (typeof item.proxy === 'string') rows.push(item.proxy);
+                    else if (item.host && item.port) rows.push((item.login||'') + ':' + (item.password||'') + '@' + item.host + ':' + item.port);
+                    else rows.push(JSON.stringify(item));
+                }
+            });
+        };
+        if (resp){
+            if (Array.isArray(resp)) pushRows(resp);
+            else if (typeof resp === 'object'){
+                ['proxies','proxy_list','proxy-list','list','items','data','access','accesses'].forEach(function(k){
+                    if (resp[k]) pushRows(resp[k]);
+                });
+                if (!rows.length && Array.isArray(resp['proxy-list-data'])) pushRows(resp['proxy-list-data']);
+            }
+        }
+        return rows;
+    }
+
+    function fetchDetails(btn){
+        var listId   = btn.getAttribute('data-list-id') || '';
+        var listName = btn.getAttribute('data-list-name') || '';
+        var login    = btn.getAttribute('data-login') || '';
+        var password = btn.getAttribute('data-password') || '';
+
+        openModal(listName || login);
+        setMessage('<div class="text-muted small p-2">Loading...</div>');
+        allRows = [];
+
+        var fd = new FormData();
+        fd.append('action', 'view_proxy_list');
+        fd.append('service_id', serviceId);
+        fd.append('list_id', listId);
+        fd.append('list_name', listName);
+
+        fetch(window.location.pathname + window.location.search, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd,
+            credentials: 'same-origin'
+        }).then(function(r){
+            return r.text().then(function(txt){
+                try { return { status: r.status, json: JSON.parse(txt), text: txt }; }
+                catch(e){ return { status: r.status, json: null, text: txt }; }
+            });
+        }).then(function(res){
+            if (!res.json || res.json.ok === false){
+                var err = (res.json && res.json.error) ? res.json.error : ('HTTP ' + res.status);
+                setMessage('<div class="alert alert-danger small mb-0">' + esc(err) + '</div><pre class="small mt-2" style="max-height:240px;overflow:auto;background:transparent">' + esc(res.text.slice(0, 4000)) + '</pre>');
+                return;
+            }
+            allRows = extractRows(res.json);
+            if (!allRows.length){
+                setMessage('<div class="alert alert-warning small mb-0">No proxies in response.</div><pre class="small mt-2" style="max-height:320px;overflow:auto;background:transparent">' + esc(JSON.stringify(res.json.response, null, 2)) + '</pre>');
+                return;
+            }
+            renderRows(allRows, '');
+        }).catch(function(err){
+            setMessage('<div class="alert alert-danger small mb-0">Network error: ' + esc(String(err && err.message || err)) + '</div>');
+        });
+    }
+
+    function flash(btn, ok){
+        var prev = btn.getAttribute('data-prev') || btn.textContent;
+        btn.setAttribute('data-prev', prev);
+        btn.textContent = ok ? 'Copied' : 'Error';
+        window.clearTimeout(btn.__t);
+        btn.__t = window.setTimeout(function(){ btn.textContent = prev; }, 1200);
+    }
+
+    function copyValue(value, cb){
+        if (navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(value).then(function(){ cb(true); }, function(){ fallback(); });
+        } else { fallback(); }
+        function fallback(){
+            try {
+                var ta = document.createElement('textarea');
+                ta.value = value; ta.style.position='fixed'; ta.style.opacity='0';
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                var ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                cb(!!ok);
+            } catch(e){ cb(false); }
+        }
+    }
+
+    document.addEventListener('click', function(e){
+        var detBtn = e.target.closest('.pm-proxy-details-btn');
+        if (detBtn){ e.preventDefault(); fetchDetails(detBtn); return; }
+
+        var copyBtn = e.target.closest('.pm-copy-btn');
+        if (copyBtn){
+            e.preventDefault(); e.stopPropagation();
+            copyValue(copyBtn.getAttribute('data-value') || '', function(ok){ flash(copyBtn, ok); });
+            return;
+        }
+        var row = e.target.closest('.pm-details-row');
+        if (row && listEl.contains(row)){
+            var rowBtn = row.querySelector('.pm-copy-btn');
+            copyValue(row.getAttribute('data-value') || '', function(ok){ if (rowBtn) flash(rowBtn, ok); });
+        }
+    });
+
+    listEl.addEventListener('keydown', function(e){
+        var row = e.target.closest('.pm-details-row'); if (!row) return;
+        if (e.key === 'Enter' || e.key === ' '){
+            e.preventDefault();
+            var rowBtn = row.querySelector('.pm-copy-btn');
+            copyValue(row.getAttribute('data-value') || '', function(ok){ if (rowBtn) flash(rowBtn, ok); });
+        }
+    });
+
+    var searchTimer = 0;
+    searchEl.addEventListener('input', function(){
+        window.clearTimeout(searchTimer);
+        var q = searchEl.value;
+        searchTimer = window.setTimeout(function(){ if (allRows.length) renderRows(allRows, q); }, 80);
+    });
+
+    closeEl.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+    window.addEventListener('keydown', function(e){
+        if (modal.getAttribute('aria-hidden') === 'true') return;
+        if (e.key === 'Escape'){ e.preventDefault(); closeModal(); }
+    });
+})();
+</script>
 <?php
 Sogerien::Page()->footer();

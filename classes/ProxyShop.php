@@ -1220,6 +1220,7 @@ final class ProxyShop
                     'isp' => $accessOptions['isp'] ?? '',
                     'isp_id' => $accessOptions['isp_id'] ?? '',
                     'zip' => $accessOptions['zip'] ?? '',
+                    'port_count' => (int)($accessOptions['port_count'] ?? 0),
                     'rotation_period' => $accessOptions['rotation_period'] ?? 0,
                     'rotation_mode' => $accessOptions['rotation_mode'] ?? '',
                     'format' => $accessOptions['format'] ?? '',
@@ -1239,7 +1240,7 @@ final class ProxyShop
                 $listName = $this->str($request['list_name'] ?? '');
                 $apiResult = ['ok' => false, 'error' => 'Proxy list not found.'];
                 if (isset($service['proxy_lists']) && is_array($service['proxy_lists'])) {
-                    foreach ($service['proxy_lists'] as &$list) {
+                    foreach ($service['proxy_lists'] as $idx => $list) {
                         if (!is_array($list)) {
                             continue;
                         }
@@ -1247,14 +1248,11 @@ final class ProxyShop
                         $currentName = $this->str($list['name'] ?? '');
                         if (($listId !== '' && $currentId === $listId) || ($listName !== '' && $currentName === $listName)) {
                             $apiResult = $this->provider_remove_access($service, $packageKey, $currentId, $currentName);
-                            $list['status'] = 'disabled';
-                            $list['disabled_at'] = date('c');
-                            $list['disable_reason'] = 'Disabled manually.';
-                            $list['disable_response'] = $apiResult;
+                            unset($service['proxy_lists'][$idx]);
                             break;
                         }
                     }
-                    unset($list);
+                    $service['proxy_lists'] = array_values($service['proxy_lists']);
                 }
             } elseif ($action === 'update_proxy_list') {
                 $api = $this->traffic_provider_api($service);
@@ -2442,6 +2440,7 @@ final class ProxyShop
             'isp' => ['isp', 'proxy-list-isp'],
             'isp_id' => ['isp_id'],
             'zip' => ['zip', 'proxy-zip-code', 'proxy-list-zip'],
+            'port_count' => ['port_count', 'quantity', 'proxy-list-port-count'],
             'rotation_period' => ['rotation_period', 'proxy-list-rotation-period'],
             'rotation_mode' => ['rotation_mode', 'proxy-list-rotation-mode'],
             'format' => ['format', 'proxy-list-format'],
