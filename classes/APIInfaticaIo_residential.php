@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 declare(strict_types=1);
 
 final class APIInfaticaIo_residential
@@ -149,6 +149,12 @@ final class APIInfaticaIo_residential
     }
 
     /** @return array<mixed>|null */
+    public function create_package_gib(float $limit_gib, string $expired_at): ?array
+    {
+        return $this->create_package_bytes((int)round($limit_gib * 1024 * 1024 * 1024), $expired_at);
+    }
+
+    /** @return array<mixed>|null */
     public function set_traffic_limit_bytes(string $package_key, int $limit_bytes, string $expired_at = ''): ?array
     {
         $form = ['limit_traffic_common' => $limit_bytes];
@@ -176,6 +182,12 @@ final class APIInfaticaIo_residential
             $this->resume($package_key);
         }
         return $updated;
+    }
+
+    /** @return array<mixed>|null */
+    public function add_traffic_mib(string $package_key, int $add_mib, bool $resume = true): ?array
+    {
+        return $this->add_traffic_bytes($package_key, $add_mib * 1024 * 1024, $resume);
     }
 
     /** @return array<mixed>|null */

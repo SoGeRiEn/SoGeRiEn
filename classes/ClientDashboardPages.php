@@ -4,6 +4,8 @@ declare(strict_types=1);
 final class ClientDashboardPages
 {
     private string $db_alias = 'front';
+    /** @var array{ok:bool,message:string}|null */
+    private ?array $password_notice = null;
 
     /** @var array<string,array<string,mixed>> */
     private array $pages = [
@@ -30,7 +32,7 @@ final class ClientDashboardPages
         ],
         'payment_methods' => [
             'title' => 'Payment Methods',
-            'subtitle' => 'Saved payment methods placeholder. Stripe setup is connected through checkout.',
+            'subtitle' => 'Saved cards and default billing method for this account.',
             'blocks' => ['payment_methods'],
         ],
         'services' => [
@@ -48,24 +50,29 @@ final class ClientDashboardPages
             'subtitle' => 'Main account details and security settings.',
             'blocks' => ['profile', 'security'],
         ],
+        'change_password' => [
+            'title' => 'Change Password',
+            'subtitle' => 'Set a new password for this client account.',
+            'blocks' => ['security'],
+        ],
         'contacts' => [
             'title' => 'Contacts',
-            'subtitle' => 'Additional account contacts placeholder.',
+            'subtitle' => 'Billing, technical and administrative contacts for this account.',
             'blocks' => ['contacts'],
         ],
         'email_history' => [
             'title' => 'Email History',
-            'subtitle' => 'System email log placeholder.',
+            'subtitle' => 'Account notices, payment emails and support notifications.',
             'blocks' => ['email_history'],
         ],
         'users' => [
             'title' => 'User Management',
-            'subtitle' => 'Team members and account access placeholder.',
+            'subtitle' => 'Team members, roles and account access.',
             'blocks' => ['team_users'],
         ],
         'subscriptions' => [
             'title' => 'Subscriptions',
-            'subtitle' => 'Renewal and subscription state for proxy products.',
+            'subtitle' => 'Legacy billing page.',
             'blocks' => ['subscriptions'],
         ],
         'support' => [
@@ -128,6 +135,11 @@ final class ClientDashboardPages
             return;
         }
 
+        $this->password_notice = $this->handle_account_action($userId, $user);
+        if (is_array($this->password_notice) && $this->password_notice['ok']) {
+            [$userId, $user] = $this->current_user();
+        }
+
         $shop = new ProxyShop();
         $shop->init_db_alias($this->db_alias);
         $services = $shop->list_user_services($userId);
@@ -143,7 +155,7 @@ final class ClientDashboardPages
         $this->styles();
         echo '<div class="pm-dash-head">';
         echo '<div><h1>' . $this->h((string)$page['title']) . '</h1><p>' . $this->h((string)$page['subtitle']) . '</p></div>';
-        echo '<div class="pm-dash-user">User #' . (int)$userId . '<br><strong>$' . $this->h($shop->get_user_balance_usd($userId)) . '</strong></div>';
+        echo '<div class="pm-dash-user">User #' . (int)$userId . '<br><strong>$' . $this->h($shop->get_user_balance_usd($userId)) . '</strong><br><a class="btn btn-sm btn-primary mt-2" href="/client/change-password">Change password</a></div>';
         echo '</div>';
 
         if (isset($page['cards']) && is_array($page['cards'])) {
@@ -197,7 +209,7 @@ final class ClientDashboardPages
     {
         if ($block === 'quick_actions') {
             echo '<div class="card shadow-sm mb-3"><div class="card-body"><div class="pm-actions">';
-            foreach ([['/all_proxy', 'Order proxies'], ['/client/add-funds', 'Add funds'], ['/support/tickets', 'Open ticket'], ['/manuals', 'Manuals']] as $link) {
+            foreach ([['/client/all_proxy', 'Order proxies'], ['/client/add-funds', 'Add funds'], ['/client/support/tickets', 'Open ticket'], ['/client/manuals', 'Manuals']] as $link) {
                 echo '<a class="btn btn-primary" href="' . $this->h($link[0]) . '">' . $this->h($link[1]) . '</a>';
             }
             echo '</div></div></div>';
@@ -223,7 +235,7 @@ final class ClientDashboardPages
                     'country' => $this->s($service['country'] ?? '-'),
                     'traffic' => $this->s($service['traffic_remains'] ?? '-'),
                     'expires' => $this->s($service['expires_at'] ?? '-'),
-                    'actions' => '<a class="pm-pill-btn is-active" href="/proxy/manage?service_id=' . $this->h(rawurlencode($this->s($service['service_id'] ?? ''))) . '">Manage</a>',
+                    'actions' => '<a class="pm-pill-btn is-active" href="/client/proxy/manage?service_id=' . $this->h(rawurlencode($this->s($service['service_id'] ?? ''))) . '">Manage</a>',
                 ];
             }
             $this->table('Products & Services', $rows, ['title', 'status', 'country', 'traffic', 'expires', 'actions']);
@@ -259,6 +271,7 @@ final class ClientDashboardPages
         }
 
         if ($block === 'tickets') {
+            echo '<div class="d-flex justify-content-end mb-2"><a class="btn btn-primary" href="/client/support/tickets">Create ticket</a></div>';
             $this->table('Support tickets', $tickets, ['created', 'subject', 'status', 'updated']);
             return;
         }
@@ -283,32 +296,28 @@ final class ClientDashboardPages
         }
 
         if ($block === 'profile') {
-            echo '<section class="card shadow-sm mb-3"><div class="card-header">Profile</div><div class="card-body"><dl class="row mb-0">';
-            foreach (['id' => $userId, 'login' => $user['login'] ?? '-', 'email' => $user['email'] ?? '-'] as $label => $value) {
-                echo '<dt class="col-sm-3">' . $this->h((string)$label) . '</dt><dd class="col-sm-9">' . $this->h($this->s($value)) . '</dd>';
-            }
-            echo '</dl></div></section>';
+            $this->render_profile_form($userId, $user);
             return;
         }
 
         if ($block === 'security') {
-            $this->placeholder('Security', 'Two-factor authentication, password reset and login security controls are reserved here.');
+            $this->render_password_form($userId, $user);
             return;
         }
         if ($block === 'contacts') {
-            $this->placeholder('Contacts', 'Additional billing and technical contacts will be stored here.');
+            $this->render_contacts($user);
             return;
         }
         if ($block === 'email_history') {
-            $this->placeholder('Email history', 'Transactional emails and account notifications will be listed here.');
+            $this->render_email_history($user, $payments, $charges, $tickets);
             return;
         }
         if ($block === 'team_users') {
-            $this->placeholder('Users', 'Team member invites, permissions and account seats will be managed here.');
+            $this->render_team_users($user);
             return;
         }
         if ($block === 'subscriptions') {
-            $this->placeholder('Subscriptions', 'Auto-renewal state is currently stored per proxy service.');
+            $this->render_subscriptions($services);
             return;
         }
         if ($block === 'ticket_view') {
@@ -316,9 +325,17 @@ final class ClientDashboardPages
             return;
         }
         if ($block === 'manuals') {
+            $docs = [
+                'Residential proxies' => ['Use rotating residential IPs for sessions that need broad geo coverage.', 'Generate an access list, select countries, choose rotation and use the shown login/password in your proxy client.'],
+                'Mobile proxies' => ['Use mobile pools when target sites require carrier-grade IP reputation.', 'Create a mobile access list, keep rotation on request or sticky by interval, then copy HTTP or SOCKS5 details from Details.'],
+                'Datacenter proxies' => ['Use datacenter IPs for fast stable traffic where residential reputation is not required.', 'Buy an IP package, open My Services and use issued IP credentials from the service page.'],
+                'ISP bandwidth' => ['ISP services are yearly IP packages, not monthly traffic topups.', 'Renewal and lifecycle actions are controlled by ProxyMint admins.'],
+                'Web scraper API' => ['ProxyMint gateway hides provider keys from clients.', 'Send scraping requests through your issued client API key after buying a scraper package.'],
+                'Authentication' => ['Login/password is the default mode. IP whitelist is available when you want access without credentials.', 'For whitelist mode add your public IP or CIDR before generating the list.'],
+            ];
             echo '<section class="card shadow-sm mb-3"><div class="card-header">Manuals</div><div class="card-body pm-doc-grid">';
-            foreach (['Residential proxies', 'Mobile proxies', 'Datacenter proxies', 'ISP bandwidth', 'Web scraper API', 'Authentication'] as $doc) {
-                echo '<a href="#" class="pm-doc-link">' . $this->h($doc) . '</a>';
+            foreach ($docs as $title => $doc) {
+                echo '<article class="pm-doc-link"><strong>' . $this->h($title) . '</strong><span>' . $this->h($doc[0]) . '</span><small>' . $this->h($doc[1]) . '</small></article>';
             }
             echo '</div></section>';
             return;
@@ -354,7 +371,7 @@ final class ClientDashboardPages
             return;
         }
         if ($block === 'payment_methods') {
-            $this->placeholder('Payment methods', 'Saved cards are handled by Stripe. Manual card management is a placeholder until Stripe customer portal is connected.');
+            $this->render_payment_methods($user);
         }
     }
 
@@ -363,9 +380,22 @@ final class ClientDashboardPages
      */
     private function list_user_tickets(int $userId): array
     {
-        return [
-            ['created' => date('Y-m-d'), 'subject' => 'Welcome support ticket', 'status' => 'open', 'updated' => date('Y-m-d')],
-        ];
+        $tickets = new SupportTickets();
+        $tickets->init_db_alias($this->db_alias);
+        $rows = [];
+        foreach ($tickets->list_user_tickets($userId) as $ticket) {
+            $ticketId = $this->s($ticket['ticket_id'] ?? '');
+            if ($ticketId === '') {
+                continue;
+            }
+            $rows[] = [
+                'created' => substr($this->s($ticket['created_at'] ?? ''), 0, 10),
+                'subject' => '<a href="/client/support/ticket?id=' . $this->h(rawurlencode($ticketId)) . '">' . $this->h($this->s($ticket['subject'] ?? $ticketId)) . '</a>',
+                'status' => $tickets->status_label($this->s($ticket['status'] ?? '')),
+                'updated' => substr($this->s($ticket['updated_at'] ?? ''), 0, 10),
+            ];
+        }
+        return $rows;
     }
 
     /**
@@ -387,7 +417,8 @@ final class ClientDashboardPages
         foreach ($rows as $row) {
             echo '<tr>';
             foreach ($columns as $column) {
-                echo '<td>' . (string)($row[$column] ?? '-') . '</td>';
+                $value = (string)($row[$column] ?? '-');
+                echo '<td>' . (in_array($column, ['actions', 'id', 'order', 'subject'], true) ? $value : $this->h($value)) . '</td>';
             }
             echo '</tr>';
         }
@@ -400,6 +431,593 @@ final class ClientDashboardPages
         echo '<p class="text-muted mb-0">' . $this->h($text) . '</p></div></section>';
     }
 
+    /**
+     * @param array<string,mixed> $user
+     * @return array{ok:bool,message:string}|null
+     */
+    private function handle_account_action(int $userId, array $user): ?array
+    {
+        $post = Sogerien::InputRequest()->request_post_get_cookie_json;
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            $setupSessionId = $this->s($_GET['setup_session_id'] ?? '');
+            if ($setupSessionId !== '') {
+                return $this->save_stripe_setup_session($userId, $user, $setupSessionId);
+            }
+            return null;
+        }
+
+        $action = $this->s($post['action'] ?? '');
+        if ($action === 'update_profile') {
+            return $this->update_user_patch($userId, [
+                'fio' => $this->s($post['fio'] ?? ''),
+                'email' => $this->s($post['email'] ?? ''),
+                'phone' => $this->s($post['phone'] ?? ''),
+                'settings' => [
+                    'tz' => $this->s($post['settings_tz'] ?? 'Europe/Warsaw'),
+                    'lang' => $this->s($post['settings_lang'] ?? 'ru'),
+                ],
+            ], 'Profile saved.');
+        }
+
+        if ($action === 'add_contact') {
+            $contacts = $this->list_from_user($user, 'contacts');
+            $contacts[] = [
+                'id' => 'cnt_' . date('YmdHis') . '_' . bin2hex(random_bytes(3)),
+                'type' => $this->s($post['contact_type'] ?? 'technical'),
+                'name' => $this->s($post['contact_name'] ?? ''),
+                'email' => $this->s($post['contact_email'] ?? ''),
+                'phone' => $this->s($post['contact_phone'] ?? ''),
+                'notes' => $this->s($post['contact_notes'] ?? ''),
+                'created_at' => date('c'),
+            ];
+            return $this->update_user_patch($userId, ['contacts' => $contacts], 'Contact added.');
+        }
+
+        if ($action === 'remove_contact') {
+            $removeId = $this->s($post['contact_id'] ?? '');
+            $contacts = array_values(array_filter($this->list_from_user($user, 'contacts'), static fn(array $row): bool => (string)($row['id'] ?? '') !== $removeId));
+            return $this->update_user_patch($userId, ['contacts' => $contacts], 'Contact removed.');
+        }
+
+        if ($action === 'add_payment_method') {
+            return $this->start_stripe_card_setup($userId, $user);
+        }
+
+        if ($action === 'remove_payment_method' || $action === 'default_payment_method') {
+            $methodId = $this->s($post['payment_method_id'] ?? '');
+            $methods = $this->list_from_user($user, 'payment_methods');
+            if ($action === 'remove_payment_method') {
+                $removedDefault = false;
+                foreach ($methods as $method) {
+                    if ((string)($method['id'] ?? '') === $methodId && $this->s($method['is_default'] ?? '') === '1') {
+                        $removedDefault = true;
+                        break;
+                    }
+                }
+                if (str_starts_with($methodId, 'pm_')) {
+                    $stripe = $this->stripe_api();
+                    if ($stripe->detach_payment_method($methodId, 'detach_' . $methodId . '_' . (string)$userId) === null) {
+                        return ['ok' => false, 'message' => $stripe->error !== '' ? $stripe->error : 'Stripe payment method was not removed.'];
+                    }
+                }
+                $methods = array_values(array_filter($methods, static fn(array $row): bool => (string)($row['id'] ?? '') !== $methodId));
+                if ($removedDefault && $methods !== []) {
+                    $methods[0]['is_default'] = '1';
+                    $customerId = $this->s($user['stripe_customer_id'] ?? '');
+                    $nextDefaultId = $this->s($methods[0]['id'] ?? '');
+                    if ($customerId !== '' && str_starts_with($nextDefaultId, 'pm_')) {
+                        $stripe = $this->stripe_api();
+                        if ($stripe->update_customer($customerId, [
+                            'invoice_settings' => ['default_payment_method' => $nextDefaultId],
+                        ], 'default_pm_' . $nextDefaultId . '_' . (string)$userId) === null) {
+                            return ['ok' => false, 'message' => $stripe->error !== '' ? $stripe->error : 'Stripe default payment method was not updated.'];
+                        }
+                    }
+                }
+            } else {
+                foreach ($methods as &$method) {
+                    $method['is_default'] = (string)($method['id'] ?? '') === $methodId ? '1' : '0';
+                }
+                unset($method);
+                $customerId = $this->s($user['stripe_customer_id'] ?? '');
+                if ($customerId !== '' && str_starts_with($methodId, 'pm_')) {
+                    $stripe = $this->stripe_api();
+                    if ($stripe->update_customer($customerId, [
+                        'invoice_settings' => ['default_payment_method' => $methodId],
+                    ], 'default_pm_' . $methodId . '_' . (string)$userId) === null) {
+                        return ['ok' => false, 'message' => $stripe->error !== '' ? $stripe->error : 'Stripe default payment method was not updated.'];
+                    }
+                }
+            }
+            $defaultPaymentMethodId = $this->default_payment_method_id($methods);
+            $patch = [
+                'payment_methods' => $methods,
+                'billing_default_payment_method_id' => $defaultPaymentMethodId,
+            ];
+            if ($methods === []) {
+                $patch['billing_autopay_enabled'] = '0';
+            }
+            return $this->update_user_patch($userId, $patch, 'Payment methods updated.');
+        }
+
+        if ($action === 'add_team_user') {
+            $team = $this->list_from_user($user, 'team_users');
+            $team[] = [
+                'id' => 'usr_' . date('YmdHis') . '_' . bin2hex(random_bytes(3)),
+                'name' => $this->s($post['team_name'] ?? ''),
+                'email' => $this->s($post['team_email'] ?? ''),
+                'role' => $this->s($post['team_role'] ?? 'support'),
+                'status' => 'invited',
+                'created_at' => date('c'),
+            ];
+            return $this->update_user_patch($userId, ['team_users' => $team], 'User invited.');
+        }
+
+        if ($action === 'remove_team_user') {
+            $removeId = $this->s($post['team_user_id'] ?? '');
+            $team = array_values(array_filter($this->list_from_user($user, 'team_users'), static fn(array $row): bool => (string)($row['id'] ?? '') !== $removeId));
+            return $this->update_user_patch($userId, ['team_users' => $team], 'User removed.');
+        }
+
+        if ($action !== 'change_account_password') {
+            return null;
+        }
+
+        $newPassword = (string)($post['new_password'] ?? '');
+        $repeatPassword = (string)($post['repeat_password'] ?? '');
+        $identity = $this->s($user['email'] ?? '') !== '' ? $this->s($user['email'] ?? '') : $this->s($user['login'] ?? '');
+
+        if ($userId <= 0 || $identity === '') {
+            return ['ok' => false, 'message' => 'Client account was not found.'];
+        }
+        if (mb_strlen($newPassword) < 8) {
+            return ['ok' => false, 'message' => 'Password must be at least 8 characters.'];
+        }
+        if ($newPassword !== $repeatPassword) {
+            return ['ok' => false, 'message' => 'Passwords do not match.'];
+        }
+
+        $users = Sogerien::Users();
+        $users->init_db_alias($this->db_alias);
+        $ok = $users->reset_password($identity, $newPassword);
+
+        return [
+            'ok' => $ok,
+            'message' => $ok ? 'Password changed.' : ($users->error !== '' ? $users->error : 'Password update failed.'),
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $patch
+     * @return array{ok:bool,message:string}
+     */
+    private function update_user_patch(int $userId, array $patch, string $okMessage): array
+    {
+        if ($userId <= 0) {
+            return ['ok' => false, 'message' => 'Client account was not found.'];
+        }
+        $users = Sogerien::Users();
+        $users->init_db_alias($this->db_alias);
+        $ok = $users->update_user($userId, $patch);
+        return ['ok' => $ok, 'message' => $ok ? $okMessage : ($users->error !== '' ? $users->error : 'Update failed.')];
+    }
+
+    private function start_stripe_card_setup(int $userId, array $user): array
+    {
+        $customerId = $this->ensure_stripe_customer($userId, $user);
+        if ($customerId === '') {
+            return ['ok' => false, 'message' => 'Stripe customer was not created.'];
+        }
+
+        $stripe = $this->stripe_api();
+        $returnUrl = $this->absolute_url('/client/payment-methods', [
+            'user_id' => (string)$userId,
+            'setup_session_id' => '{CHECKOUT_SESSION_ID}',
+        ]);
+        $returnUrl = str_replace('%7BCHECKOUT_SESSION_ID%7D', '{CHECKOUT_SESSION_ID}', $returnUrl);
+
+        $session = $stripe->create_checkout_session([
+            'mode' => 'setup',
+            'customer' => $customerId,
+            'payment_method_types' => ['card'],
+            'success_url' => $returnUrl,
+            'cancel_url' => $this->absolute_url('/client/payment-methods', ['user_id' => (string)$userId]),
+            'metadata' => [
+                'user_id' => (string)$userId,
+                'source' => 'client_payment_methods',
+            ],
+            'setup_intent_data' => [
+                'metadata' => [
+                    'user_id' => (string)$userId,
+                    'source' => 'client_payment_methods',
+                ],
+            ],
+        ], 'setup_card_' . (string)$userId . '_' . bin2hex(random_bytes(6)));
+
+        $url = is_array($session) ? $this->s($session['url'] ?? '') : '';
+        if ($url === '') {
+            return ['ok' => false, 'message' => $stripe->error !== '' ? $stripe->error : 'Stripe setup session was not created.'];
+        }
+
+        if (!headers_sent()) {
+            header('Location: ' . $url, true, 303);
+            exit;
+        }
+
+        return ['ok' => true, 'message' => 'Open Stripe to add card: ' . $url];
+    }
+
+    private function save_stripe_setup_session(int $userId, array $user, string $setupSessionId): array
+    {
+        $stripe = $this->stripe_api();
+        $session = $stripe->retrieve_checkout_session($setupSessionId, ['expand' => ['setup_intent', 'setup_intent.payment_method']]);
+        if (!is_array($session) || $this->s($session['mode'] ?? '') !== 'setup') {
+            return ['ok' => false, 'message' => $stripe->error !== '' ? $stripe->error : 'Stripe setup session was not found.'];
+        }
+
+        $sessionUserId = (int)($session['metadata']['user_id'] ?? 0);
+        if ($sessionUserId !== $userId) {
+            return ['ok' => false, 'message' => 'Stripe setup session belongs to another user.'];
+        }
+
+        $setupIntent = $session['setup_intent'] ?? null;
+        $paymentMethod = is_array($setupIntent) ? ($setupIntent['payment_method'] ?? null) : null;
+        if (!is_array($paymentMethod)) {
+            return ['ok' => false, 'message' => 'Stripe did not return saved payment method.'];
+        }
+
+        $methodId = $this->s($paymentMethod['id'] ?? '');
+        $card = isset($paymentMethod['card']) && is_array($paymentMethod['card']) ? $paymentMethod['card'] : [];
+        if ($methodId === '' || $card === []) {
+            return ['ok' => false, 'message' => 'Stripe payment method has no card data.'];
+        }
+
+        $methods = $this->list_from_user($user, 'payment_methods');
+        $makeDefault = $methods === [];
+        $exists = false;
+        foreach ($methods as &$method) {
+            if ((string)($method['id'] ?? '') !== $methodId) {
+                if ($makeDefault) {
+                    $method['is_default'] = '0';
+                }
+                continue;
+            }
+            $exists = true;
+            $method = $this->stripe_payment_method_row($paymentMethod, $makeDefault || $this->s($method['is_default'] ?? '') === '1');
+        }
+        unset($method);
+
+        if (!$exists) {
+            if ($makeDefault) {
+                foreach ($methods as &$method) {
+                    $method['is_default'] = '0';
+                }
+                unset($method);
+            }
+            $methods[] = $this->stripe_payment_method_row($paymentMethod, $makeDefault);
+        }
+
+        $customerId = $this->s($session['customer'] ?? $user['stripe_customer_id'] ?? '');
+        $defaultPaymentMethodId = $this->default_payment_method_id($methods);
+        $patch = [
+            'payment_methods' => $methods,
+            'billing_autopay_enabled' => '1',
+            'billing_default_payment_method_id' => $defaultPaymentMethodId !== '' ? $defaultPaymentMethodId : $methodId,
+        ];
+        if ($customerId !== '') {
+            $patch['stripe_customer_id'] = $customerId;
+        }
+
+        if ($customerId !== '' && $makeDefault) {
+            $stripe->update_customer($customerId, [
+                'invoice_settings' => ['default_payment_method' => $methodId],
+            ], 'default_pm_' . $methodId . '_' . (string)$userId);
+        }
+
+        return $this->update_user_patch($userId, $patch, 'Payment method saved.');
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $methods
+     */
+    private function default_payment_method_id(array $methods): string
+    {
+        $first = '';
+        foreach ($methods as $method) {
+            $id = $this->s($method['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+            if ($first === '') {
+                $first = $id;
+            }
+            if ($this->s($method['is_default'] ?? '') === '1') {
+                return $id;
+            }
+        }
+        return $first;
+    }
+
+    /**
+     * @param array<string,mixed> $paymentMethod
+     * @return array<string,string>
+     */
+    private function stripe_payment_method_row(array $paymentMethod, bool $isDefault): array
+    {
+        $card = isset($paymentMethod['card']) && is_array($paymentMethod['card']) ? $paymentMethod['card'] : [];
+        $billing = isset($paymentMethod['billing_details']) && is_array($paymentMethod['billing_details']) ? $paymentMethod['billing_details'] : [];
+        return [
+            'id' => $this->s($paymentMethod['id'] ?? ''),
+            'brand' => strtoupper($this->s($card['brand'] ?? 'CARD')),
+            'last4' => $this->s($card['last4'] ?? '----'),
+            'exp_month' => $this->s($card['exp_month'] ?? '--'),
+            'exp_year' => $this->s($card['exp_year'] ?? '----'),
+            'billing_name' => $this->s($billing['name'] ?? ''),
+            'stripe_customer_id' => $this->s($paymentMethod['customer'] ?? ''),
+            'is_default' => $isDefault ? '1' : '0',
+            'created_at' => date('c'),
+        ];
+    }
+
+    private function ensure_stripe_customer(int $userId, array $user): string
+    {
+        $existing = $this->s($user['stripe_customer_id'] ?? '');
+        if ($existing !== '') {
+            return $existing;
+        }
+
+        $stripe = $this->stripe_api();
+        $customer = $stripe->create_customer([
+            'email' => $this->s($user['email'] ?? ''),
+            'name' => $this->s($user['fio'] ?? $user['login'] ?? ''),
+            'phone' => $this->s($user['phone'] ?? ''),
+            'metadata' => [
+                'user_id' => (string)$userId,
+                'source' => 'proxymint_client',
+            ],
+        ], 'customer_' . (string)$userId);
+
+        $customerId = is_array($customer) ? $this->s($customer['id'] ?? '') : '';
+        if ($customerId === '') {
+            return '';
+        }
+
+        $this->update_user_patch($userId, ['stripe_customer_id' => $customerId], 'Stripe customer saved.');
+        return $customerId;
+    }
+
+    private function stripe_api(): APIStripe
+    {
+        $stripe = Sogerien::API()->Stripe();
+        $stripe->debug_enabled = false;
+        $stripe->set_api_key(defined('STRIPE_LIVE_SECRET_KEY_LLC') ? (string)STRIPE_LIVE_SECRET_KEY_LLC : '');
+        return $stripe;
+    }
+
+    /**
+     * @param array<string,string> $query
+     */
+    private function absolute_url(string $path, array $query = []): string
+    {
+        $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $base = $host !== '' ? ($scheme . '://' . $host) : rtrim((string)(Sogerien::InputRequest()->domain ?: Sogerien::InputRequest()->sogerien_domain), '/');
+        $url = rtrim($base, '/') . '/' . ltrim($path, '/');
+        if ($query !== []) {
+            $url .= '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+        }
+        return $url;
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function list_from_user(array $user, string $key): array
+    {
+        $raw = $user[$key] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $row) {
+            if (is_array($row)) {
+                $out[] = $row;
+            }
+        }
+        return $out;
+    }
+
+    private function render_notice(): void
+    {
+        if (!is_array($this->password_notice)) {
+            return;
+        }
+        echo '<div class="alert ' . ($this->password_notice['ok'] ? 'alert-success' : 'alert-danger') . '">' . $this->h($this->password_notice['message']) . '</div>';
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function render_profile_form(int $userId, array $user): void
+    {
+        $settings = isset($user['settings']) && is_array($user['settings']) ? $user['settings'] : [];
+        $action = (string)($_SERVER['REQUEST_URI'] ?? '/client/profile');
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Account Details</div><div class="card-body">';
+        $this->render_notice();
+        echo '<form class="row g-3" method="post" action="' . $this->h($action) . '">';
+        echo '<input type="hidden" name="action" value="update_profile">';
+        echo '<div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" value="' . (int)$userId . '" disabled></div>';
+        echo '<div class="col-md-3"><label class="form-label">Login</label><input class="form-control" value="' . $this->h($this->s($user['login'] ?? '')) . '" disabled></div>';
+        echo '<div class="col-md-6"><label class="form-label" for="pmFio">Full name</label><input id="pmFio" class="form-control" name="fio" value="' . $this->h($this->s($user['fio'] ?? '')) . '"></div>';
+        echo '<div class="col-md-4"><label class="form-label" for="pmEmail">Email</label><input id="pmEmail" class="form-control" type="email" name="email" value="' . $this->h($this->s($user['email'] ?? '')) . '"></div>';
+        echo '<div class="col-md-4"><label class="form-label" for="pmPhone">Phone</label><input id="pmPhone" class="form-control" name="phone" value="' . $this->h($this->s($user['phone'] ?? '')) . '"></div>';
+        echo '<div class="col-md-2"><label class="form-label" for="pmLang">Language</label><select id="pmLang" class="form-select" name="settings_lang">';
+        foreach (['ru' => 'RU', 'en' => 'EN', 'de' => 'DE'] as $value => $label) {
+            echo '<option value="' . $this->h($value) . '"' . ($this->s($settings['lang'] ?? 'ru') === $value ? ' selected' : '') . '>' . $this->h($label) . '</option>';
+        }
+        echo '</select></div>';
+        echo '<div class="col-md-2"><label class="form-label" for="pmTz">Timezone</label><input id="pmTz" class="form-control" name="settings_tz" value="' . $this->h($this->s($settings['tz'] ?? 'Europe/Warsaw')) . '"></div>';
+        echo '<div class="col-12"><button class="btn btn-primary" type="submit">Save profile</button></div>';
+        echo '</form></div></section>';
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function render_contacts(array $user): void
+    {
+        $contacts = $this->list_from_user($user, 'contacts');
+        $rows = [];
+        foreach ($contacts as $contact) {
+            $id = $this->s($contact['id'] ?? '');
+            $rows[] = [
+                'type' => $this->s($contact['type'] ?? '-'),
+                'name' => $this->s($contact['name'] ?? '-'),
+                'email' => $this->s($contact['email'] ?? '-'),
+                'phone' => $this->s($contact['phone'] ?? '-'),
+                'notes' => $this->s($contact['notes'] ?? ''),
+                'actions' => '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/contacts')) . '" class="m-0"><input type="hidden" name="action" value="remove_contact"><input type="hidden" name="contact_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-danger" type="submit">Remove</button></form>',
+            ];
+        }
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Add Contact</div><div class="card-body">';
+        $this->render_notice();
+        echo '<form class="row g-3" method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/contacts')) . '">';
+        echo '<input type="hidden" name="action" value="add_contact">';
+        echo '<div class="col-md-2"><label class="form-label">Type</label><select class="form-select" name="contact_type"><option value="technical">Technical</option><option value="billing">Billing</option><option value="admin">Admin</option></select></div>';
+        echo '<div class="col-md-3"><label class="form-label">Name</label><input class="form-control" name="contact_name" required></div>';
+        echo '<div class="col-md-3"><label class="form-label">Email</label><input class="form-control" type="email" name="contact_email" required></div>';
+        echo '<div class="col-md-2"><label class="form-label">Phone</label><input class="form-control" name="contact_phone"></div>';
+        echo '<div class="col-md-2"><label class="form-label">Notes</label><input class="form-control" name="contact_notes"></div>';
+        echo '<div class="col-12"><button class="btn btn-primary" type="submit">Add contact</button></div>';
+        echo '</form></div></section>';
+        $this->table('Contacts', $rows, ['type', 'name', 'email', 'phone', 'notes', 'actions']);
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function render_payment_methods(array $user): void
+    {
+        $methods = $this->list_from_user($user, 'payment_methods');
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Payment Methods</div><div class="card-body">';
+        echo '<div class="pm-card-wallet">';
+        foreach ($methods as $method) {
+            $id = $this->s($method['id'] ?? '');
+            $isDefault = $this->s($method['is_default'] ?? '') === '1';
+            echo '<article class="pm-card-method">';
+            echo '<div class="pm-card-chip"></div><div><strong>' . $this->h($this->s($method['brand'] ?? 'CARD')) . ' **** ' . $this->h($this->s($method['last4'] ?? '----')) . '</strong><span>' . $this->h($this->s($method['billing_name'] ?? 'Card holder')) . '</span></div>';
+            echo '<div class="pm-card-meta"><span>Expires ' . $this->h($this->s($method['exp_month'] ?? '--') . '/' . $this->s($method['exp_year'] ?? '----')) . '</span>' . ($isDefault ? '<b>Default</b>' : '') . '</div>';
+            echo '<div class="pm-card-actions">';
+            if (!$isDefault) {
+                echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="default_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-primary" type="submit">Default</button></form>';
+            }
+            echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="remove_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-danger" type="submit">Remove</button></form>';
+            echo '</div></article>';
+        }
+        if ($methods === []) {
+            echo '<div class="text-muted">No saved payment methods yet.</div>';
+        }
+        echo '</div></div></section>';
+
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Add Payment Method</div><div class="card-body">';
+        $this->render_notice();
+        echo '<form class="row g-3" method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '">';
+        echo '<input type="hidden" name="action" value="add_payment_method">';
+        echo '<div class="col-md-8"><div class="text-muted">Visa and Mastercard are added through Stripe. ProxyMint stores only the Stripe payment method id, brand, last4 and expiry.</div></div>';
+        echo '<div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Add card in Stripe</button></div>';
+        echo '</form><div class="text-muted small mt-2">Saved cards can be used for automatic renewals and client-approved ordered services.</div></div></section>';
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     * @param array<int,array<string,mixed>> $payments
+     * @param array<int,array<string,mixed>> $charges
+     * @param array<int,array<string,mixed>> $tickets
+     */
+    private function render_email_history(array $user, array $payments, array $charges, array $tickets): void
+    {
+        $rows = [];
+        foreach ($payments as $payment) {
+            $rows[] = ['date' => $this->s($payment['created_at'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Payment status: ' . $this->s($payment['status'] ?? $payment['payment_status'] ?? '-'), 'status' => 'sent'];
+        }
+        foreach ($charges as $charge) {
+            $rows[] = ['date' => $this->s($charge['created_at'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Invoice/order: ' . $this->s($charge['order_id'] ?? '-'), 'status' => $this->s($charge['fulfillment_status'] ?? 'sent')];
+        }
+        foreach ($tickets as $ticket) {
+            $rows[] = ['date' => $this->s($ticket['created'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Support ticket: ' . $this->s($ticket['subject'] ?? '-'), 'status' => $this->s($ticket['status'] ?? '-')];
+        }
+        if ($rows === []) {
+            $rows[] = ['date' => date('Y-m-d'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Account created', 'status' => 'sent'];
+        }
+        $this->table('Email History', $rows, ['date', 'recipient', 'subject', 'status']);
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function render_team_users(array $user): void
+    {
+        $team = $this->list_from_user($user, 'team_users');
+        $rows = [[
+            'name' => $this->s($user['fio'] ?? $user['login'] ?? 'Owner'),
+            'email' => $this->s($user['email'] ?? '-'),
+            'role' => 'owner',
+            'status' => 'active',
+            'actions' => '',
+        ]];
+        foreach ($team as $member) {
+            $id = $this->s($member['id'] ?? '');
+            $rows[] = [
+                'name' => $this->s($member['name'] ?? '-'),
+                'email' => $this->s($member['email'] ?? '-'),
+                'role' => $this->s($member['role'] ?? '-'),
+                'status' => $this->s($member['status'] ?? '-'),
+                'actions' => '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/users')) . '" class="m-0"><input type="hidden" name="action" value="remove_team_user"><input type="hidden" name="team_user_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-danger" type="submit">Remove</button></form>',
+            ];
+        }
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Invite User</div><div class="card-body">';
+        $this->render_notice();
+        echo '<form class="row g-3" method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/users')) . '">';
+        echo '<input type="hidden" name="action" value="add_team_user">';
+        echo '<div class="col-md-4"><label class="form-label">Name</label><input class="form-control" name="team_name" required></div>';
+        echo '<div class="col-md-4"><label class="form-label">Email</label><input class="form-control" type="email" name="team_email" required></div>';
+        echo '<div class="col-md-3"><label class="form-label">Role</label><select class="form-select" name="team_role"><option value="technical">Technical</option><option value="billing">Billing</option><option value="support">Support</option><option value="readonly">Read only</option></select></div>';
+        echo '<div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" type="submit">Invite</button></div>';
+        echo '</form></div></section>';
+        $this->table('Users', $rows, ['name', 'email', 'role', 'status', 'actions']);
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $services
+     */
+    private function render_subscriptions(array $services): void
+    {
+        echo '<section class="card shadow-sm mb-3"><div class="card-body">';
+        echo '<h2 class="h5">Subscriptions are not used for proxy traffic</h2>';
+        echo '<p class="text-muted mb-3">Paid traffic is a yearly balance. Additional traffic is bought from the proxy catalog and added to the existing service.</p>';
+        echo '<a class="btn btn-primary" href="/client/my/proxies">Open My Services</a>';
+        echo '</div></section>';
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function render_password_form(int $userId, array $user): void
+    {
+        $identity = $this->s($user['email'] ?? '') !== '' ? $this->s($user['email'] ?? '') : $this->s($user['login'] ?? '');
+        $action = (string)($_SERVER['REQUEST_URI'] ?? '/client/change-password');
+
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">Change Password</div><div class="card-body">';
+        $this->render_notice();
+        echo '<form class="pm-password-form" method="post" action="' . $this->h($action) . '">';
+        echo '<input type="hidden" name="action" value="change_account_password">';
+        echo '<div><label class="form-label" for="pmAccountLogin">Client</label><input id="pmAccountLogin" class="form-control" value="' . $this->h($identity !== '' ? $identity : ('User #' . $userId)) . '" disabled></div>';
+        echo '<div><label class="form-label" for="pmNewPassword">New password</label><input id="pmNewPassword" class="form-control" type="password" name="new_password" autocomplete="new-password" minlength="8" required></div>';
+        echo '<div><label class="form-label" for="pmRepeatPassword">Repeat password</label><input id="pmRepeatPassword" class="form-control" type="password" name="repeat_password" autocomplete="new-password" minlength="8" required></div>';
+        echo '<div class="pm-password-actions"><button class="btn btn-primary" type="submit">Set password</button></div>';
+        echo '</form></div></section>';
+    }
+
     private function styles(): void
     {
         echo '<style>
@@ -410,11 +1028,23 @@ final class ClientDashboardPages
             .pm-dash-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
             .pm-stat{font-size:24px;font-weight:700}
             .pm-actions{display:flex;flex-wrap:wrap;gap:10px}
+            .pm-password-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+            .pm-password-actions{display:flex;align-items:end}
             .pm-code{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:14px;white-space:pre-wrap}
             .pm-doc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-            .pm-doc-link{display:block;border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:12px;text-decoration:none}
-            @media(max-width:900px){.pm-dash-grid,.pm-doc-grid{grid-template-columns:1fr 1fr}.pm-dash-head{display:block}.pm-dash-user{text-align:left;margin-top:10px}}
-            @media(max-width:560px){.pm-dash-grid,.pm-doc-grid{grid-template-columns:1fr}}
+            .pm-doc-link{display:grid;gap:8px;border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:14px;background:rgba(255,255,255,.72)}
+            .pm-doc-link span{color:#334155}
+            .pm-doc-link small{color:#64748b}
+            .pm-card-wallet{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+            .pm-card-method{display:grid;gap:14px;min-height:170px;border-radius:8px;padding:18px;color:#e5f0ff;background:linear-gradient(135deg,#172554,#0f766e);box-shadow:0 16px 34px rgba(15,23,42,.18)}
+            .pm-card-method strong{display:block;font-size:18px;letter-spacing:1px}
+            .pm-card-method span{display:block;color:rgba(226,232,240,.82)}
+            .pm-card-chip{width:42px;height:30px;border-radius:6px;background:linear-gradient(135deg,#facc15,#f97316)}
+            .pm-card-meta{display:flex;justify-content:space-between;gap:10px;align-items:center}
+            .pm-card-meta b{border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:2px 8px;font-size:12px}
+            .pm-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+            @media(max-width:900px){.pm-dash-grid,.pm-doc-grid,.pm-password-form{grid-template-columns:1fr 1fr}.pm-dash-head{display:block}.pm-dash-user{text-align:left;margin-top:10px}}
+            @media(max-width:560px){.pm-dash-grid,.pm-doc-grid,.pm-password-form{grid-template-columns:1fr}}
         </style>';
     }
 

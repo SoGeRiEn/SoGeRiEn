@@ -22,6 +22,16 @@ final class TemplateBasePage
     public function get_head_css_urls(): array
     {
         $domain = $this->get_sogerien_domain();
+        $mainMenuCssVersion = (string)@filemtime(Sogerien::$SOGERIEN_DIR . '/page/css/admin_panel/main_menu.css');
+        $mainMenuCssUrl = $domain . '/page/css/admin_panel/main_menu.css';
+        if ($mainMenuCssVersion !== '') {
+            $mainMenuCssUrl .= '?v=' . rawurlencode($mainMenuCssVersion . '-client-account-2');
+        }
+        $mainCssVersion = (string)@filemtime(Sogerien::$SOGERIEN_DIR . '/page/css/admin_panel/main.css');
+        $mainCssUrl = $domain . '/page/css/admin_panel/main.css';
+        if ($mainCssVersion !== '') {
+            $mainCssUrl .= '?v=' . rawurlencode($mainCssVersion . '-select-theme-1');
+        }
 
         return array_merge([
             'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
@@ -29,10 +39,10 @@ final class TemplateBasePage
             'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
             'https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css',
             'https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css',
-            $domain . '/page/css/admin_panel/main_menu.css',
+            $mainMenuCssUrl,
             $domain . '/page/css/BasePage/forms.css',
             $domain . '/page/css/BasePage/table_renderer.css',
-            $domain . '/page/css/admin_panel/main.css',
+            $mainCssUrl,
         ], Affects::get_head_css_urls($domain));
     }
 
@@ -122,6 +132,41 @@ final class TemplateBasePage
     }
 
     /**
+     * @return array{label:string,balance:string}
+     */
+    private function client_topbar_context(): array
+    {
+        $label = 'Client';
+        $balance = '$0.00';
+
+        $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
+        if ($dbAlias === '') {
+            $dbAlias = 'front';
+        }
+
+        $users = Sogerien::Users();
+        $users->init_db_alias($dbAlias);
+        $users->load_identity_from_token();
+
+        $userId = (int)$users->user_id;
+        $user = is_array($users->user_data ?? null) ? $users->user_data : [];
+        $name = trim((string)($user['fio'] ?? $user['name'] ?? $user['email'] ?? $user['login'] ?? ''));
+        if ($name !== '') {
+            $label = $name;
+        } elseif ($userId > 0) {
+            $label = 'User #' . (string)$userId;
+        }
+
+        if ($userId > 0 && class_exists('ProxyShop')) {
+            $shop = new ProxyShop();
+            $shop->init_db_alias($dbAlias);
+            $balance = '$' . $shop->get_user_balance_usd($userId);
+        }
+
+        return ['label' => $label, 'balance' => $balance];
+    }
+
+    /**
      * @param array<int,array{label:string,url:string,tag?:string,permission?:string}> $items
      */
     private function render_nav_items(array $items): string
@@ -180,7 +225,6 @@ final class TemplateBasePage
         $proxyProductItems = [
             ['label' => 'Order Proxies', 'url' => '/client/all_proxy', 'tag' => 'Order'],
             ['label' => 'My Services', 'url' => '/client/my/proxies', 'tag' => 'Client'],
-            ['label' => 'Service Detail', 'url' => '/client/proxy/manage', 'tag' => 'Ops'],
             ['label' => 'Traffic Usage', 'url' => '/client/traffic', 'tag' => 'Stats'],
             ['label' => 'Access Lists', 'url' => '/client/access-lists', 'tag' => 'Proxy'],
             ['label' => 'Mobile Proxy', 'url' => '/client/proxies/mobile_proxy', 'tag' => 'GB'],
@@ -197,7 +241,6 @@ final class TemplateBasePage
             ['label' => 'Add Funds', 'url' => '/client/add-funds', 'tag' => 'Pay'],
             ['label' => 'Invoices', 'url' => '/client/my/payments', 'tag' => 'Billing'],
             ['label' => 'Payment Methods', 'url' => '/client/payment-methods', 'tag' => 'Billing'],
-            ['label' => 'Subscriptions', 'url' => '/client/subscriptions', 'tag' => 'Renew'],
         ];
         $supportItems = [
             ['label' => 'Tickets', 'url' => '/client/support/tickets', 'tag' => 'Help'],
@@ -205,12 +248,24 @@ final class TemplateBasePage
         ];
         $accountItems = [
             ['label' => 'Profile', 'url' => '/client/profile', 'tag' => 'Account'],
+            ['label' => 'Change Password', 'url' => '/client/change-password', 'tag' => 'Security'],
             ['label' => 'Contacts', 'url' => '/client/contacts', 'tag' => 'Account'],
             ['label' => 'Email History', 'url' => '/client/email-history', 'tag' => 'Account'],
             ['label' => 'Users', 'url' => '/client/users', 'tag' => 'Team'],
         ];
+        $accountDropItems = [
+            ['label' => 'Account Details', 'url' => '/client/profile', 'icon' => 'ID'],
+            ['label' => 'User Management', 'url' => '/client/users', 'icon' => 'US'],
+            ['label' => 'Payment Methods', 'url' => '/client/payment-methods', 'icon' => 'PM'],
+            ['label' => 'Contacts', 'url' => '/client/contacts', 'icon' => 'CT'],
+            ['label' => 'Subscriptions', 'url' => '/client/subscriptions', 'icon' => 'SB'],
+            ['label' => 'Email History', 'url' => '/client/email-history', 'icon' => 'EM'],
+            ['label' => 'Change Password', 'url' => '/client/change-password', 'icon' => 'PW'],
+            ['label' => 'Security Settings', 'url' => '/client/change-password', 'icon' => 'SC'],
+        ];
         $adminItems = $this->is_admin_user() ? [
             ['label' => 'Proxy Orders', 'url' => '/admin/orders', 'tag' => 'Admin'],
+            ['label' => 'Статистика', 'url' => '/admin/statistics', 'tag' => 'Admin'],
             ['label' => 'Client Services', 'url' => '/admin/services', 'tag' => 'Admin'],
             ['label' => 'Traffic', 'url' => '/admin/traffic', 'tag' => 'Admin'],
             ['label' => 'Access Lists', 'url' => '/admin/access-lists', 'tag' => 'Admin'],
@@ -310,9 +365,36 @@ final class TemplateBasePage
         echo '                          </div>';
         echo '                      </div>';
         echo '                  </div>';
-        if ($is_authenticated) {
+        if (!$isAdminSystem) {
+            $clientTopbar = $this->client_topbar_context();
+            echo '                  <a class="pm-client-add-funds" href="' . $h($this->append_admin_view_user_id('/client/add-funds')) . '">Add Funds</a>';
+            echo '                  <div class="pm-client-balance" title="Account balance"><span>Balance</span><strong>' . $h((string)$clientTopbar['balance']) . '</strong></div>';
+            echo '                  <div class="dropdown pm-client-icon-dropdown">';
+            echo '                      <button class="pm-client-icon-btn" type="button" id="pm_notify_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" aria-label="Notifications">!</button>';
+            echo '                      <div class="dropdown-menu dropdown-menu-end pm-client-mini-menu" aria-labelledby="pm_notify_dropdown_toggle">';
+            echo '                          <div class="pm-client-empty">No notifications.</div>';
+            echo '                      </div>';
+            echo '                  </div>';
+            echo '                  <a class="pm-client-icon-btn" href="' . $h($this->append_admin_view_user_id('/client/proxy/checkout')) . '" title="Cart" aria-label="Cart">$</a>';
+            echo '                  <div class="dropdown pm-client-account-dropdown">';
+            echo '                      <button class="pm-client-account-btn" type="button" id="pm_personal_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false">';
+            echo '                          <span class="pm-client-avatar" aria-hidden="true">U</span>';
+            echo '                          <span class="pm-client-account-copy"><span>Personal</span><strong>' . $h((string)$clientTopbar['label']) . '</strong></span>';
+            echo '                      </button>';
+            echo '                      <div class="dropdown-menu dropdown-menu-end pm-client-account-menu" aria-labelledby="pm_personal_dropdown_toggle">';
+            foreach ($accountDropItems as $item) {
+                $url = $this->append_admin_view_user_id((string)$item['url']);
+                echo '<a class="dropdown-item pm-client-account-item" href="' . $h($url) . '"><span class="pm-client-menu-icon">' . $h((string)$item['icon']) . '</span><span>' . $h((string)$item['label']) . '</span></a>';
+            }
+            echo '<div class="dropdown-divider"></div>';
+            echo '<a class="dropdown-item pm-client-account-item" href="' . $h($this->append_admin_view_user_id('/client/support/tickets')) . '"><span class="pm-client-menu-icon">TK</span><span>Tickets</span></a>';
+            echo '<a class="dropdown-item pm-client-account-item pm-client-logout" href="' . $h($this->build_logout_url()) . '"><span class="pm-client-menu-icon">LO</span><span>Logout</span></a>';
+            echo '                      </div>';
+            echo '                  </div>';
+        }
+        if ($is_authenticated && $isAdminSystem) {
             echo '                  <a class="pm-cta pm-cta-danger" href="' . $h($this->build_logout_url()) . '">' . $h($t('menu.logout', 'Logout')) . '</a>';
-        } else {
+        } elseif (!$is_authenticated) {
             echo '                  <a class="pm-cta pm-cta-primary" href="' . $h($this->build_login_url()) . '">' . $h($t('auth.authorize', 'Authorize')) . '</a>';
         }
         echo '              </div>';

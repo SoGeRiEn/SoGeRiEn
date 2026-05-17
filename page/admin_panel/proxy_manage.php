@@ -54,20 +54,23 @@ $shop->init_db_alias($dbAlias);
 $serviceId = pm_s($request['service_id'] ?? '');
 $alertType = '';
 $alertText = '';
-$actionDump = '';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
     $serviceId = pm_s($request['service_id'] ?? '');
     $action = pm_s($request['action'] ?? '');
     if ($serviceId !== '' && $action !== '') {
-        $result = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
-        $actionDump = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        if (($result['ok'] ?? false) === true) {
-            $alertType = 'success';
-            $alertText = 'Action completed.';
-        } else {
+        if ($action === 'add_traffic' || $action === 'set_traffic_limit') {
             $alertType = 'danger';
-            $alertText = (string)($result['error'] ?? 'Action failed.');
+            $alertText = 'Traffic is added only through purchase or admin panel.';
+        } else {
+            $result = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
+            if (($result['ok'] ?? false) === true) {
+                $alertType = 'success';
+                $alertText = $action === 'generate_proxy_list' ? 'Proxy access list generated.' : 'Action completed.';
+            } else {
+                $alertType = 'danger';
+                $alertText = (string)($result['error'] ?? 'Action failed.');
+            }
         }
     }
 }
@@ -99,13 +102,17 @@ Sogerien::Page()->mainmenu();
         <?php $category = strtolower(pm_s($service['provider_pool_category'] ?? '')); ?>
         <?php $isTrafficService = $category === 'mobile' || $category === 'residential' || $category === 'residential_ipv6'; ?>
         <?php $isStaticIpService = $category === 'isp' || $category === 'dc'; ?>
+        <?php $geoOptions = $shop->infatica_access_geo_options($category); ?>
         <div class="card shadow-sm mb-3">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                    <div>
+                    <div class="d-flex align-items-start gap-2 flex-wrap">
+                        <a class="btn btn-outline-secondary btn-sm mt-1" href="/client/my/proxies">MyServices</a>
+                        <div>
                         <h1 class="h4 mb-1"><?= pm_h($service['title'] ?? '') ?></h1>
                         <div class="text-muted small">Service ID: <code><?= pm_h($serviceId) ?></code></div>
                         <div class="text-muted small">Provider pool: <code><?= pm_h($service['provider_pool_category'] ?? '-') ?></code></div>
+                        </div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
                         <?php if ($isTrafficService): ?>
@@ -212,51 +219,7 @@ Sogerien::Page()->mainmenu();
             </div>
         </div>
 
-        <?php if ($isTrafficService): ?>
-            <div class="card shadow-sm mb-3">
-                <div class="card-header">Traffic controls</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-6">
-                            <form method="post" action="/client/proxy/manage" class="row g-2 align-items-end">
-                                <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
-                                <input type="hidden" name="action" value="add_traffic">
-                                <div class="col-md-5">
-                                    <label class="form-label" for="pmAddGb">Add traffic, GB</label>
-                                    <input class="form-control" id="pmAddGb" name="add_gb" type="number" min="0.01" step="0.01" value="1">
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" id="pmResumeAfterTopup" name="resume_after_topup" type="checkbox" value="1" checked>
-                                        <label class="form-check-label" for="pmResumeAfterTopup">Resume after topup</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 d-grid">
-                                    <button type="submit" class="btn btn-primary">Top up</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="col-lg-6">
-                            <form method="post" action="/client/proxy/manage" class="row g-2 align-items-end">
-                                <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
-                                <input type="hidden" name="action" value="set_traffic_limit">
-                                <div class="col-md-4">
-                                    <label class="form-label" for="pmLimitGb">New limit, GB</label>
-                                    <input class="form-control" id="pmLimitGb" name="limit_gb" type="number" min="0.01" step="0.01" value="<?= pm_h($service['traffic_total_gb'] ?? '1') ?>">
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label" for="pmExpiresAt">Expires at</label>
-                                    <input class="form-control" id="pmExpiresAt" name="expires_at" value="<?= pm_h($service['expires_at'] ?? '') ?>">
-                                </div>
-                                <div class="col-md-3 d-grid">
-                                    <button type="submit" class="btn btn-outline-primary">Set limit</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <?php elseif ($isStaticIpService): ?>
+        <?php if ($isStaticIpService): ?>
             <div class="card shadow-sm mb-3">
                 <div class="card-header"><?= $category === 'dc' ? 'Dedicated DC lifecycle' : 'ISP lifecycle' ?></div>
                 <div class="card-body d-flex flex-wrap gap-2">
@@ -289,7 +252,7 @@ Sogerien::Page()->mainmenu();
                         <input type="hidden" name="action" value="generate_proxy_list">
                         <div class="col-md-3">
                             <label class="form-label" for="pmListName">List name</label>
-                            <input class="form-control" id="pmListName" name="list_name" value="ProxyMint <?= pm_h(date('Y-m-d')) ?>">
+                            <input class="form-control" id="pmListName" name="list_name" value="<?= (int)$userId ?>-ProxyMint-<?= pm_h(date('Y-m-d')) ?>">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="pmAuthMode">Authorization</label>
@@ -312,16 +275,31 @@ Sogerien::Page()->mainmenu();
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="pmListCountries">Countries</label>
-                            <input class="form-control" id="pmListCountries" name="countries" value="<?= pm_h($service['country'] ?? '') ?>" placeholder="US, DE, NL">
+                            <select class="form-select" id="pmListCountries" name="countries">
+                                <?php foreach (($geoOptions['countries'] ?? []) as $code => $label): ?>
+                                    <?php $selected = strtoupper(pm_s($service['country'] ?? '')) === strtoupper((string)$code) ? ' selected' : ''; ?>
+                                    <option value="<?= pm_h($code) ?>"<?= $selected ?>><?= pm_h($code . ' - ' . $label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                             <div class="form-text">Leave empty for World Mix.</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="pmListRegion">Region</label>
-                            <input class="form-control" id="pmListRegion" name="region" placeholder="California">
+                            <select class="form-select" id="pmListRegion" name="region">
+                                <option value="">All regions</option>
+                                <?php foreach (($geoOptions['regions'] ?? []) as $region => $label): ?>
+                                    <option value="<?= pm_h($region) ?>"><?= pm_h($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="pmListCity">City</label>
-                            <input class="form-control" id="pmListCity" name="city" placeholder="New York">
+                            <select class="form-select" id="pmListCity" name="city">
+                                <option value="">All cities</option>
+                                <?php foreach (($geoOptions['cities'] ?? []) as $city => $label): ?>
+                                    <option value="<?= pm_h($city) ?>"><?= pm_h($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="pmListIsp">ISP</label>
@@ -390,6 +368,7 @@ Sogerien::Page()->mainmenu();
                                     <th>Status</th>
                                     <th>Used</th>
                                     <th>Created</th>
+                                    <th>Details</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -417,6 +396,14 @@ Sogerien::Page()->mainmenu();
                                     <td><?= pm_h($list['traffic_used_gb'] ?? '0.0000') ?> GB</td>
                                     <td><?= pm_h($list['created_at'] ?? '-') ?></td>
                                     <td>
+                                        <?php $detailId = 'pmProxyListDetails' . preg_replace('/[^A-Za-z0-9_:-]/', '', pm_s($list['vendor_list_id'] ?? $list['id'] ?? md5(pm_s($list['name'] ?? '')))); ?>
+                                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#<?= pm_h($detailId) ?>" aria-expanded="false">Details</button>
+                                        <div class="collapse mt-2" id="<?= pm_h($detailId) ?>">
+                                            <?php $host = pm_s($service['connection_host'] ?? ''); $port = pm_s($service['connection_port'] ?? ''); $login = pm_s($list['login'] ?? ''); $password = pm_s($list['password'] ?? ''); ?>
+                                            <pre class="mb-0 small"><?= pm_h("http://{$login}:{$password}@{$host}:{$port}\nsocks5://{$login}:{$password}@{$host}:{$port}\n{$host}:{$port}:{$login}:{$password}") ?></pre>
+                                        </div>
+                                    </td>
+                                    <td>
                                         <?php if (pm_s($list['status'] ?? 'active') === 'active'): ?>
                                             <form method="post" action="/client/proxy/manage" class="m-0">
                                                 <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
@@ -438,14 +425,6 @@ Sogerien::Page()->mainmenu();
             </div>
         <?php endif; ?>
 
-        <?php if ($actionDump !== ''): ?>
-            <div class="card shadow-sm mt-3">
-                <div class="card-header">Last action response</div>
-                <div class="card-body">
-                    <pre class="mb-0"><?= pm_h($actionDump) ?></pre>
-                </div>
-            </div>
-        <?php endif; ?>
     <?php endif; ?>
 </main>
 <?php

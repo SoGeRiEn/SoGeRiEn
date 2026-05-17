@@ -317,6 +317,49 @@ body.pm-theme-midnight .btn-close {
     box-shadow: none !important;
 }
 
+body.pm-theme-midnight .form-select {
+    color-scheme: dark;
+}
+
+body.pm-theme-ice .form-select {
+    color-scheme: light;
+}
+
+.form-select option,
+.form-select optgroup {
+    background-color: var(--surface-strong);
+    color: var(--text);
+}
+
+body.pm-theme-midnight .form-select option,
+body.pm-theme-midnight .form-select optgroup {
+    background-color: #0d1424;
+    color: #f6f7ff;
+}
+
+body.pm-theme-ice .form-select option,
+body.pm-theme-ice .form-select optgroup {
+    background-color: #ffffff;
+    color: #172027;
+}
+
+.form-select option:checked {
+    background-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.form-select option:disabled {
+    color: color-mix(in srgb, var(--muted) 72%, var(--text));
+}
+
+body.pm-theme-midnight .form-select option:disabled {
+    color: #8f9ab8;
+}
+
+body.pm-theme-ice .form-select option:disabled {
+    color: #64748b;
+}
+
 .form-control::placeholder {
     color: var(--muted);
 }
@@ -326,6 +369,125 @@ body.pm-theme-midnight .btn-close {
 .select2-container--bootstrap-5.select2-container--focus .select2-selection {
     border-color: color-mix(in srgb, var(--accent) 45%, var(--line)) !important;
     box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 16%, transparent) !important;
+}
+
+.pm-datetime-popover {
+    position: fixed;
+    z-index: 1092;
+    width: min(360px, calc(100vw - 24px));
+    padding: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--pm-radius-lg);
+    background: var(--surface-float);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.pm-datetime-head,
+.pm-datetime-time,
+.pm-datetime-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pm-datetime-head {
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.pm-datetime-title {
+    min-width: 140px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.pm-datetime-nav,
+.pm-datetime-day,
+.pm-datetime-action {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+}
+
+.pm-datetime-nav {
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+}
+
+.pm-datetime-nav:hover,
+.pm-datetime-day:hover,
+.pm-datetime-action:hover {
+    border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+    background: color-mix(in srgb, var(--accent) 11%, var(--surface-soft));
+}
+
+.pm-datetime-week,
+.pm-datetime-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.pm-datetime-week {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.pm-datetime-day {
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    font-size: 13px;
+}
+
+.pm-datetime-day.is-muted {
+    color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.pm-datetime-day.is-today {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.pm-datetime-day.is-selected {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    color: var(--accent-text);
+}
+
+.pm-datetime-time {
+    justify-content: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.pm-datetime-time input {
+    width: 64px;
+    min-height: 36px;
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--text);
+    text-align: center;
+}
+
+.pm-datetime-actions {
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.pm-datetime-action {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
 }
 
 .select2-container--bootstrap-5 .select2-dropdown,
@@ -557,6 +719,7 @@ table.dataTable > thead > tr > td {
     border: 1px solid var(--line);
     border-radius: 22px;
     box-shadow: var(--shadow);
+    color: var(--text);
 }
 
 .sog-ui .head {
@@ -583,17 +746,26 @@ table.dataTable > thead > tr > td {
     border-bottom: 1px solid var(--line);
     cursor: pointer;
     background: transparent;
+    color: var(--text);
 }
 
-.sog-ui .modal .list .pal-row:hover {
+.sog-ui .modal .list .pal-row:hover,
+.sog-ui .modal .list .pal-row:focus {
     background: color-mix(in srgb, var(--accent) 10%, transparent);
+    outline: none;
 }
 
 .sog-ui .modal .list .pal-row strong {
+    color: var(--text);
     font-weight: 700;
 }
 
 .sog-ui .modal .list .pal-row small {
+    color: var(--muted);
+}
+
+.sog-ui .modal .list .pal-row-empty,
+.sog-ui .modal .list .pal-row .muted {
     color: var(--muted);
 }
 

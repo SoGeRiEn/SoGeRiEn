@@ -1,353 +1,442 @@
 (function () {
-  "use strict";
-
-  var TAU = Math.PI * 2;
-  var STYLE_ID = "pm-cosmic-fast-style";
-
-  var cosmicThemes = {
+  const cosmicThemes = {
     proxyMintMidnight: {
+      name: "ProxyMint Midnight",
       particleColors: ["#1EDBCB", "#7EF4E5", "#6CE7D8", "#B7FFF4"],
       connectionColor: "#1EDBCB",
-      figureColor: "#7C9BFF",
-      glowColor: "#1EDBCB",
-      particleAlphaMin: 0.32,
-      particleAlphaMax: 0.74,
-      connectionOpacity: 0.2,
-      figureOpacity: 0.09,
-      glowOpacity: 0.12
+      mouseGradient: ["#1EDBCB", "#7C9BFF"],
+      glowStops: ["#7C9BFF", "#1EDBCB"],
+      connectionOpacity: 0.17,
+      connectionWidth: 0.55,
+      mouseOpacity: 0.62,
+      glowAlphaStart: 0.1,
+      glowAlphaMid: 0.035,
+      particleAlphaMin: 0.22,
+      particleAlphaMax: 0.62,
+      coreColor: "#FFFFFF",
+      coreOpacity: 0.22,
     },
     proxyMintIce: {
+      name: "ProxyMint Ice",
       particleColors: ["#0F3B42", "#118A84", "#1AD7C6", "#8AD4FF", "#D8F7FF"],
       connectionColor: "#0F3B42",
-      figureColor: "#1AD7C6",
-      glowColor: "#8AD4FF",
-      particleAlphaMin: 0.38,
-      particleAlphaMax: 0.8,
-      connectionOpacity: 0.18,
-      figureOpacity: 0.075,
-      glowOpacity: 0.1
+      mouseGradient: ["#118A84", "#8AD4FF"],
+      glowStops: ["#A7E2FF", "#1AD7C6"],
+      connectionOpacity: 0.26,
+      connectionWidth: 0.72,
+      mouseOpacity: 0.28,
+      glowAlphaStart: 0.055,
+      glowAlphaMid: 0.02,
+      particleAlphaMin: 0.34,
+      particleAlphaMax: 0.82,
+      coreColor: "#FFFFFF",
+      coreOpacity: 0.34,
     },
     cosmicClassic: {
+      name: "Cosmic Classic",
       particleColors: ["#4ADE80", "#A855F7", "#22C55E", "#C084FC"],
       connectionColor: "#4ADE80",
-      figureColor: "#A855F7",
-      glowColor: "#4ADE80",
-      particleAlphaMin: 0.3,
-      particleAlphaMax: 0.68,
-      connectionOpacity: 0.18,
-      figureOpacity: 0.085,
-      glowOpacity: 0.11
-    }
-  };
+      mouseGradient: ["#4ADE80", "#A855F7"],
+      glowStops: ["#A855F7", "#4ADE80"],
+    },
+  }
 
   function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
+    return Math.min(max, Math.max(min, value))
+  }
+
+  function hexToRgba(color, alpha) {
+    if (!String(color).startsWith("#")) {
+      return color
+    }
+
+    const normalized = color.replace("#", "")
+    const hex =
+      normalized.length === 3
+        ? normalized
+            .split("")
+            .map(function (char) {
+              return char + char
+            })
+            .join("")
+        : normalized
+
+    const red = parseInt(hex.slice(0, 2), 16)
+    const green = parseInt(hex.slice(2, 4), 16)
+    const blue = parseInt(hex.slice(4, 6), 16)
+
+    return "rgba(" + red + ", " + green + ", " + blue + ", " + alpha + ")"
   }
 
   function resolveElement(target) {
     if (!target) {
-      return document.body;
+      return document.body
     }
 
     if (typeof target === "string") {
-      return document.querySelector(target);
+      return document.querySelector(target)
     }
 
-    return target;
+    return target
   }
 
   function resolveTheme(theme) {
+    if (!theme) {
+      return cosmicThemes.proxyMintMidnight
+    }
+
     if (theme === "midnight") {
-      return cosmicThemes.proxyMintMidnight;
+      return cosmicThemes.proxyMintMidnight
     }
 
     if (theme === "ice") {
-      return cosmicThemes.proxyMintIce;
+      return cosmicThemes.proxyMintIce
     }
 
     if (typeof theme === "string" && cosmicThemes[theme]) {
-      return cosmicThemes[theme];
+      return cosmicThemes[theme]
     }
 
-    return theme || cosmicThemes.proxyMintMidnight;
-  }
-
-  function pick(items, index) {
-    return items[index % items.length];
-  }
-
-  function injectStyle() {
-    if (document.getElementById(STYLE_ID)) {
-      return;
-    }
-
-    var style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent =
-      "@keyframes pmCosmicFastDriftA{0%{transform:translate3d(-1.6%,-1.2%,0) scale(1.045) rotate(0deg)}50%{transform:translate3d(1.2%,1.4%,0) scale(1.055) rotate(.18deg)}100%{transform:translate3d(-1.6%,-1.2%,0) scale(1.045) rotate(0deg)}}" +
-      "@keyframes pmCosmicFastDriftB{0%{transform:translate3d(1.4%,-.8%,0) scale(1.04) rotate(.1deg)}50%{transform:translate3d(-1.1%,1.1%,0) scale(1.052) rotate(-.14deg)}100%{transform:translate3d(1.4%,-.8%,0) scale(1.04) rotate(.1deg)}}" +
-      ".pm-cosmic-fast-layer{position:absolute;inset:-5%;width:110%;height:110%;pointer-events:none;will-change:transform;backface-visibility:hidden}" +
-      ".pm-cosmic-fast-layer-a{animation:pmCosmicFastDriftA 34s ease-in-out infinite}" +
-      ".pm-cosmic-fast-layer-b{animation:pmCosmicFastDriftB 46s ease-in-out infinite;mix-blend-mode:screen;opacity:.72}" +
-      "@media (prefers-reduced-motion: reduce){.pm-cosmic-fast-layer{animation:none!important}}";
-
-    document.head.appendChild(style);
-  }
-
-  function createCanvas(className, layerClassName, zIndex) {
-    var canvas = document.createElement("canvas");
-    canvas.className = (className ? className + " " : "") + layerClassName;
-    canvas.setAttribute("aria-hidden", "true");
-    canvas.style.zIndex = String(zIndex);
-    return canvas;
-  }
-
-  function createParticle(width, height, index, count, theme, layer) {
-    var angle = (index / Math.max(count, 1)) * TAU;
-    var radius = Math.min(width, height) * (0.2 + Math.random() * 0.34);
-
-    return {
-      x: width * 0.5 + Math.cos(angle) * radius + (Math.random() - 0.5) * width * 0.34,
-      y: height * 0.5 + Math.sin(angle * 1.17) * radius + (Math.random() - 0.5) * height * 0.34,
-      radius: (layer === 0 ? 1.05 : 0.85) + Math.random() * (layer === 0 ? 1.95 : 1.35),
-      color: pick(theme.particleColors, index + layer),
-      alpha: theme.particleAlphaMin + Math.random() * Math.max(theme.particleAlphaMax - theme.particleAlphaMin, 0.05)
-    };
-  }
-
-  function drawGlow(context, width, height, theme, layer) {
-    var points = layer === 0
-      ? [[0.1, 0.2, 0.34], [0.14, 0.84, 0.32], [0.9, 0.9, 0.28]]
-      : [[0.78, 0.16, 0.24], [0.42, 0.62, 0.18]];
-
-    for (var i = 0; i < points.length; i += 1) {
-      var x = width * points[i][0];
-      var y = height * points[i][1];
-      var radius = Math.min(width, height) * points[i][2];
-      var gradient = context.createRadialGradient(x, y, 0, x, y, radius);
-
-      gradient.addColorStop(0, theme.glowColor);
-      gradient.addColorStop(1, "rgba(0,0,0,0)");
-      context.save();
-      context.globalAlpha = theme.glowOpacity * (layer === 0 ? 1 : 0.62);
-      context.fillStyle = gradient;
-      context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-      context.restore();
-    }
-  }
-
-  function drawFigures(context, width, height, theme, layer) {
-    var count = layer === 0 ? 5 : 4;
-
-    context.save();
-    context.strokeStyle = theme.figureColor;
-    context.fillStyle = theme.figureColor;
-    context.lineWidth = layer === 0 ? 1 : 0.75;
-
-    for (var i = 0; i < count; i += 1) {
-      var x = width * (0.12 + Math.random() * 0.76);
-      var y = height * (0.1 + Math.random() * 0.78);
-      var size = Math.min(width, height) * (0.055 + Math.random() * 0.075);
-      var sides = i % 3 === 0 ? 3 : 4;
-      var start = Math.random() * TAU;
-
-      context.beginPath();
-
-      for (var side = 0; side < sides; side += 1) {
-        var angle = start + (side / sides) * TAU;
-        var px = x + Math.cos(angle) * size;
-        var py = y + Math.sin(angle) * size;
-
-        if (side === 0) {
-          context.moveTo(px, py);
-        } else {
-          context.lineTo(px, py);
-        }
-      }
-
-      context.closePath();
-      context.globalAlpha = theme.figureOpacity * 0.72;
-      context.fill();
-      context.globalAlpha = theme.figureOpacity * 2.2;
-      context.stroke();
-    }
-
-    context.restore();
-  }
-
-  function drawConnections(context, particles, theme, maxDistance) {
-    var maxDistanceSquared = maxDistance * maxDistance;
-
-    context.save();
-    context.globalAlpha = theme.connectionOpacity;
-    context.strokeStyle = theme.connectionColor;
-    context.lineWidth = 0.7;
-    context.beginPath();
-
-    for (var i = 0; i < particles.length; i += 1) {
-      var linked = 0;
-
-      for (var j = i + 1; j < particles.length && linked < 3; j += 1) {
-        var dx = particles[i].x - particles[j].x;
-        var dy = particles[i].y - particles[j].y;
-
-        if (dx * dx + dy * dy <= maxDistanceSquared) {
-          context.moveTo(particles[i].x, particles[i].y);
-          context.lineTo(particles[j].x, particles[j].y);
-          linked += 1;
-        }
-      }
-    }
-
-    context.stroke();
-    context.restore();
-  }
-
-  function drawParticles(context, particles) {
-    for (var i = 0; i < particles.length; i += 1) {
-      var particle = particles[i];
-
-      context.save();
-      context.globalAlpha = particle.alpha;
-      context.fillStyle = particle.color;
-      context.beginPath();
-      context.arc(particle.x, particle.y, particle.radius, 0, TAU);
-      context.fill();
-      context.globalAlpha = Math.min(1, particle.alpha + 0.18);
-      context.fillStyle = "#fff";
-      context.beginPath();
-      context.arc(particle.x, particle.y, Math.max(0.45, particle.radius * 0.32), 0, TAU);
-      context.fill();
-      context.restore();
-    }
-  }
-
-  function renderLayer(canvas, theme, options, layer) {
-    var parentBounds = canvas.parentElement
-      ? canvas.parentElement.getBoundingClientRect()
-      : canvas.getBoundingClientRect();
-    var width = Math.max(1, Math.ceil(parentBounds.width * 1.1));
-    var height = Math.max(1, Math.ceil(parentBounds.height * 1.1));
-    var scale = Math.min(window.devicePixelRatio || 1, options.maxDevicePixelRatio);
-    var context = canvas.getContext("2d", { alpha: true });
-
-    if (!context) {
-      return;
-    }
-
-    canvas.width = Math.max(1, Math.floor(width * scale));
-    canvas.height = Math.max(1, Math.floor(height * scale));
-    context.setTransform(scale, 0, 0, scale, 0, 0);
-    context.clearRect(0, 0, width, height);
-
-    var baseCount = Math.round((width * height) / options.particleDensity);
-    var count = clamp(baseCount, options.minParticles, layer === 0 ? options.maxParticles : Math.ceil(options.maxParticles * 0.55));
-    var particles = [];
-
-    for (var i = 0; i < count; i += 1) {
-      particles.push(createParticle(width, height, i, count, theme, layer));
-    }
-
-    drawGlow(context, width, height, theme, layer);
-    drawFigures(context, width, height, theme, layer);
-    drawConnections(context, particles, theme, options.connectionDistance * (layer === 0 ? 1 : 1.18));
-    drawParticles(context, particles);
+    return theme
   }
 
   function createCosmicParticleNetwork(options) {
-    var settings = Object.assign(
+    const settings = Object.assign(
       {
         target: document.body,
         className: "",
-        particleDensity: 38000,
-        minParticles: 18,
-        maxParticles: 42,
-        connectionDistance: 170,
+        particleDensity: 15000,
+        minParticles: 24,
+        maxParticles: 80,
+        minSpeed: 0.25,
+        maxSpeed: 0.5,
+        connectionDistance: 150,
+        mouseConnectionDistance: 200,
+        mouseInfluence: 0.00005,
+        glowRadius: 100,
         zIndex: 0,
         respectReducedMotion: true,
-        maxDevicePixelRatio: 1
       },
-      options || {}
-    );
-    var mountNode = resolveElement(settings.target);
-    var theme = resolveTheme(settings.theme);
-    var resizeTimer = 0;
-    var destroyed = false;
-    var layerA = createCanvas(settings.className, "pm-cosmic-fast-layer pm-cosmic-fast-layer-a", settings.zIndex);
-    var layerB = createCanvas(settings.className, "pm-cosmic-fast-layer pm-cosmic-fast-layer-b", settings.zIndex);
+      options || {},
+    )
+
+    let theme = resolveTheme(settings.theme)
+    const mountNode = resolveElement(settings.target)
 
     if (!mountNode) {
-      throw new Error("CosmicParticleNetwork target element was not found.");
+      throw new Error("CosmicParticleNetwork target element was not found.")
     }
 
-    injectStyle();
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d")
 
-    if (mountNode !== document.body && window.getComputedStyle(mountNode).position === "static") {
-      mountNode.style.position = "relative";
+    if (!context) {
+      throw new Error("Canvas 2D context is not supported in this browser.")
     }
 
-    mountNode.appendChild(layerA);
-    mountNode.appendChild(layerB);
+    canvas.className = settings.className
+    canvas.setAttribute("aria-hidden", "true")
+    canvas.style.position = mountNode === document.body ? "fixed" : "absolute"
+    canvas.style.inset = "0"
+    canvas.style.width = "100%"
+    canvas.style.height = "100%"
+    canvas.style.pointerEvents = "none"
+    canvas.style.zIndex = String(settings.zIndex)
 
-    function render() {
-      if (destroyed) {
-        return;
-      }
+    if (mountNode !== document.body) {
+      const computedPosition = window.getComputedStyle(mountNode).position
 
-      try {
-        renderLayer(layerA, theme, settings, 0);
-      } catch (error) {
-        layerA.setAttribute("data-pm-cosmic-error", error && error.message ? error.message : "render");
-      }
-
-      try {
-        renderLayer(layerB, theme, settings, 1);
-      } catch (error) {
-        layerB.setAttribute("data-pm-cosmic-error", error && error.message ? error.message : "render");
+      if (computedPosition === "static") {
+        mountNode.style.position = "relative"
       }
     }
 
-    function handleResize() {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(render, 180);
+    mountNode.appendChild(canvas)
+
+    const reducedMotion =
+      settings.respectReducedMotion &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+    const mouse = { x: -1000, y: -1000, active: false }
+    let viewportWidth = 0
+    let viewportHeight = 0
+    let particles = []
+    let animationFrame = 0
+
+    function getSize() {
+      if (mountNode === document.body) {
+        viewportWidth = window.innerWidth
+        viewportHeight = window.innerHeight
+        return
+      }
+
+      const bounds = mountNode.getBoundingClientRect()
+      viewportWidth = bounds.width
+      viewportHeight = bounds.height
+    }
+
+    function createParticle() {
+      const angle = Math.random() * Math.PI * 2
+      const speed =
+        settings.minSpeed +
+        Math.random() * Math.max(settings.maxSpeed - settings.minSpeed, 0.01)
+
+      return {
+        x: Math.random() * viewportWidth,
+        y: Math.random() * viewportHeight,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: Math.random() * 2 + 1,
+        color:
+          theme.particleColors[
+            Math.floor(Math.random() * theme.particleColors.length)
+          ],
+        alpha:
+          (theme.particleAlphaMin || 0.2) +
+          Math.random() *
+            Math.max(
+              (theme.particleAlphaMax || 0.7) -
+                (theme.particleAlphaMin || 0.2),
+              0.05,
+            ),
+      }
+    }
+
+    function initializeParticles() {
+      const count = clamp(
+        Math.floor((viewportWidth * viewportHeight) / settings.particleDensity),
+        settings.minParticles,
+        settings.maxParticles,
+      )
+
+      particles = Array.from({ length: count }, createParticle)
+    }
+
+    function resizeCanvas() {
+      getSize()
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.floor(viewportWidth * dpr)
+      canvas.height = Math.floor(viewportHeight * dpr)
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+      initializeParticles()
+    }
+
+    function handlePointerMove(event) {
+      if (mountNode === document.body) {
+        mouse.x = event.clientX
+        mouse.y = event.clientY
+      } else {
+        const bounds = mountNode.getBoundingClientRect()
+        mouse.x = event.clientX - bounds.left
+        mouse.y = event.clientY - bounds.top
+      }
+
+      mouse.active = true
+    }
+
+    function resetPointer() {
+      mouse.x = -1000
+      mouse.y = -1000
+      mouse.active = false
+    }
+
+    function animate() {
+      context.clearRect(0, 0, viewportWidth, viewportHeight)
+
+      for (let i = 0; i < particles.length; i += 1) {
+        const particle = particles[i]
+
+        particle.x += particle.vx
+        particle.y += particle.vy
+
+        if (
+          particle.x <= particle.radius ||
+          particle.x >= viewportWidth - particle.radius
+        ) {
+          particle.vx *= -1
+        }
+
+        if (
+          particle.y <= particle.radius ||
+          particle.y >= viewportHeight - particle.radius
+        ) {
+          particle.vy *= -1
+        }
+
+        particle.x = clamp(
+          particle.x,
+          particle.radius,
+          viewportWidth - particle.radius,
+        )
+        particle.y = clamp(
+          particle.y,
+          particle.radius,
+          viewportHeight - particle.radius,
+        )
+
+        if (!reducedMotion && mouse.active) {
+          const mouseDx = mouse.x - particle.x
+          const mouseDy = mouse.y - particle.y
+          const mouseDistance = Math.hypot(mouseDx, mouseDy)
+
+          if (mouseDistance < settings.mouseConnectionDistance) {
+            particle.vx += mouseDx * settings.mouseInfluence
+            particle.vy += mouseDy * settings.mouseInfluence
+
+            const maxVelocity = settings.maxSpeed * 1.75
+            particle.vx = clamp(particle.vx, -maxVelocity, maxVelocity)
+            particle.vy = clamp(particle.vy, -maxVelocity, maxVelocity)
+          }
+        }
+
+        context.beginPath()
+        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
+        context.fillStyle = hexToRgba(particle.color, particle.alpha)
+        context.fill()
+
+        if (theme.coreOpacity) {
+          context.beginPath()
+          context.arc(
+            particle.x,
+            particle.y,
+            Math.max(0.55, particle.radius * 0.38),
+            0,
+            Math.PI * 2,
+          )
+          context.fillStyle = hexToRgba(
+            theme.coreColor || "#FFFFFF",
+            Math.min(1, theme.coreOpacity + particle.alpha * 0.18),
+          )
+          context.fill()
+        }
+
+        for (let j = i + 1; j < particles.length; j += 1) {
+          const sibling = particles[j]
+          const distance = Math.hypot(
+            particle.x - sibling.x,
+            particle.y - sibling.y,
+          )
+
+          if (distance < settings.connectionDistance) {
+            const opacity =
+              (1 - distance / settings.connectionDistance) *
+              (theme.connectionOpacity || 0.15)
+            context.beginPath()
+            context.moveTo(particle.x, particle.y)
+            context.lineTo(sibling.x, sibling.y)
+            context.strokeStyle = hexToRgba(theme.connectionColor, opacity)
+            context.lineWidth = theme.connectionWidth || 0.5
+            context.stroke()
+          }
+        }
+
+        if (mouse.active) {
+          const mouseDistance = Math.hypot(
+            particle.x - mouse.x,
+            particle.y - mouse.y,
+          )
+
+          if (
+            mouseDistance < settings.mouseConnectionDistance &&
+            (theme.mouseOpacity || 0) > 0
+          ) {
+            const opacity =
+              (1 - mouseDistance / settings.mouseConnectionDistance) *
+              (theme.mouseOpacity || 0.6)
+            const gradient = context.createLinearGradient(
+              particle.x,
+              particle.y,
+              mouse.x,
+              mouse.y,
+            )
+
+            gradient.addColorStop(0, hexToRgba(theme.mouseGradient[0], opacity))
+            gradient.addColorStop(1, hexToRgba(theme.mouseGradient[1], opacity))
+
+            context.beginPath()
+            context.moveTo(particle.x, particle.y)
+            context.lineTo(mouse.x, mouse.y)
+            context.strokeStyle = gradient
+            context.lineWidth = 1.5
+            context.stroke()
+          }
+        }
+      }
+
+      if (
+        mouse.active &&
+        settings.glowRadius > 0 &&
+        ((theme.glowAlphaStart || 0) > 0 || (theme.glowAlphaMid || 0) > 0)
+      ) {
+        const glow = context.createRadialGradient(
+          mouse.x,
+          mouse.y,
+          0,
+          mouse.x,
+          mouse.y,
+          settings.glowRadius,
+        )
+
+        glow.addColorStop(
+          0,
+          hexToRgba(theme.glowStops[0], theme.glowAlphaStart || 0.15),
+        )
+        glow.addColorStop(
+          0.5,
+          hexToRgba(theme.glowStops[1], theme.glowAlphaMid || 0.05),
+        )
+        glow.addColorStop(1, "rgba(0, 0, 0, 0)")
+
+        context.fillStyle = glow
+        context.fillRect(
+          mouse.x - settings.glowRadius,
+          mouse.y - settings.glowRadius,
+          settings.glowRadius * 2,
+          settings.glowRadius * 2,
+        )
+      }
+
+      animationFrame = window.requestAnimationFrame(animate)
     }
 
     function setTheme(nextTheme) {
-      theme = resolveTheme(nextTheme);
-      render();
+      theme = resolveTheme(nextTheme)
+      initializeParticles()
     }
 
     function destroy() {
-      destroyed = true;
-      window.clearTimeout(resizeTimer);
-      window.removeEventListener("resize", handleResize);
+      window.cancelAnimationFrame(animationFrame)
+      window.removeEventListener("resize", resizeCanvas)
+      window.removeEventListener("pointermove", handlePointerMove)
+      window.removeEventListener("pointerleave", resetPointer)
+      window.removeEventListener("blur", resetPointer)
 
-      if (layerA.parentNode) {
-        layerA.parentNode.removeChild(layerA);
-      }
-
-      if (layerB.parentNode) {
-        layerB.parentNode.removeChild(layerB);
+      if (canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas)
       }
     }
 
-    render();
-    window.requestAnimationFrame(render);
-    window.setTimeout(render, 120);
-    window.addEventListener("resize", handleResize, { passive: true });
+    resizeCanvas()
+    animate()
+
+    window.addEventListener("resize", resizeCanvas)
+    window.addEventListener("pointermove", handlePointerMove)
+    window.addEventListener("pointerleave", resetPointer)
+    window.addEventListener("blur", resetPointer)
 
     return {
       destroy: destroy,
       setTheme: setTheme,
-      canvas: layerA,
+      canvas: canvas,
       themes: cosmicThemes,
-      mode: "fast"
-    };
+    }
   }
 
   window.CosmicParticleNetwork = {
     create: createCosmicParticleNetwork,
     themes: cosmicThemes,
-    mode: "fast"
-  };
-})();
+  }
+})()

@@ -21,6 +21,43 @@ function ct_s(mixed $value): string
     return '';
 }
 
+/**
+ * @return array{user_id:int,user_group:array<string,bool>}
+ */
+function ct_regular_token_identity(): array
+{
+    $identity = ['user_id' => 0, 'user_group' => []];
+    $keyFile = (string)(Sogerien::$patch_to_cookies_keyFile ?? '');
+    if ($keyFile === '') {
+        return $identity;
+    }
+
+    $tokenReader = Sogerien::AccessToken();
+    $tokenReader->patch_to_keyFile = $keyFile;
+    $token = $tokenReader->load_token_for_cookie();
+    if (!$tokenReader->status || $token === '') {
+        return $identity;
+    }
+
+    $payload = $tokenReader->read_token($token);
+    if (!$tokenReader->status || !is_array($payload)) {
+        return $identity;
+    }
+
+    $identity['user_id'] = max((int)($payload['user_id'] ?? 0), 0);
+    $groups = $payload['user_group'] ?? [];
+    if (is_array($groups)) {
+        foreach ($groups as $group => $enabled) {
+            $group = trim((string)$group);
+            if ($group !== '' && $enabled) {
+                $identity['user_group'][$group] = true;
+            }
+        }
+    }
+
+    return $identity;
+}
+
 $request = Sogerien::InputRequest()->request_post_get_cookie_json;
 $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
 if ($dbAlias === '') {
@@ -31,7 +68,14 @@ $users = Sogerien::Users();
 $users->init_db_alias($dbAlias);
 $users->load_identity_from_token();
 $userId = (int)$users->user_id;
-if ($userId <= 0) {
+$regularIdentity = ct_regular_token_identity();
+$isAdmin = isset($regularIdentity['user_group']['admin']) || isset($users->user_group['admin']);
+$regularUserId = (int)$regularIdentity['user_id'];
+$actorUserId = $userId > 0 ? $userId : $regularUserId;
+if ($isAdmin && $regularUserId > 0) {
+    $actorUserId = $regularUserId;
+}
+if ($actorUserId <= 0) {
     $_GET['next'] = '/client/support/ticket';
     require __DIR__ . '/page_login_form.php';
     Sogerien::markDone();
@@ -47,9 +91,9 @@ $alertText = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $ticketId !== '') {
     $action = ct_s($request['action'] ?? 'reply');
     if ($action === 'close' || $action === 'reopen') {
-        $result = $tickets->set_status($ticketId, $action === 'close' ? 'closed' : 'open', $userId, false);
+        $result = $tickets->set_status($ticketId, $action === 'close' ? 'closed' : 'open', $actorUserId, $isAdmin);
     } else {
-        $result = $tickets->add_message($ticketId, $userId, 'user', ct_s($request['message'] ?? ''), false);
+        $result = $tickets->add_message($ticketId, $actorUserId, $isAdmin ? 'admin' : 'user', ct_s($request['message'] ?? ''), $isAdmin);
     }
     if (($result['ok'] ?? false) === true) {
         header('Location: /client/support/ticket?id=' . rawurlencode($ticketId));
@@ -60,7 +104,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $ticketId !== '') {
     $alertText = (string)($result['error'] ?? 'Action failed.');
 }
 
-$ticket = $tickets->get_ticket($ticketId, $userId, false);
+$ticket = $tickets->get_ticket($ticketId, $actorUserId, $isAdmin);
 
 Sogerien::Page()->title = 'Support Ticket';
 Sogerien::Page()->header();

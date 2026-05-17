@@ -144,7 +144,13 @@ sw_log_write('stripe webhook event parsed', [
     'event_type' => $eventType,
 ]);
 
-if ($eventType !== 'checkout.session.completed') {
+$supportedEvents = [
+    'checkout.session.completed' => true,
+    'payment_intent.succeeded' => true,
+    'payment_intent.payment_failed' => true,
+];
+
+if (!isset($supportedEvents[$eventType])) {
     sw_log_write('stripe webhook event ignored', [
         'event_id' => (string)($event['id'] ?? ''),
         'event_type' => $eventType,
@@ -164,7 +170,9 @@ if ($dbAlias === '') {
 $shop = new ProxyShop();
 $shop->init_db_alias($dbAlias);
 
-$result = $shop->finalize_checkout_by_event($event);
+$result = $eventType === 'checkout.session.completed'
+    ? $shop->finalize_checkout_by_event($event)
+    : $shop->handle_payment_intent_event($event);
 if (($result['ok'] ?? false) !== true) {
     sw_log_write('stripe webhook finalize failed', [
         'event_id' => (string)($event['id'] ?? ''),

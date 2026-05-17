@@ -43,7 +43,37 @@ $pageKey = match ($path) {
 
 $shop = new ProxyShop();
 $shop->init_db_alias($dbAlias);
+$request = Sogerien::InputRequest()->request_post_get_cookie_json;
+$alertType = '';
+$alertText = '';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $pageKey === 'access') {
+    $serviceId = cpo_s($request['service_id'] ?? '');
+    $action = cpo_s($request['action'] ?? '');
+    if ($serviceId !== '' && $action === 'generate_proxy_list') {
+        $result = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
+        if (($result['ok'] ?? false) === true) {
+            $alertType = 'success';
+            $alertText = 'Proxy access list generated.';
+        } else {
+            $alertType = 'danger';
+            $alertText = cpo_s($result['error'] ?? 'Action failed.');
+        }
+    }
+}
 $services = $shop->list_user_services($userId);
+$geoOptions = ['countries' => [], 'regions' => [], 'cities' => []];
+foreach ($services as $service) {
+    if (!is_array($service)) {
+        continue;
+    }
+    $options = $shop->infatica_access_geo_options(cpo_s($service['provider_pool_category'] ?? ''));
+    $geoOptions['countries'] = array_merge($geoOptions['countries'], $options['countries']);
+    $geoOptions['regions'] = array_merge($geoOptions['regions'], $options['regions']);
+    $geoOptions['cities'] = array_merge($geoOptions['cities'], $options['cities']);
+}
+ksort($geoOptions['countries']);
+asort($geoOptions['regions']);
+asort($geoOptions['cities']);
 
 $titles = [
     'traffic' => ['Traffic Usage', 'Usage, consumption speed placeholders and yearly traffic balance.'],
@@ -62,16 +92,35 @@ Sogerien::Page()->mainmenu();
         .pm-ops-head p{margin:0;color:rgb(100,116,139)}
         .pm-ops-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
         .pm-ops-stat{font-size:22px;font-weight:700}
+        .pm-ops-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
         .pm-access-card{border:1px solid rgba(148,163,184,.3);border-radius:8px;padding:12px;margin-bottom:10px}
-        @media(max-width:800px){.pm-ops-grid{grid-template-columns:1fr}.pm-ops-head{display:block}}
+        .pm-scraper-console{border:1px solid rgba(148,163,184,.35);border-radius:8px;background:#fff;overflow:hidden}
+        .pm-scraper-console-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:18px 20px;border-bottom:1px solid rgba(148,163,184,.28)}
+        .pm-scraper-console h2{margin:0 0 6px;font-size:24px;color:#0f172a}
+        .pm-scraper-console p{margin:0;color:#64748b}
+        .pm-scraper-modes{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .pm-scraper-modes span{border:1px solid rgba(37,99,235,.28);border-radius:6px;padding:5px 9px;font-size:12px;font-weight:700;color:#1d4ed8;background:#eff6ff}
+        .pm-scraper-flow{display:grid;grid-template-columns:1.2fr .8fr;gap:0}
+        .pm-scraper-pane{padding:18px 20px}
+        .pm-scraper-pane + .pm-scraper-pane{border-left:1px solid rgba(148,163,184,.28);background:#f8fafc}
+        .pm-scraper-kv{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:14px}
+        .pm-scraper-kv span{color:#64748b}
+        .pm-scraper-endpoint{display:block;margin-top:12px;padding:10px 12px;border:1px solid rgba(148,163,184,.35);border-radius:6px;background:#0f172a;color:#e2e8f0;white-space:normal;word-break:break-all}
+        @media(max-width:800px){.pm-ops-grid{grid-template-columns:1fr}.pm-ops-head{display:block}.pm-scraper-console-head{display:block}.pm-scraper-modes{justify-content:flex-start;margin-top:12px}.pm-scraper-flow{grid-template-columns:1fr}.pm-scraper-pane + .pm-scraper-pane{border-left:0;border-top:1px solid rgba(148,163,184,.28)}}
     </style>
     <div class="pm-ops-head">
         <div>
             <h1><?= cpo_h($titles[$pageKey][0]) ?></h1>
             <p><?= cpo_h($titles[$pageKey][1]) ?></p>
         </div>
-        <a class="btn btn-primary" href="/client/all_proxy">Order proxies</a>
+        <div class="pm-ops-head-actions">
+            <a class="btn btn-primary" href="/client/change-password">Change password</a>
+            <a class="btn btn-outline-primary" href="/client/all_proxy">Order proxies</a>
+        </div>
     </div>
+    <?php if ($alertText !== ''): ?>
+        <div class="alert alert-<?= cpo_h($alertType !== '' ? $alertType : 'info') ?>" role="alert"><?= cpo_h($alertText) ?></div>
+    <?php endif; ?>
 
     <?php if ($pageKey === 'traffic'): ?>
         <?php
@@ -117,7 +166,7 @@ Sogerien::Page()->mainmenu();
         ?>
     <?php elseif ($pageKey === 'access'): ?>
         <section class="card shadow-sm mb-3"><div class="card-header">Generate access</div><div class="card-body">
-            <form method="post" action="/client/my/proxies" class="row g-3 align-items-end">
+            <form method="post" action="/client/access-lists" class="row g-3 align-items-end">
                 <input type="hidden" name="action" value="generate_proxy_list">
                 <div class="col-md-4">
                     <label class="form-label" for="cpoServiceId">Service</label>
@@ -131,7 +180,7 @@ Sogerien::Page()->mainmenu();
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="cpoListName">List name</label>
-                    <input class="form-control" id="cpoListName" name="list_name" value="client-main-us">
+                    <input class="form-control" id="cpoListName" name="list_name" value="<?= (int)$userId ?>-ProxyMint-<?= cpo_h(date('Y-m-d')) ?>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="cpoAuthMode">Authorization</label>
@@ -154,15 +203,29 @@ Sogerien::Page()->mainmenu();
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoCountries">Countries</label>
-                    <input class="form-control" id="cpoCountries" name="countries" placeholder="US, DE, NL">
+                    <select class="form-select" id="cpoCountries" name="countries">
+                        <?php foreach (($geoOptions['countries'] ?? []) as $code => $label): ?>
+                            <option value="<?= cpo_h((string)$code) ?>"><?= cpo_h((string)$code . ' - ' . (string)$label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoRegion">Region</label>
-                    <input class="form-control" id="cpoRegion" name="region" placeholder="California">
+                    <select class="form-select" id="cpoRegion" name="region">
+                        <option value="">All regions</option>
+                        <?php foreach (($geoOptions['regions'] ?? []) as $region => $label): ?>
+                            <option value="<?= cpo_h((string)$region) ?>"><?= cpo_h((string)$label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoCity">City</label>
-                    <input class="form-control" id="cpoCity" name="city" placeholder="New York">
+                    <select class="form-select" id="cpoCity" name="city">
+                        <option value="">All cities</option>
+                        <?php foreach (($geoOptions['cities'] ?? []) as $city => $label): ?>
+                            <option value="<?= cpo_h((string)$city) ?>"><?= cpo_h((string)$label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoIsp">ISP</label>
@@ -229,14 +292,54 @@ Sogerien::Page()->mainmenu();
                                 cpo_s($list['zip'] ?? ''),
                             ]); ?>
                             <div><strong><?= cpo_h(cpo_s($list['name'] ?? '-')) ?></strong><div class="small text-muted"><?= cpo_h(implode(' / ', $targetBits)) ?> - rotation <?= cpo_h(cpo_s($list['rotation_period'] ?? '0')) ?></div></div>
-                            <div><code><?= cpo_h(cpo_s($list['login'] ?? '-')) ?>:<?= cpo_h(cpo_s($list['password'] ?? '-')) ?></code></div>
+                            <div class="d-flex gap-2 align-items-start flex-wrap">
+                                <code><?= cpo_h(cpo_s($list['login'] ?? '-')) ?>:<?= cpo_h(cpo_s($list['password'] ?? '-')) ?></code>
+                                <?php $detailId = 'cpoAccessDetails' . preg_replace('/[^A-Za-z0-9_:-]/', '', cpo_s($list['vendor_list_id'] ?? $list['id'] ?? md5(cpo_s($list['name'] ?? '')))); ?>
+                                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#<?= cpo_h($detailId) ?>">Details</button>
+                            </div>
+                        </div>
+                        <div class="collapse mt-2" id="<?= cpo_h($detailId) ?>">
+                            <?php
+                            $host = cpo_s($service['connection_host'] ?? '');
+                            $port = cpo_s($service['connection_port'] ?? '');
+                            $login = cpo_s($list['login'] ?? '');
+                            $password = cpo_s($list['password'] ?? '');
+                            $details = 'http://' . $login . ':' . $password . '@' . $host . ':' . $port . "\n"
+                                . 'socks5://' . $login . ':' . $password . '@' . $host . ':' . $port . "\n"
+                                . $host . ':' . $port . ':' . $login . ':' . $password;
+                            ?>
+                            <pre class="mb-0 small"><?= cpo_h($details) ?></pre>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div></section>
         <?php endforeach; ?>
     <?php else: ?>
-        <section class="card shadow-sm mb-3"><div class="card-header">Scraper gateway test</div><div class="card-body">
+        <section class="pm-scraper-console mb-3">
+            <div class="pm-scraper-console-head">
+                <div>
+                    <h2>Scraper playground</h2>
+                    <p>Gateway test console for scraping modes without exposing provider keys.</p>
+                </div>
+                <div class="pm-scraper-modes">
+                    <span>URL scrape</span><span>JS render</span><span>SERP</span><span>AI search</span>
+                </div>
+            </div>
+            <div class="pm-scraper-flow">
+                <div class="pm-scraper-pane">
+                    <div class="pm-scraper-kv">
+                        <span>Route</span><strong>Client - ProxyMint gateway - Infatica API</strong>
+                        <span>Auth</span><strong>Client API key only</strong>
+                        <span>Billing</span><strong>Successful requests</strong>
+                    </div>
+                </div>
+                <div class="pm-scraper-pane">
+                    <div class="small text-muted">Endpoint</div>
+                    <code class="pm-scraper-endpoint">POST /client/scraper/playground</code>
+                </div>
+            </div>
+        </section>
+        <section class="card shadow-sm mb-3"><div class="card-header">Gateway request</div><div class="card-body">
             <?php
             $form = new Forms(['id' => 'scraper_playground_form', 'action' => '/client/scraper/playground', 'method' => 'POST', 'ajax' => false]);
             $form->addSelect('mode', 'Mode', [
@@ -253,7 +356,7 @@ Sogerien::Page()->mainmenu();
             $form->render();
             ?>
         </div></section>
-        <section class="card shadow-sm"><div class="card-body text-muted">Client keys are not exposed here. Correct production flow is client - ProxyMint gateway - Infatica scraper API.</div></section>
+        <section class="card shadow-sm"><div class="card-body text-muted">Client keys are not exposed here. Production flow: client - ProxyMint gateway - Infatica scraper API.</div></section>
     <?php endif; ?>
 </main>
 <?php

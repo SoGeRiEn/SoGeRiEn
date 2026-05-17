@@ -57,7 +57,10 @@ final class SupportTickets
                 'created_at' => $now,
             ]],
         ];
-        $this->insert_row('support_ticket', $ticketId, $subject, $ticket);
+        $inserted = $this->insert_row('support_ticket', $ticketId, $subject, $ticket);
+        if (!$inserted) {
+            return ['ok' => false, 'error' => 'Ticket was not saved.'];
+        }
         return ['ok' => true, 'ticket_id' => $ticketId];
     }
 
@@ -221,22 +224,24 @@ final class SupportTickets
             )
         ", []);
         $this->sql("CREATE INDEX IF NOT EXISTS sogerien_support_ticket_idx ON sogerien (table_name, table_index)", []);
+        $this->sql("CREATE INDEX IF NOT EXISTS sogerien_support_ticket_ticket_id_idx ON sogerien ((table_value->>'ticket_id')) WHERE table_name = 'support_ticket'", []);
     }
 
     /**
      * @param array<string,mixed> $value
      */
-    private function insert_row(string $table_name, string $table_index, string $name, array $value): void
+    private function insert_row(string $table_name, string $table_index, string $name, array $value): bool
     {
-        $this->sql("
+        $resp = $this->sql("
             INSERT INTO sogerien (table_name, table_index, name, status, table_value, created_at, updated_at)
-            VALUES (:table_name, :table_index, :name, 'active', :table_value::jsonb, now(), now())
+            VALUES (:table_name, to_jsonb(:table_index::text), :name, 'active', :table_value::jsonb, now(), now())
         ", [
             'table_name' => $table_name,
             'table_index' => $table_index,
             'name' => $name,
             'table_value' => $value,
         ]);
+        return ($resp['result'] ?? false) === true && (int)($resp['rowCount'] ?? 0) > 0;
     }
 
     /**
@@ -249,7 +254,12 @@ final class SupportTickets
             SET table_value = :table_value::jsonb, updated_at = now()
             WHERE id = (
                 SELECT id FROM sogerien
-                WHERE table_name = :table_name AND table_index = :table_index AND status <> 'delete'
+                WHERE table_name = :table_name
+                  AND status <> 'delete'
+                  AND (
+                      table_index = to_jsonb(:table_index::text)
+                      OR table_value->>'ticket_id' = :table_index
+                  )
                 ORDER BY id DESC
                 LIMIT 1
             )
@@ -268,7 +278,12 @@ final class SupportTickets
         $resp = $this->sql("
             SELECT table_value
             FROM sogerien
-            WHERE table_name = :table_name AND table_index = :table_index AND status <> 'delete'
+            WHERE table_name = :table_name
+              AND status <> 'delete'
+              AND (
+                  table_index = to_jsonb(:table_index::text)
+                  OR table_value->>'ticket_id' = :table_index
+              )
             ORDER BY id DESC
             LIMIT 1
         ", ['table_name' => $table_name, 'table_index' => $table_index]);

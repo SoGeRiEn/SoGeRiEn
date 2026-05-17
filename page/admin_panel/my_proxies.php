@@ -58,13 +58,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
     $serviceId = mp_s($request['service_id'] ?? '');
     $action = mp_s($request['action'] ?? '');
     if ($serviceId !== '' && $action !== '') {
-        $actionResult = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
-        if (($actionResult['ok'] ?? false) === true) {
-            $alertType = 'success';
-            $alertText = 'Action completed.';
-        } else {
+        if ($action === 'add_traffic' || $action === 'set_traffic_limit') {
             $alertType = 'danger';
-            $alertText = (string)($actionResult['error'] ?? 'Action failed.');
+            $alertText = 'Traffic is added only through purchase or admin panel.';
+        } else {
+            $actionResult = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
+            if (($actionResult['ok'] ?? false) === true) {
+                $alertType = 'success';
+                $alertText = 'Action completed.';
+            } else {
+                $alertType = 'danger';
+                $alertText = (string)($actionResult['error'] ?? 'Action failed.');
+            }
         }
     }
 }

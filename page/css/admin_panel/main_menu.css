@@ -589,6 +589,143 @@ body.pm-theme-midnight .pm-topbar .pm-pill-btn[data-pm-theme="midnight"] {
     color: var(--danger);
 }
 
+.pm-client-add-funds,
+.pm-client-icon-btn,
+.pm-client-account-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.pm-client-add-funds {
+    padding: 9px 15px;
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+    color: var(--accent);
+}
+
+.pm-client-balance {
+    min-height: 42px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding: 6px 13px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+    line-height: 1.1;
+}
+
+.pm-client-balance span,
+.pm-client-account-copy span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.pm-client-balance strong,
+.pm-client-account-copy strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 900;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pm-client-icon-btn {
+    width: 42px;
+    padding: 0;
+}
+
+.pm-client-account-btn {
+    gap: 10px;
+    padding: 6px 12px 6px 8px;
+    max-width: 230px;
+}
+
+.pm-client-avatar {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--accent-text);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.pm-client-account-copy {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.05;
+    min-width: 0;
+}
+
+.pm-client-account-copy span {
+    display: none;
+}
+
+.pm-client-account-copy strong {
+    max-width: 170px;
+}
+
+.pm-client-account-menu {
+    width: 260px;
+    padding: 8px;
+}
+
+.pm-client-mini-menu {
+    width: 240px;
+    padding: 10px;
+}
+
+.dropdown-menu .pm-client-account-item {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pm-client-menu-icon {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.pm-client-empty {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pm-client-logout {
+    color: var(--danger);
+}
+
 .pm-icon-btn {
     width: 42px;
     height: 42px;
@@ -709,5 +846,13 @@ body.pm-theme-midnight .pm-topbar .pm-pill-btn[data-pm-theme="midnight"] {
 
     .pm-lang-dropdown .pm-lang-dd-toggle {
         max-width: 180px;
+    }
+
+    .pm-client-balance {
+        display: none;
+    }
+
+    .pm-client-account-copy strong {
+        max-width: 110px;
     }
 }

@@ -55,6 +55,18 @@ $users->load_identity_from_token();
 $buyerUserId = (int)$users->user_id;
 $infaticaApi = Sogerien::API()->InfaticaIo()->Catalog();
 $pricing = $infaticaApi->retail_pricing();
+$shop = new ProxyShop();
+$shop->init_db_alias($dbAlias);
+$usedTrialCategories = [];
+foreach ($shop->list_user_services($buyerUserId) as $service) {
+    if (!is_array($service) || pli_s($service['is_trial'] ?? '') !== '1') {
+        continue;
+    }
+    $trialCategory = strtolower(pli_s($service['provider_pool_category'] ?? ''));
+    if ($trialCategory !== '') {
+        $usedTrialCategories[$trialCategory] = true;
+    }
+}
 $requestPath = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
 $onlyCategory = $requestPath === 'proxies/mobile_proxy' ? 'mobile' : '';
 $planCountryOptions = [
@@ -62,15 +74,17 @@ $planCountryOptions = [
     'residential_ipv6' => ['BR' => 'Brazil', 'CA' => 'Canada', 'CO' => 'Colombia', 'ES' => 'Spain', 'FR' => 'France', 'GB' => 'United Kingdom', 'RU' => 'Russia', 'UA' => 'Ukraine', 'US' => 'United States'],
     'mobile' => ['CN' => 'China', 'IN' => 'India', 'IT' => 'Italy', 'KZ' => 'Kazakhstan', 'MY' => 'Malaysia', 'PL' => 'Poland', 'RU' => 'Russia', 'SA' => 'Saudi Arabia', 'US' => 'United States'],
     'isp' => ['AT' => 'Austria', 'BR' => 'Brazil', 'CA' => 'Canada', 'FR' => 'France', 'JP' => 'Japan', 'LV' => 'Latvia', 'RO' => 'Romania', 'UA' => 'Ukraine'],
+    'dc' => ['BR' => 'Brazil', 'CA' => 'Canada', 'DE' => 'Germany', 'FR' => 'France', 'GB' => 'United Kingdom', 'NL' => 'Netherlands', 'US' => 'United States'],
+    'dc_shared' => ['BR' => 'Brazil', 'CA' => 'Canada', 'DE' => 'Germany', 'FR' => 'France', 'GB' => 'United Kingdom', 'NL' => 'Netherlands', 'US' => 'United States'],
 ];
 $trialPlans = $infaticaApi->trial_retail_pricing();
-$visibleCategories = ['residential', 'residential_ipv6', 'mobile', 'isp'];
+$visibleCategories = ['residential', 'residential_ipv6', 'mobile', 'isp', 'dc', 'dc_shared'];
 if ($onlyCategory !== '') {
     $visibleCategories = [$onlyCategory];
 }
 $planGroups = [];
 foreach ($visibleCategories as $category) {
-    if (isset($trialPlans[$category])) {
+    if (isset($trialPlans[$category]) && !isset($usedTrialCategories[$category])) {
         $trial = $trialPlans[$category];
         $planGroups[] = [
             'category' => $category,

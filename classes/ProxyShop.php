@@ -78,7 +78,7 @@ final class ProxyShop
     {
         $category = strtolower($this->str($category));
         $plans = [];
-        if (in_array($category, ['mobile', 'residential', 'residential_ipv6'], true)) {
+        if (in_array($category, ['mobile', 'residential', 'residential_ipv6', 'dc_shared'], true)) {
             $api = Sogerien::API()->InfaticaIo()->Catalog();
             $trial = $api->trial_retail_pricing();
             $trialCost = $api->trial_cost_pricing();
@@ -264,7 +264,7 @@ final class ProxyShop
     private function verify_infatica_tariff_item(array $rawItem): ?array
     {
         $category = strtolower($this->str($rawItem['category'] ?? $rawItem['proxy_category'] ?? ''));
-        if (!in_array($category, ['mobile', 'residential', 'residential_ipv6'], true)) {
+        if (!in_array($category, ['mobile', 'residential', 'residential_ipv6', 'dc_shared'], true)) {
             return null;
         }
         $traffic = $this->money_float($rawItem['traffic'] ?? $rawItem['traffic_limitation'] ?? 0);
@@ -523,11 +523,180 @@ final class ProxyShop
         $order['services'] = $services;
         $this->update_json_row('proxy_order', $order_id, $order);
 
-        foreach ($services as $service) {
+        foreach ($services as &$service) {
+            if ($this->merge_traffic_service_if_possible((int)($order['user_id'] ?? 0), $service)) {
+                continue;
+            }
             $this->insert_row('proxy_service', (string)$service['service_id'], (string)$service['title'], $service);
         }
+        unset($service);
 
         return ['ok' => true, 'services' => $services];
+    }
+
+    /**
+     * Charge saved Stripe default card without bringing the client back to Checkout.
+     *
+     * @param array<string,mixed> $metadata
+     * @return array<string,mixed>
+     */
+    public function charge_user_default_method(
+        int $user_id,
+        int $amount_cents,
+        string $currency = 'usd',
+        string $reason = 'auto_renewal',
+        array $metadata = []
+    ): array {
+        if ($user_id <= 0) {
+            return ['ok' => false, 'error' => 'user_id is required'];
+        }
+        if ($amount_cents <= 0) {
+            return ['ok' => false, 'error' => 'amount_cents must be > 0'];
+        }
+
+        $currency = strtolower(trim($currency));
+        if (preg_match('/^[a-z]{3}$/', $currency) !== 1) {
+            return ['ok' => false, 'error' => 'currency must be 3-letter ISO code'];
+        }
+
+        $billing = $this->user_billing_profile($user_id);
+        if (($billing['ok'] ?? false) !== true) {
+            return $billing;
+        }
+
+        $attemptId = 'pat_' . date('YmdHis') . '_' . bin2hex(random_bytes(5));
+        $idempotencyKey = $this->str($metadata['idempotency_key'] ?? '');
+        if ($idempotencyKey === '') {
+            $idempotencyKey = 'charge_' . $attemptId;
+        }
+
+        $baseAttempt = [
+            'attempt_id' => $attemptId,
+            'user_id' => $user_id,
+            'stripe_customer_id' => $billing['stripe_customer_id'],
+            'payment_method_id' => $billing['payment_method_id'],
+            'amount_cents' => $amount_cents,
+            'amount_usd' => number_format($amount_cents / 100, 2, '.', ''),
+            'currency' => strtoupper($currency),
+            'reason' => $reason,
+            'status' => 'pending',
+            'idempotency_key' => $idempotencyKey,
+            'metadata' => $metadata,
+            'created_at' => date('c'),
+            'updated_at' => date('c'),
+        ];
+        $this->insert_row('payment_attempt', $attemptId, 'Payment attempt ' . $attemptId, $baseAttempt);
+
+        $stripe = Sogerien::API()->Stripe();
+        $stripe->debug_enabled = false;
+        $stripe->set_api_key(defined('STRIPE_LIVE_SECRET_KEY_LLC') ? (string)STRIPE_LIVE_SECRET_KEY_LLC : '');
+
+        $stripeMetadata = array_merge($metadata, [
+            'attempt_id' => $attemptId,
+            'user_id' => (string)$user_id,
+            'reason' => $reason,
+            'source' => 'proxymint_off_session',
+        ]);
+
+        $paymentIntent = $stripe->create_payment_intent($amount_cents, $currency, [
+            'customer' => $billing['stripe_customer_id'],
+            'payment_method' => $billing['payment_method_id'],
+            'off_session' => 'true',
+            'confirm' => 'true',
+            'description' => 'ProxyMint ' . $reason,
+            'metadata' => $stripeMetadata,
+        ], $idempotencyKey);
+
+        if (!is_array($paymentIntent)) {
+            $failedAttempt = $baseAttempt;
+            $failedAttempt['status'] = 'failed';
+            $failedAttempt['failure_category'] = $this->stripe_failure_category($stripe->last_error_code, $stripe->last_error_decline_code);
+            $failedAttempt['stripe_error'] = $this->stripe_error_snapshot($stripe);
+            $failedAttempt['updated_at'] = date('c');
+
+            $errorIntentId = $this->payment_intent_id_from_stripe_error($stripe->last_response_raw);
+            if ($errorIntentId !== '') {
+                $failedAttempt['payment_intent_id'] = $errorIntentId;
+            }
+
+            $this->update_json_row('payment_attempt', $attemptId, $failedAttempt);
+            return [
+                'ok' => false,
+                'attempt_id' => $attemptId,
+                'payment_intent_id' => $errorIntentId,
+                'status' => 'failed',
+                'failure_category' => $failedAttempt['failure_category'],
+                'error' => $stripe->last_error_message !== '' ? $stripe->last_error_message : ($stripe->error !== '' ? $stripe->error : 'Stripe charge failed'),
+                'stripe_error' => $failedAttempt['stripe_error'],
+            ];
+        }
+
+        $status = $this->str($paymentIntent['status'] ?? '');
+        $paymentIntentId = $this->str($paymentIntent['id'] ?? '');
+        $attempt = $baseAttempt;
+        $attempt['payment_intent_id'] = $paymentIntentId;
+        $attempt['status'] = $this->payment_intent_attempt_status($status);
+        $attempt['stripe_status'] = $status;
+        $attempt['stripe_payment_intent'] = $paymentIntent;
+        $attempt['updated_at'] = date('c');
+        $this->update_json_row('payment_attempt', $attemptId, $attempt);
+
+        return [
+            'ok' => $attempt['status'] === 'succeeded',
+            'attempt_id' => $attemptId,
+            'payment_intent_id' => $paymentIntentId,
+            'status' => $attempt['status'],
+            'stripe_status' => $status,
+            'payment_intent' => $paymentIntent,
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $event
+     * @return array<string,mixed>
+     */
+    public function handle_payment_intent_event(array $event): array
+    {
+        $eventType = $this->str($event['type'] ?? '');
+        $object = $event['data']['object'] ?? null;
+        if (!is_array($object)) {
+            return ['ok' => false, 'error' => 'Stripe event object is missing'];
+        }
+
+        $paymentIntentId = $this->str($object['id'] ?? '');
+        if ($paymentIntentId === '') {
+            return ['ok' => false, 'error' => 'payment_intent_id is missing'];
+        }
+
+        $attempt = $this->load_one('payment_attempt', $paymentIntentId);
+        if (!is_array($attempt)) {
+            return ['ok' => true, 'ignored' => true, 'error' => 'Payment attempt not found'];
+        }
+
+        $attempt['payment_intent_id'] = $paymentIntentId;
+        $attempt['stripe_status'] = $this->str($object['status'] ?? '');
+        $attempt['stripe_payment_intent'] = $object;
+        $attempt['stripe_event_id'] = $this->str($event['id'] ?? '');
+        $attempt['stripe_event_type'] = $eventType;
+        $attempt['updated_at'] = date('c');
+
+        if ($eventType === 'payment_intent.succeeded') {
+            $attempt['status'] = 'succeeded';
+            $attempt['paid_at'] = date('c');
+        } elseif ($eventType === 'payment_intent.payment_failed') {
+            $attempt['status'] = 'failed';
+            $error = isset($object['last_payment_error']) && is_array($object['last_payment_error']) ? $object['last_payment_error'] : [];
+            $attempt['failure_category'] = $this->stripe_failure_category(
+                $this->str($error['code'] ?? ''),
+                $this->str($error['decline_code'] ?? '')
+            );
+            $attempt['stripe_error'] = $error;
+        } else {
+            $attempt['status'] = $this->payment_intent_attempt_status($this->str($object['status'] ?? ''));
+        }
+
+        $this->update_json_row('payment_attempt', $paymentIntentId, $attempt);
+        return ['ok' => true, 'attempt_id' => $this->str($attempt['attempt_id'] ?? ''), 'status' => $this->str($attempt['status'] ?? '')];
     }
 
     /**
@@ -539,7 +708,7 @@ final class ProxyShop
             return [];
         }
         $resp = $this->sql("
-            SELECT table_value
+            SELECT table_index, table_value, created_at, updated_at
             FROM sogerien
             WHERE table_name = 'proxy_service'
               AND status <> 'delete'
@@ -551,7 +720,11 @@ final class ProxyShop
         $rows = [];
         foreach (($resp['rows'] ?? []) as $row) {
             if (isset($row['table_value']) && is_array($row['table_value'])) {
-                $rows[] = $row['table_value'];
+                $value = $row['table_value'];
+                if ($this->str($value['service_id'] ?? '') === '') {
+                    $value['service_id'] = $this->normalize_table_index($row['table_index'] ?? '');
+                }
+                $rows[] = $value;
             }
         }
         return $rows;
@@ -563,14 +736,31 @@ final class ProxyShop
     public function list_all_services(): array
     {
         $resp = $this->sql("
-            SELECT table_value
+            SELECT table_index, table_value
             FROM sogerien
             WHERE table_name = 'proxy_service'
               AND status <> 'delete'
             ORDER BY updated_at DESC
             LIMIT 5000
         ", []);
-        return $this->extract_value_rows($resp);
+        $rows = [];
+        foreach (($resp['rows'] ?? []) as $row) {
+            if (!isset($row['table_value']) || !is_array($row['table_value'])) {
+                continue;
+            }
+            $value = $row['table_value'];
+            if ($this->str($value['service_id'] ?? '') === '') {
+                $value['service_id'] = $this->normalize_table_index($row['table_index'] ?? '');
+            }
+            if ($this->str($value['created_at'] ?? '') === '') {
+                $value['created_at'] = $this->str($row['created_at'] ?? '');
+            }
+            if ($this->str($value['updated_at'] ?? '') === '') {
+                $value['updated_at'] = $this->str($row['updated_at'] ?? '');
+            }
+            $rows[] = $value;
+        }
+        return $rows;
     }
 
     /**
@@ -847,6 +1037,43 @@ final class ProxyShop
     }
 
     /**
+     * @return array{countries:array<string,string>,regions:array<string,string>,cities:array<string,string>}
+     */
+    public function infatica_access_geo_options(string $category): array
+    {
+        $category = strtolower($this->str($category));
+        if (!in_array($category, ['mobile', 'residential', 'residential_ipv6', 'isp', 'dc'], true)) {
+            $category = 'residential';
+        }
+
+        $cacheFile = 'infatica/access_geo_' . $category . '.json';
+        $cache = Sogerien::Cache();
+        $updatedAt = 0;
+        if (!$cache->is_interval_elapsed($cacheFile, 30 * 86400)) {
+            $cached = $cache->load($cacheFile, $updatedAt);
+            if (is_array($cached)) {
+                return $this->normalize_access_geo_options($cached, $category);
+            }
+        }
+
+        $raw = null;
+        try {
+            $api = Sogerien::API()->InfaticaIo()->Catalog()->core();
+            $raw = $api->client_geo_nodes($category === 'mobile', $category === 'dc', $category === 'residential_ipv6');
+        } catch (Throwable) {
+            $raw = null;
+        }
+
+        $options = $this->normalize_access_geo_options(is_array($raw) ? $raw : [], $category);
+        if ($options['countries'] === []) {
+            $options = $this->fallback_access_geo_options($category);
+        }
+        $cache->save($options, $cacheFile, time());
+
+        return $options;
+    }
+
+    /**
      * @return array<string,mixed>|null
      */
     public function get_order_value(string $order_id): ?array
@@ -875,6 +1102,11 @@ final class ProxyShop
             'deactivate' => true,
             'add_traffic' => true,
             'set_traffic_limit' => true,
+            'prolongate' => true,
+            'update_proxy_list' => true,
+            'regenerate_proxy_password' => true,
+            'view_proxy_list' => true,
+            'api_tool_access' => true,
             'cancel' => true,
             'uncancel' => true,
         ];
@@ -931,6 +1163,17 @@ final class ProxyShop
                 if ($expiresAt !== '') {
                     $service['expires_at'] = $expiresAt;
                 }
+            } elseif ($action === 'prolongate') {
+                $expiresAt = $this->str($request['expires_at'] ?? '');
+                if ($expiresAt === '') {
+                    return ['ok' => false, 'error' => 'Expiration date is required.'];
+                }
+                $api = $this->traffic_provider_api($service);
+                if (!is_object($api) || !method_exists($api, 'prolongate')) {
+                    return ['ok' => false, 'error' => 'Prolongation is not supported for this service type.'];
+                }
+                $apiResult = $api->prolongate($packageKey, $expiresAt);
+                $service['expires_at'] = $expiresAt;
             } elseif ($action === 'refresh_traffic') {
                 $apiResult = $this->refresh_service_traffic($service);
             } elseif ($action === 'generate_proxy_list') {
@@ -1013,6 +1256,57 @@ final class ProxyShop
                     }
                     unset($list);
                 }
+            } elseif ($action === 'update_proxy_list') {
+                $api = $this->traffic_provider_api($service);
+                if (!is_object($api) || !method_exists($api, 'update_access')) {
+                    return ['ok' => false, 'error' => 'Access list update is not supported for this service type.'];
+                }
+                $listId = $this->str($request['list_id'] ?? '');
+                $listName = $this->str($request['list_name'] ?? $request['name'] ?? '');
+                if ($listId === '' && $listName === '') {
+                    return ['ok' => false, 'error' => 'Access list id or name is required.'];
+                }
+                $accessOptions = $this->proxy_access_options_from_request($request, $service);
+                if ($listName === '') {
+                    $listName = $this->str($accessOptions['list_name'] ?? '');
+                }
+                $apiResult = $api->update_access($packageKey, $listId, $listName, $accessOptions);
+                if (isset($service['proxy_lists']) && is_array($service['proxy_lists'])) {
+                    foreach ($service['proxy_lists'] as &$list) {
+                        if (!is_array($list)) {
+                            continue;
+                        }
+                        $currentId = $this->str($list['vendor_list_id'] ?? $list['id'] ?? '');
+                        $currentName = $this->str($list['name'] ?? '');
+                        if (($listId !== '' && $currentId === $listId) || ($listName !== '' && $currentName === $listName)) {
+                            $list = array_merge($list, $accessOptions);
+                            $list['updated_at'] = date('c');
+                            $list['update_response'] = $apiResult;
+                            break;
+                        }
+                    }
+                    unset($list);
+                }
+            } elseif ($action === 'regenerate_proxy_password') {
+                $api = $this->traffic_provider_api($service);
+                if (!is_object($api) || !method_exists($api, 'regenerate_access_password')) {
+                    return ['ok' => false, 'error' => 'Password regeneration is not supported for this service type.'];
+                }
+                $listId = $this->str($request['list_id'] ?? '');
+                $listName = $this->str($request['list_name'] ?? '');
+                $apiResult = $api->regenerate_access_password($packageKey, $listId, $listName);
+            } elseif ($action === 'view_proxy_list') {
+                $api = $this->traffic_provider_api($service);
+                if (!is_object($api) || !method_exists($api, 'view_access')) {
+                    return ['ok' => false, 'error' => 'Access list view is not supported for this service type.'];
+                }
+                $apiResult = $api->view_access($packageKey, $this->str($request['list_id'] ?? ''), $this->str($request['list_name'] ?? ''));
+            } elseif ($action === 'api_tool_access') {
+                $api = $this->traffic_provider_api($service);
+                if (!is_object($api) || !method_exists($api, 'api_tool_access')) {
+                    return ['ok' => false, 'error' => 'API tool access is not supported for this service type.'];
+                }
+                $apiResult = $api->api_tool_access($packageKey, $this->proxy_access_options_from_request($request, $service));
             } else {
                 $apiResult = ['local' => true, 'message' => 'Action is stored but provider endpoint is not mapped.'];
             }
@@ -1020,6 +1314,354 @@ final class ProxyShop
         $service['last_action'] = ['action' => $action, 'at' => date('c'), 'response' => $apiResult];
         $this->update_json_row('proxy_service', $service_id, $service);
         return ['ok' => true, 'response' => $apiResult];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    public function admin_provider_action(int $adminUserId, array $request): array
+    {
+        $action = $this->str($request['action'] ?? '');
+        $result = ['ok' => false, 'error' => 'Unknown admin action.'];
+
+        if ($action === 'admin_service_action') {
+            $serviceId = $this->str($request['service_id'] ?? '');
+            $service = $this->load_one('proxy_service', $serviceId);
+            if (!is_array($service)) {
+                $result = ['ok' => false, 'error' => 'Service not found.'];
+            } else {
+                $result = $this->service_action((int)($service['user_id'] ?? 0), $serviceId, $this->str($request['provider_action'] ?? ''), $request);
+            }
+        } elseif ($action === 'create_traffic_package') {
+            $result = $this->admin_create_traffic_package($request);
+        } elseif ($action === 'create_static_package') {
+            $result = $this->admin_create_static_package($request);
+        } elseif ($action === 'provider_balance') {
+            $result = $this->admin_provider_balance($this->str($request['category'] ?? 'mobile'));
+        } elseif ($action === 'provider_catalog') {
+            $result = $this->admin_provider_catalog($this->str($request['category'] ?? 'mobile'), $this->str($request['catalog_method'] ?? 'geos'), $request);
+        } elseif ($action === 'ip_block_check' || $action === 'ip_unblock') {
+            $ipAction = $this->str($request['block_action'] ?? $action);
+            $result = $this->admin_ip_block_action($ipAction === 'ip_unblock' ? 'ip_unblock' : 'ip_block_check', $request);
+        } elseif ($action === 'scraper_test') {
+            $result = $this->admin_scraper_test($request);
+        } elseif ($action === 'proxy_test') {
+            $result = $this->admin_proxy_test($request);
+        } elseif ($action === 'integration_snippet') {
+            $result = $this->admin_integration_snippet($request);
+        } elseif ($action === 'client_api_diagnostics') {
+            $result = $this->admin_client_api_diagnostics($request);
+        } elseif ($action === 'raw_api') {
+            $result = $this->admin_raw_api($request);
+        }
+
+        $this->write_provider_audit($adminUserId, $action, $request, $result);
+        return $result;
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    public function provider_audit_log(int $limit = 50): array
+    {
+        $limit = max(1, min(200, $limit));
+        $resp = $this->sql("
+            SELECT table_value
+            FROM sogerien
+            WHERE table_name = 'provider_api_audit' AND status <> 'delete'
+            ORDER BY id DESC
+            LIMIT " . $limit, []);
+        return $this->extract_value_rows($resp);
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_create_traffic_package(array $request): array
+    {
+        $category = $this->service_category($request);
+        if (!in_array($category, ['mobile', 'residential', 'residential_ipv6'], true)) {
+            return ['ok' => false, 'error' => 'Traffic packages support only mobile/residential/residential_ipv6.'];
+        }
+        $gb = $this->money_float($request['traffic_gb'] ?? $request['limit_gb'] ?? 0);
+        $expiresAt = $this->str($request['expires_at'] ?? '');
+        if ($gb <= 0.0 || $expiresAt === '') {
+            return ['ok' => false, 'error' => 'Traffic GB and expiration date are required.'];
+        }
+
+        $api = $this->traffic_provider_api(['provider_pool_category' => $category]);
+        if (!is_object($api) || !method_exists($api, 'create_package_gib')) {
+            return ['ok' => false, 'error' => 'Provider create package is not available.'];
+        }
+
+        $raw = $api->create_package_gib($gb, $expiresAt);
+        $packageKey = is_array($raw) ? $this->extract_package_key($raw) : '';
+        $serviceId = $this->str($request['service_id'] ?? '');
+        $userId = (int)$this->str($request['client_user_id'] ?? $request['user_id'] ?? 0);
+        if ($serviceId !== '') {
+            $service = $this->load_one('proxy_service', $serviceId);
+            if (is_array($service)) {
+                $service['vendor_package_key'] = $packageKey;
+                $service['vendor_package_pid'] = $packageKey;
+                $service['provider_pool_category'] = $category;
+                $service['traffic_total_gb'] = number_format($gb, 2, '.', '');
+                $service['traffic_remaining_gb'] = number_format($gb, 2, '.', '');
+                $service['expires_at'] = $expiresAt;
+                $service['status'] = $packageKey !== '' ? 'active' : 'provider_failed';
+                $service['provider_raw_json'] = $raw;
+                $service['updated_at'] = date('c');
+                $this->update_json_row('proxy_service', $serviceId, $service);
+            }
+        } elseif ($userId > 0) {
+            $serviceId = 'svc_' . bin2hex(random_bytes(8));
+            $service = [
+                'service_id' => $serviceId,
+                'order_id' => 'admin_' . bin2hex(random_bytes(6)),
+                'user_id' => $userId,
+                'provider' => 'infatica_io',
+                'provider_pool_category' => $category,
+                'vendor_package_key' => $packageKey,
+                'vendor_package_pid' => $packageKey,
+                'title' => $this->str($request['title'] ?? 'Admin issued ' . $category . ' package'),
+                'country' => strtoupper($this->first_country($request['country'] ?? '')),
+                'status' => $packageKey !== '' ? 'active' : 'provider_failed',
+                'traffic_total_gb' => number_format($gb, 2, '.', ''),
+                'traffic_used_gb' => '0.00',
+                'traffic_remaining_gb' => number_format($gb, 2, '.', ''),
+                'traffic_remains' => number_format($gb, 2, '.', '') . ' GB',
+                'expires_at' => $expiresAt,
+                'provider_raw_json' => $raw,
+                'created_at' => date('c'),
+            ];
+            $this->insert_row('proxy_service', $serviceId, $service['title'], $service);
+        }
+
+        return ['ok' => $packageKey !== '', 'package_key' => $packageKey, 'service_id' => $serviceId, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_create_static_package(array $request): array
+    {
+        $category = $this->service_category($request);
+        if (!in_array($category, ['isp', 'dc'], true)) {
+            return ['ok' => false, 'error' => 'Static package supports only ISP/DC.'];
+        }
+        $country = strtoupper($this->first_country($request['country'] ?? ''));
+        $count = max(1, (int)$this->money_float($request['ip_count'] ?? $request['count'] ?? 1));
+        if ($country === '') {
+            return ['ok' => false, 'error' => 'Country is required.'];
+        }
+        $raw = $category === 'dc'
+            ? Sogerien::API()->InfaticaIo()->Dc()->create_package($country, $count)
+            : Sogerien::API()->InfaticaIo()->Isp()->create_package($country, $count);
+        return ['ok' => is_array($raw), 'package_key' => is_array($raw) ? $this->extract_package_key($raw) : '', 'response' => $raw];
+    }
+
+    /** @return array<string,mixed> */
+    private function admin_provider_balance(string $category): array
+    {
+        $category = strtolower($category);
+        $api = Sogerien::API()->InfaticaIo();
+        $raw = match ($category) {
+            'isp' => $api->Isp()->balance(),
+            'dc', 'dc_shared' => $api->Dc()->balance(),
+            'mobile' => $api->Mobile()->reseller_stats(),
+            'residential', 'residential_ipv6' => $api->Residential()->reseller_stats(),
+            default => null,
+        };
+        $keys = in_array($category, ['mobile'], true)
+            ? $api->Mobile()->keys()
+            : (in_array($category, ['residential', 'residential_ipv6'], true) ? $api->Residential()->keys() : null);
+        return ['ok' => $raw !== null, 'category' => $category, 'response' => $raw, 'keys' => $keys];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_provider_catalog(string $category, string $method, array $request): array
+    {
+        $category = strtolower($category);
+        $method = strtolower($method);
+        $api = match ($category) {
+            'mobile' => Sogerien::API()->InfaticaIo()->Mobile(),
+            'residential', 'residential_ipv6' => Sogerien::API()->InfaticaIo()->Residential(),
+            'isp' => Sogerien::API()->InfaticaIo()->Isp(),
+            'dc', 'dc_shared' => Sogerien::API()->InfaticaIo()->Dc(),
+            default => null,
+        };
+        if (!is_object($api)) {
+            return ['ok' => false, 'error' => 'Unknown provider category.'];
+        }
+        $allowed = ['geos', 'detailed_geos', 'ipv6_detailed_geos', 'subdivision_codes', 'isp_codes', 'zip_codes', 'geo_db', 'online_statistics', 'countries', 'online_nodes'];
+        if (!in_array($method, $allowed, true) || !method_exists($api, $method)) {
+            return ['ok' => false, 'error' => 'Catalog method is not allowed for this provider.'];
+        }
+        $country = strtoupper($this->first_country($request['country'] ?? ''));
+        $raw = $method === 'zip_codes' ? $api->{$method}($country) : $api->{$method}();
+        return ['ok' => $raw !== null, 'category' => $category, 'method' => $method, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_ip_block_action(string $action, array $request): array
+    {
+        $ip = $this->str($request['ip'] ?? '');
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return ['ok' => false, 'error' => 'Valid IP is required.'];
+        }
+        $category = $this->service_category($request);
+        $api = $category === 'mobile' ? Sogerien::API()->InfaticaIo()->Mobile() : Sogerien::API()->InfaticaIo()->Residential();
+        $raw = $action === 'ip_unblock' ? $api->unblock_ip($ip) : $api->check_ip_block($ip);
+        return ['ok' => $raw !== null, 'ip' => $ip, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_scraper_test(array $request): array
+    {
+        $method = strtolower($this->str($request['scraper_method'] ?? 'scrape'));
+        $api = Sogerien::API()->InfaticaIo()->Scraper();
+        $rawPayload = $this->str($request['payload_json'] ?? '');
+        $payload = $rawPayload !== '' ? json_decode($rawPayload, true) : ['url' => $this->str($request['url'] ?? '')];
+        if (!is_array($payload)) {
+            return ['ok' => false, 'error' => 'Payload JSON is invalid.'];
+        }
+        $raw = match ($method) {
+            'render' => $api->render($payload),
+            'serp' => $api->serp($payload),
+            'chatgpt' => $api->chatgpt($this->str($request['query'] ?? ''), !empty($request['return_html'])),
+            'gemini' => $api->gemini($this->str($request['query'] ?? ''), !empty($request['return_html'])),
+            'perplexity' => $api->perplexity($this->str($request['query'] ?? ''), !empty($request['return_html'])),
+            default => $api->scrape($payload),
+        };
+        $core = $api->core();
+        return ['ok' => $raw !== null, 'http_code' => $core->last_http_code, 'error' => $core->error, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_proxy_test(array $request): array
+    {
+        $proxyUrl = $this->str($request['proxy_url'] ?? '');
+        $targetUrl = $this->str($request['target_url'] ?? 'http://ip-api.com/json');
+        if ($proxyUrl === '') {
+            $urls = Sogerien::API()->InfaticaIo()->Catalog()->shared_proxy_urls(
+                $this->str($request['login'] ?? ''),
+                $this->str($request['password'] ?? ''),
+                $request
+            );
+            $proxyUrl = is_array($urls) ? (string)($urls['http'] ?? '') : '';
+        }
+        if ($proxyUrl === '') {
+            return ['ok' => false, 'error' => 'Proxy URL or login/password is required.'];
+        }
+        $core = Sogerien::API()->InfaticaIo()->Transport();
+        $raw = $core->proxy_check_ip_api($proxyUrl, $targetUrl !== '' ? $targetUrl : 'http://ip-api.com/json');
+        return ['ok' => $raw !== null, 'http_code' => $core->last_http_code, 'err_code' => $core->last_err_code, 'err_msg' => $core->last_err_msg, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_integration_snippet(array $request): array
+    {
+        $core = Sogerien::API()->InfaticaIo()->Transport();
+        $login = $this->str($request['login'] ?? '');
+        $password = $this->str($request['password'] ?? '');
+        $urls = $core->shared_proxy_urls_from_options($login, $password, $request);
+        $curl = $core->shared_proxy_curl_command($this->str($request['target_url'] ?? 'https://example.com'), $login, $password, $request);
+        return ['ok' => is_array($urls), 'urls' => $urls, 'curl' => $curl, 'guidelines' => $core->shared_proxy_guidelines()];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_client_api_diagnostics(array $request): array
+    {
+        $pid = $this->str($request['pid'] ?? $request['package_key'] ?? '');
+        $login = $this->str($request['login'] ?? '');
+        $category = $this->service_category($request);
+        $core = Sogerien::API()->InfaticaIo()->Transport();
+        return [
+            'ok' => true,
+            'traffic' => $pid !== '' ? $core->client_get_traffic($pid, $login) : null,
+            'remaining_traffic' => $pid !== '' ? $core->client_remaining_traffic($pid) : null,
+            'balance' => $core->client_get_balance(),
+            'count_nodes' => $core->client_count_nodes($category === 'mobile', in_array($category, ['dc', 'dc_shared'], true)),
+            'geo_nodes' => $core->client_geo_nodes($category === 'mobile', in_array($category, ['dc', 'dc_shared'], true), $category === 'residential_ipv6'),
+            'day_online' => $core->client_day_online($category === 'mobile', in_array($category, ['dc', 'dc_shared'], true)),
+            'isp_codes' => $core->client_isp_codes(),
+            'zip_codes' => $core->client_zip_codes($this->first_country($request['country'] ?? '')),
+            'subdivision_codes' => $core->client_subdivision_codes(),
+            'http_code' => $core->last_http_code,
+            'error' => $core->error,
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @return array<string,mixed>
+     */
+    private function admin_raw_api(array $request): array
+    {
+        $scope = strtolower($this->str($request['scope'] ?? 'transport'));
+        $method = $this->str($request['method_name'] ?? '');
+        $allowed = [
+            'mobile' => ['reseller_stats', 'packages', 'package_info', 'package_usage', 'traffic_details', 'lists', 'keys', 'geos', 'detailed_geos', 'subdivision_codes', 'isp_codes', 'zip_codes', 'geo_db'],
+            'residential' => ['reseller_stats', 'packages', 'package_info', 'package_usage', 'traffic_details', 'lists', 'keys', 'geos', 'detailed_geos', 'ipv6_detailed_geos', 'subdivision_codes', 'isp_codes', 'zip_codes', 'geo_db'],
+            'isp' => ['balance', 'countries', 'package_info'],
+            'dc' => ['balance', 'countries', 'online_nodes', 'detailed_geos', 'package_info'],
+        ];
+        $api = match ($scope) {
+            'mobile' => Sogerien::API()->InfaticaIo()->Mobile(),
+            'residential', 'residential_ipv6' => Sogerien::API()->InfaticaIo()->Residential(),
+            'isp' => Sogerien::API()->InfaticaIo()->Isp(),
+            'dc', 'dc_shared' => Sogerien::API()->InfaticaIo()->Dc(),
+            default => null,
+        };
+        $allowKey = $scope === 'residential_ipv6' ? 'residential' : ($scope === 'dc_shared' ? 'dc' : $scope);
+        if (!is_object($api) || !isset($allowed[$allowKey]) || !in_array($method, $allowed[$allowKey], true) || !method_exists($api, $method)) {
+            return ['ok' => false, 'error' => 'Raw API method is not allowed.'];
+        }
+        $arg1 = $this->str($request['arg1'] ?? '');
+        $arg2 = $this->str($request['arg2'] ?? '');
+        $raw = $arg2 !== '' ? $api->{$method}($arg1, $arg2) : ($arg1 !== '' ? $api->{$method}($arg1) : $api->{$method}());
+        return ['ok' => $raw !== null, 'scope' => $scope, 'method' => $method, 'response' => $raw];
+    }
+
+    /**
+     * @param array<string,mixed> $request
+     * @param array<string,mixed> $result
+     */
+    private function write_provider_audit(int $adminUserId, string $action, array $request, array $result): void
+    {
+        $id = 'audit_' . date('YmdHis') . '_' . bin2hex(random_bytes(4));
+        $safeRequest = $request;
+        foreach (['password', 'new_password', 'proxy-list-password'] as $secretKey) {
+            if (isset($safeRequest[$secretKey])) {
+                $safeRequest[$secretKey] = '***';
+            }
+        }
+        $this->insert_row('provider_api_audit', $id, $action, [
+            'audit_id' => $id,
+            'admin_user_id' => $adminUserId,
+            'action' => $action,
+            'request' => $safeRequest,
+            'result' => $result,
+            'created_at' => date('c'),
+        ]);
     }
 
     /**
@@ -1169,6 +1811,9 @@ final class ProxyShop
             'price_usd' => $this->str($item['price_usd'] ?? ''),
             'provider_cost_usd' => $this->str($item['provider_cost_usd'] ?? ''),
             'profit_usd' => $this->str($item['profit_usd'] ?? ''),
+            'days' => (string)$days,
+            'billing_period' => $days <= 31 ? 'trial' : 'year',
+            'is_trial' => $days <= 31 ? '1' : '0',
             'connection_host' => $api->shared_proxy_host(),
             'connection_port' => (string)$api->shared_proxy_port(),
             'connection_login' => is_array($urls) ? (string)($urls['login'] ?? $login) : $login,
@@ -1183,6 +1828,55 @@ final class ProxyShop
             'auto_renew_request' => !empty($item['auto_renew']),
             'created_at' => date('c'),
         ];
+    }
+
+    /**
+     * @param array<string,mixed> $service
+     */
+    private function merge_traffic_service_if_possible(int $user_id, array &$service): bool
+    {
+        if ($user_id <= 0 || $this->str($service['is_trial'] ?? '') === '1') {
+            return false;
+        }
+
+        $category = $this->service_category($service);
+        if (!in_array($category, ['mobile', 'residential', 'residential_ipv6'], true)) {
+            return false;
+        }
+
+        $country = $this->first_country($service['country'] ?? '');
+        $addGb = $this->money_float($service['traffic_total_gb'] ?? 0);
+        if ($country === '' || $addGb <= 0.0) {
+            return false;
+        }
+
+        foreach ($this->list_user_services($user_id) as $existing) {
+            if (!is_array($existing) || $this->str($existing['is_trial'] ?? '') === '1') {
+                continue;
+            }
+            if ($this->service_category($existing) !== $category || $this->first_country($existing['country'] ?? '') !== $country) {
+                continue;
+            }
+
+            $existingId = $this->str($existing['service_id'] ?? '');
+            if ($existingId === '') {
+                continue;
+            }
+
+            $oldTotal = $this->money_float($existing['traffic_total_gb'] ?? 0);
+            $oldRemaining = $this->money_float($existing['traffic_remaining_gb'] ?? 0);
+            $existing['traffic_total_gb'] = number_format($oldTotal + $addGb, 2, '.', '');
+            $existing['traffic_remaining_gb'] = number_format($oldRemaining + $addGb, 2, '.', '');
+            $existing['traffic_remains'] = $existing['traffic_remaining_gb'] . ' GB';
+            $existing['status'] = $this->str($existing['status'] ?? '') === 'traffic_exhausted' ? 'active' : ($existing['status'] ?? 'active');
+            $existing['last_topup_order_id'] = $this->str($service['order_id'] ?? '');
+            $existing['updated_at'] = date('c');
+            $this->update_json_row('proxy_service', $existingId, $existing);
+            $service = $existing;
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1270,7 +1964,7 @@ final class ProxyShop
      */
     private function service_category(array $service): string
     {
-        return strtolower($this->str($service['provider_pool_category'] ?? $service['proxy_category'] ?? 'mobile'));
+        return strtolower($this->str($service['provider_pool_category'] ?? $service['proxy_category'] ?? $service['category'] ?? 'mobile'));
     }
 
     /**
@@ -1471,13 +2165,143 @@ final class ProxyShop
     }
 
     /**
+     * @return array<string,mixed>
+     */
+    private function user_billing_profile(int $user_id): array
+    {
+        $users = Sogerien::Users();
+        $users->init_db_alias($this->db_alias);
+        $row = $users->get_user_by_id($user_id);
+        $value = is_array($row) ? ($row['table_value'] ?? []) : [];
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($value)) {
+            $value = [];
+        }
+
+        $customerId = $this->str($value['stripe_customer_id'] ?? '');
+        $paymentMethodId = $this->str($value['billing_default_payment_method_id'] ?? '');
+        $methods = is_array($value['payment_methods'] ?? null) ? $value['payment_methods'] : [];
+
+        if ($paymentMethodId === '') {
+            $first = '';
+            foreach ($methods as $method) {
+                if (!is_array($method)) {
+                    continue;
+                }
+                $id = $this->str($method['id'] ?? '');
+                if ($id === '') {
+                    continue;
+                }
+                if ($first === '') {
+                    $first = $id;
+                }
+                if ($this->str($method['is_default'] ?? '') === '1') {
+                    $paymentMethodId = $id;
+                    break;
+                }
+            }
+            if ($paymentMethodId === '') {
+                $paymentMethodId = $first;
+            }
+        }
+
+        $autopay = $this->str($value['billing_autopay_enabled'] ?? '');
+        $enabled = $autopay === '' || $autopay === '1' || strtolower($autopay) === 'true';
+
+        if (!$enabled) {
+            return ['ok' => false, 'error' => 'Autopay is disabled for this client.'];
+        }
+        if ($customerId === '') {
+            return ['ok' => false, 'error' => 'Stripe customer is missing.'];
+        }
+        if ($paymentMethodId === '') {
+            return ['ok' => false, 'error' => 'Default Stripe payment method is missing.'];
+        }
+
+        return [
+            'ok' => true,
+            'stripe_customer_id' => $customerId,
+            'payment_method_id' => $paymentMethodId,
+            'user' => $value,
+        ];
+    }
+
+    private function payment_intent_attempt_status(string $stripeStatus): string
+    {
+        return match ($stripeStatus) {
+            'succeeded' => 'succeeded',
+            'processing', 'requires_capture' => 'processing',
+            'requires_action', 'requires_payment_method', 'requires_confirmation' => 'action_required',
+            'canceled' => 'canceled',
+            default => $stripeStatus !== '' ? $stripeStatus : 'unknown',
+        };
+    }
+
+    private function stripe_failure_category(string $code, string $declineCode): string
+    {
+        $code = strtolower(trim($code));
+        $declineCode = strtolower(trim($declineCode));
+        if ($code === 'authentication_required') {
+            return 'authentication_required';
+        }
+        if ($declineCode === 'insufficient_funds') {
+            return 'insufficient_funds';
+        }
+        if ($code === 'card_declined' || $declineCode !== '') {
+            return 'card_declined';
+        }
+        return $code !== '' ? $code : 'stripe_error';
+    }
+
+    /**
+     * @return array<string,string|int>
+     */
+    private function stripe_error_snapshot(APIStripe $stripe): array
+    {
+        return [
+            'http_code' => $stripe->last_http_code,
+            'type' => $stripe->last_error_type,
+            'code' => $stripe->last_error_code,
+            'decline_code' => $stripe->last_error_decline_code,
+            'message' => $stripe->last_error_message,
+            'param' => $stripe->last_error_param,
+            'advice_code' => $stripe->last_error_advice_code,
+            'network_advice_code' => $stripe->last_error_network_advice_code,
+            'network_decline_code' => $stripe->last_error_network_decline_code,
+            'doc_url' => $stripe->last_error_doc_url,
+            'request_log_url' => $stripe->last_error_request_log_url,
+            'request_id' => $stripe->last_request_id,
+        ];
+    }
+
+    private function payment_intent_id_from_stripe_error(string $raw): string
+    {
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return '';
+        }
+        $error = $decoded['error'] ?? null;
+        if (!is_array($error)) {
+            return '';
+        }
+        $paymentIntent = $error['payment_intent'] ?? null;
+        if (is_array($paymentIntent)) {
+            return $this->str($paymentIntent['id'] ?? '');
+        }
+        return '';
+    }
+
+    /**
      * @param array<string,mixed> $value
      */
     private function insert_row(string $table_name, string $table_index, string $name, array $value): void
     {
         $this->sql("
             INSERT INTO sogerien (table_name, table_index, name, status, table_value, created_at, updated_at)
-            VALUES (:table_name, to_jsonb(:table_index::text), :name, 'active', :table_value::jsonb, now(), now())
+            VALUES (:table_name, :table_index, :name, 'active', :table_value::jsonb, now(), now())
         ", [
             'table_name' => $table_name,
             'table_index' => $table_index,
@@ -1499,11 +2323,14 @@ final class ProxyShop
                 WHERE table_name = :table_name
                   AND status <> 'delete'
                   AND (
-                      table_index = to_jsonb(:table_index::text)
+                      table_index = :table_index
+                      OR table_index = to_jsonb(:table_index::text)::text
                       OR name = :table_index
                       OR table_value->>'service_id' = :table_index
+                      OR table_value->>'vendor_package_key' = :table_index
                       OR table_value->>'order_id' = :table_index
                       OR table_value->>'payment_id' = :table_index
+                      OR table_value->>'payment_intent_id' = :table_index
                   )
                 ORDER BY id DESC
                 LIMIT 1
@@ -1526,11 +2353,14 @@ final class ProxyShop
             WHERE table_name = :table_name
               AND status <> 'delete'
               AND (
-                  table_index = to_jsonb(:table_index::text)
+                  table_index = :table_index
+                  OR table_index = to_jsonb(:table_index::text)::text
                   OR name = :table_index
                   OR table_value->>'service_id' = :table_index
+                  OR table_value->>'vendor_package_key' = :table_index
                   OR table_value->>'order_id' = :table_index
                   OR table_value->>'payment_id' = :table_index
+                  OR table_value->>'payment_intent_id' = :table_index
               )
             ORDER BY id DESC
             LIMIT 1
@@ -1552,6 +2382,18 @@ final class ProxyShop
             }
         }
         return $rows;
+    }
+
+    private function normalize_table_index(mixed $value): string
+    {
+        $index = $this->str($value);
+        if (strlen($index) >= 2 && $index[0] === '"' && substr($index, -1) === '"') {
+            $decoded = json_decode($index, true);
+            if (is_string($decoded)) {
+                return trim($decoded);
+            }
+        }
+        return $index;
     }
 
     /**
@@ -1678,6 +2520,82 @@ final class ProxyShop
             return 'socks5';
         }
         return 'mixed';
+    }
+
+    /**
+     * @param array<mixed> $raw
+     * @return array{countries:array<string,string>,regions:array<string,string>,cities:array<string,string>}
+     */
+    private function normalize_access_geo_options(array $raw, string $category): array
+    {
+        $countries = [];
+        $regions = [];
+        $cities = [];
+        $this->collect_access_geo_options($raw, $countries, $regions, $cities);
+        ksort($countries);
+        asort($regions);
+        asort($cities);
+
+        if ($countries === [] && isset($raw['countries']) && is_array($raw['countries'])) {
+            foreach ($raw['countries'] as $code => $label) {
+                $country = is_string($code) && preg_match('/^[A-Za-z]{2}$/', $code) === 1 ? strtoupper($code) : $this->first_country($label);
+                if ($country !== '') {
+                    $countries[$country] = is_string($label) && trim($label) !== '' ? trim($label) : $country;
+                }
+            }
+        }
+
+        if ($countries === []) {
+            return $this->fallback_access_geo_options($category);
+        }
+
+        return ['countries' => $countries, 'regions' => $regions, 'cities' => $cities];
+    }
+
+    /**
+     * @param array<mixed> $node
+     * @param array<string,string> $countries
+     * @param array<string,string> $regions
+     * @param array<string,string> $cities
+     */
+    private function collect_access_geo_options(array $node, array &$countries, array &$regions, array &$cities): void
+    {
+        $country = $this->first_country($node['country'] ?? $node['country_code'] ?? $node['code'] ?? $node['iso'] ?? $node['location_country_code'] ?? '');
+        if ($country !== '') {
+            $label = $this->str($node['country_name'] ?? $node['name'] ?? $node['title'] ?? $country);
+            $countries[$country] = $label !== '' && preg_match('/^[A-Z]{2}$/', $label) !== 1 ? $label : $country;
+        }
+
+        $region = $this->str($node['region'] ?? $node['region_name'] ?? $node['state'] ?? $node['subdivision'] ?? '');
+        if ($region !== '') {
+            $regions[$region] = $region;
+        }
+
+        $city = $this->str($node['city'] ?? $node['city_name'] ?? '');
+        if ($city !== '') {
+            $cities[$city] = $city;
+        }
+
+        foreach ($node as $value) {
+            if (is_array($value)) {
+                $this->collect_access_geo_options($value, $countries, $regions, $cities);
+            }
+        }
+    }
+
+    /**
+     * @return array{countries:array<string,string>,regions:array<string,string>,cities:array<string,string>}
+     */
+    private function fallback_access_geo_options(string $category): array
+    {
+        $map = [
+            'residential' => ['BR' => 'Brazil', 'CA' => 'Canada', 'CO' => 'Colombia', 'ES' => 'Spain', 'FR' => 'France', 'GB' => 'United Kingdom', 'RU' => 'Russia', 'UA' => 'Ukraine', 'US' => 'United States'],
+            'residential_ipv6' => ['BR' => 'Brazil', 'CA' => 'Canada', 'CO' => 'Colombia', 'ES' => 'Spain', 'FR' => 'France', 'GB' => 'United Kingdom', 'RU' => 'Russia', 'UA' => 'Ukraine', 'US' => 'United States'],
+            'mobile' => ['CN' => 'China', 'IN' => 'India', 'IT' => 'Italy', 'KZ' => 'Kazakhstan', 'MY' => 'Malaysia', 'PL' => 'Poland', 'RU' => 'Russia', 'SA' => 'Saudi Arabia', 'US' => 'United States'],
+            'isp' => ['AT' => 'Austria', 'BR' => 'Brazil', 'CA' => 'Canada', 'FR' => 'France', 'JP' => 'Japan', 'LV' => 'Latvia', 'RO' => 'Romania', 'UA' => 'Ukraine'],
+            'dc' => ['BR' => 'Brazil', 'CA' => 'Canada', 'DE' => 'Germany', 'FR' => 'France', 'GB' => 'United Kingdom', 'NL' => 'Netherlands', 'US' => 'United States'],
+        ];
+        return ['countries' => $map[$category] ?? $map['residential'], 'regions' => [], 'cities' => []];
     }
 
     private function normalize_amount_usd(mixed $amount, mixed $total_cents): string
