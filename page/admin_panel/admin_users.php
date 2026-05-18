@@ -173,6 +173,11 @@ foreach ($rows as $row) {
         $validate = [];
     }
     $emailVerified = au_s($validate['email'] ?? '') === 'true';
+    $authProvider = strtolower(au_s($tv['auth_provider'] ?? ''));
+    $googleSub = au_s($tv['google_sub'] ?? '');
+    if ($authProvider === '' && $googleSub !== '') {
+        $authProvider = 'google';
+    }
     $allUsers[] = [
         'id'             => (int)($row['id'] ?? 0),
         'login'          => au_s($tv['login'] ?? ''),
@@ -181,6 +186,8 @@ foreach ($rows as $row) {
         'roles'          => array_values(array_map('strval', $rolesArr)),
         'status'         => au_s($row['status'] ?? ''),
         'email_verified' => $emailVerified,
+        'auth_provider'  => $authProvider !== '' ? $authProvider : 'local',
+        'google_sub'     => $googleSub,
     ];
 }
 
@@ -242,12 +249,13 @@ Sogerien::Page()->mainmenu();
                     <th>Email</th>
                     <th>Access group</th>
                     <th style="width:130px">Email status</th>
+                    <th style="width:90px">Auth</th>
                     <th style="width:90px">Edit</th>
                 </tr>
             </thead>
             <tbody>
             <?php if ($allUsers === []): ?>
-                <tr><td colspan="8" class="text-center text-muted small">Пользователи не найдены.</td></tr>
+                <tr><td colspan="9" class="text-center text-muted small">Пользователи не найдены.</td></tr>
             <?php endif; ?>
             <?php foreach ($allUsers as $row): ?>
                 <?php $uid = (int)$row['id']; ?>
@@ -274,6 +282,16 @@ Sogerien::Page()->mainmenu();
                             <span class="badge bg-success">Verified</span>
                         <?php else: ?>
                             <span class="badge bg-warning text-dark">Not verified</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($row['auth_provider'] === 'google'): ?>
+                            <span class="badge bg-primary d-inline-flex align-items-center gap-1" title="Зарегистрирован через Google. Sub: <?= au_h($row['google_sub']) ?>">
+                                <svg width="11" height="11" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#fff" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/></svg>
+                                Google
+                            </span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary">Local</span>
                         <?php endif; ?>
                     </td>
                     <td>
