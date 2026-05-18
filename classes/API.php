@@ -17,6 +17,7 @@ final class API
     private ?APIdataimpulsecom $Dataimpulsecom = null;
     private ?APIStripe $Stripe = null;
     private ?APIPostgresql $Postgresql = null;
+    private ?APIGoogleOAuth $GoogleOAuth = null;
 
     public function Cyberyozh(): APICyberyozh   { return $this->Cyberyozh ??= new APICyberyozh(); }
     public function InfaticaIo(): APIInfaticaIo { return $this->InfaticaIo ??= new APIInfaticaIo(); }
@@ -32,4 +33,5 @@ final class API
     public function Dataimpulsecom(): APIdataimpulsecom { return $this->Dataimpulsecom ??= new APIdataimpulsecom(); }
     public function Stripe(): APIStripe { return $this->Stripe ??= new APIStripe(); }
     public function Postgresql(): APIPostgresql { return $this->Postgresql ??= new APIPostgresql(); }
+    public function GoogleOAuth(): APIGoogleOAuth { return $this->GoogleOAuth ??= new APIGoogleOAuth(); }
 }
