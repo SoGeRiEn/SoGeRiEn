@@ -724,6 +724,7 @@ final class ProxyShop
                 if ($this->str($value['service_id'] ?? '') === '') {
                     $value['service_id'] = $this->normalize_table_index($row['table_index'] ?? '');
                 }
+                $this->hydrate_provider_traffic_fields($value);
                 $rows[] = $value;
             }
         }
@@ -758,9 +759,42 @@ final class ProxyShop
             if ($this->str($value['updated_at'] ?? '') === '') {
                 $value['updated_at'] = $this->str($row['updated_at'] ?? '');
             }
+            $this->hydrate_provider_traffic_fields($value);
             $rows[] = $value;
         }
         return $rows;
+    }
+
+    /**
+     * @param array<string,mixed> $service
+     */
+    private function hydrate_provider_traffic_fields(array &$service): void
+    {
+        $info = isset($service['provider_info_response']) && is_array($service['provider_info_response'])
+            ? $service['provider_info_response']
+            : null;
+        if ($info === null) {
+            return;
+        }
+
+        $snapshot = $this->extract_provider_traffic_snapshot($info, null);
+        if ($snapshot['total_gb'] <= 0.0 && $snapshot['used_gb'] <= 0.0 && $snapshot['remaining_gb'] <= 0.0) {
+            return;
+        }
+
+        $storedUsed = $this->money_float($service['traffic_used_gb'] ?? 0);
+        $storedTotal = $this->money_float($service['traffic_total_gb'] ?? 0);
+        $storedLeft = $this->money_float($service['traffic_remaining_gb'] ?? 0);
+        if ($storedUsed > 0.0 && abs($storedUsed - $snapshot['used_gb']) < 0.01) {
+            return;
+        }
+
+        if ($storedUsed <= 0.0 || $storedTotal <= 0.0 || abs($storedLeft - $snapshot['remaining_gb']) >= 0.01) {
+            $service['traffic_total_gb'] = number_format($snapshot['total_gb'], 2, '.', '');
+            $service['traffic_used_gb'] = number_format($snapshot['used_gb'], 2, '.', '');
+            $service['traffic_remaining_gb'] = number_format($snapshot['remaining_gb'], 2, '.', '');
+            $service['traffic_remains'] = $service['traffic_remaining_gb'] . ' GB';
+        }
     }
 
     /**
@@ -1143,9 +1177,15 @@ final class ProxyShop
                     return ['ok' => false, 'error' => 'Traffic amount must be greater than zero.'];
                 }
                 $apiResult = $this->provider_add_traffic_gb($service, $addGb, !empty($request['resume_after_topup']));
-                $service['traffic_total_gb'] = number_format($this->money_float($service['traffic_total_gb'] ?? 0) + $addGb, 2, '.', '');
-                $service['traffic_remaining_gb'] = number_format($this->money_float($service['traffic_remaining_gb'] ?? 0) + $addGb, 2, '.', '');
-                $service['traffic_remains'] = $service['traffic_remaining_gb'] . ' GB';
+                $refreshResult = $this->refresh_service_traffic($service);
+                if (!($refreshResult['ok'] ?? false)) {
+                    $service['traffic_total_gb'] = number_format($this->money_float($service['traffic_total_gb'] ?? 0) + $addGb, 2, '.', '');
+                    $service['traffic_remaining_gb'] = number_format($this->money_float($service['traffic_remaining_gb'] ?? 0) + $addGb, 2, '.', '');
+                    $service['traffic_remains'] = $service['traffic_remaining_gb'] . ' GB';
+                    $apiResult = ['topup' => $apiResult, 'refresh' => $refreshResult];
+                } else {
+                    $apiResult = ['topup' => $apiResult, 'refresh' => $refreshResult];
+                }
                 if (!empty($request['resume_after_topup'])) {
                     $service['status'] = 'active';
                 }
@@ -1202,6 +1242,9 @@ final class ProxyShop
                     $packageKey,
                     $accessOptions
                 );
+                if (!is_array($apiResult)) {
+                    return ['ok' => false, 'error' => 'Provider access list generation failed.'];
+                }
                 $listId = $this->extract_proxy_list_id(is_array($apiResult) ? $apiResult : []);
                 $generated = [
                     'id' => $listId,
@@ -1298,7 +1341,26 @@ final class ProxyShop
                 if (!is_object($api) || !method_exists($api, 'view_access')) {
                     return ['ok' => false, 'error' => 'Access list view is not supported for this service type.'];
                 }
-                $apiResult = $api->view_access($packageKey, $this->str($request['list_id'] ?? ''), $this->str($request['list_name'] ?? ''));
+                $listId = $this->str($request['list_id'] ?? '');
+                $listName = $this->str($request['list_name'] ?? '');
+                if (($listId === '' || $listName === '') && isset($service['proxy_lists']) && is_array($service['proxy_lists'])) {
+                    foreach ($service['proxy_lists'] as $list) {
+                        if (!is_array($list)) {
+                            continue;
+                        }
+                        $currentId = $this->str($list['vendor_list_id'] ?? $list['id'] ?? '');
+                        $currentName = $this->str($list['name'] ?? '');
+                        if (($listId !== '' && $currentId === $listId) || ($listName !== '' && $currentName === $listName)) {
+                            $listId = $currentId;
+                            $listName = $currentName;
+                            break;
+                        }
+                    }
+                }
+                if ($listId === '' || $listName === '') {
+                    return ['ok' => false, 'error' => 'Access list id or name is missing. Regenerate the access list.'];
+                }
+                $apiResult = $api->view_access($packageKey, $listId, $listName);
             } elseif ($action === 'api_tool_access') {
                 $api = $this->traffic_provider_api($service);
                 if (!is_object($api) || !method_exists($api, 'api_tool_access')) {
@@ -1669,13 +1731,22 @@ final class ProxyShop
      */
     private function extract_traffic_usage(?array $info, ?array $details, float $fallbackTotalGb): array
     {
+        $snapshot = $this->extract_provider_traffic_snapshot($info, $details);
+        if ($snapshot['total_gb'] > 0.0 || $snapshot['used_gb'] > 0.0 || $snapshot['remaining_gb'] > 0.0) {
+            return $snapshot;
+        }
+
         $flat = [];
         $this->flatten_assoc($info ?? [], '', $flat);
         $this->flatten_assoc($details ?? [], '', $flat);
 
-        $total = $this->first_flat_number($flat, ['traffic_limit', 'traffic_total', 'total_traffic', 'limit_gb', 'traffic_gb']);
-        $used = $this->first_flat_number($flat, ['traffic_used', 'used_traffic', 'used_gb', 'spent_traffic', 'traffic_spent']);
-        $remaining = $this->first_flat_number($flat, ['traffic_remaining', 'remaining_traffic', 'remain_traffic', 'traffic_remains', 'left_traffic', 'available_traffic']);
+        $totalNeedles     = ['traffic_limit', 'traffic_total', 'total_traffic', 'limit_gb', 'traffic_gb'];
+        $usedNeedles      = ['traffic_used', 'used_traffic', 'used_gb', 'spent_traffic', 'traffic_spent'];
+        $remainingNeedles = ['traffic_remaining', 'remaining_traffic', 'remain_traffic', 'traffic_remains', 'left_traffic', 'available_traffic'];
+
+        $total = $this->first_flat_number_gb($flat, $totalNeedles);
+        $used = $this->first_flat_number_gb($flat, $usedNeedles);
+        $remaining = $this->first_flat_number_gb($flat, $remainingNeedles);
 
         if ($total <= 0.0) {
             $total = $fallbackTotalGb;
@@ -1692,6 +1763,96 @@ final class ProxyShop
             'used_gb' => round($used, 4),
             'remaining_gb' => round(max(0.0, $remaining), 4),
         ];
+    }
+
+    /**
+     * @param array<string,mixed>|null $info
+     * @param array<string,mixed>|null $details
+     * @return array{total_gb:float,used_gb:float,remaining_gb:float}
+     */
+    private function extract_provider_traffic_snapshot(?array $info, ?array $details): array
+    {
+        $row = is_array($info) && isset($info['results']) && is_array($info['results']) ? $info['results'] : ($info ?? []);
+        $limitBytes = $this->nested_number($row, ['traffic_limits', 'common']);
+        $usedBytes = $this->nested_number($row, ['traffic_usage', 'common']);
+
+        if ($usedBytes <= 0.0 && is_array($details)) {
+            $detailsRow = isset($details['results']) && is_array($details['results']) ? $details['results'] : $details;
+            $usedBytes = $this->nested_number($detailsRow, ['common']);
+        }
+
+        if ($limitBytes <= 0.0 && $usedBytes <= 0.0) {
+            return ['total_gb' => 0.0, 'used_gb' => 0.0, 'remaining_gb' => 0.0];
+        }
+
+        $totalGb = $this->bytes_to_gb($limitBytes);
+        $usedGb = $this->bytes_to_gb($usedBytes);
+
+        return [
+            'total_gb' => $totalGb,
+            'used_gb' => $usedGb,
+            'remaining_gb' => round(max(0.0, $totalGb - $usedGb), 4),
+        ];
+    }
+
+    /**
+     * Find first matching key in flattened map, returning GB.
+     * Auto-converts bytes/megabytes/kilobytes keys to GB. GB keys returned as-is.
+     *
+     * @param array<string,float> $flat
+     * @param array<int,string> $needles
+     */
+    private function first_flat_number_gb(array $flat, array $needles): float
+    {
+        // First pass: prefer keys NOT in bytes/kb/mb (likely already GB)
+        foreach ($flat as $key => $value) {
+            $unit = $this->key_unit_factor_to_gb($key);
+            if ($unit === null) {
+                continue;
+            }
+            // Skip bytes-like keys in first pass; they'll be picked up below if no GB key found.
+            if ($unit !== 1.0) {
+                continue;
+            }
+            foreach ($needles as $needle) {
+                if (str_contains($key, $needle)) {
+                    return (float)$value;
+                }
+            }
+        }
+        // Second pass: accept bytes/kb/mb keys and convert to GB
+        foreach ($flat as $key => $value) {
+            $unit = $this->key_unit_factor_to_gb($key);
+            if ($unit === null) {
+                continue;
+            }
+            foreach ($needles as $needle) {
+                if (str_contains($key, $needle)) {
+                    return (float)$value * $unit;
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Return factor that converts a raw value with this key into GB.
+     * Returns null if the key looks unrelated (e.g. price, timestamp).
+     * 1.0 for plain or _gb keys (already GB), smaller fractions for _mb, _kb, _bytes.
+     */
+    private function key_unit_factor_to_gb(string $key): ?float
+    {
+        if (str_ends_with($key, '_bytes') || str_contains($key, '_bytes_')) {
+            return 1.0 / (1024.0 * 1024.0 * 1024.0);
+        }
+        if (str_ends_with($key, '_kb') || str_contains($key, '_kb_')) {
+            return 1.0 / (1024.0 * 1024.0);
+        }
+        if (str_ends_with($key, '_mb') || str_contains($key, '_mb_')) {
+            return 1.0 / 1024.0;
+        }
+        // _gb keys or plain keys (assumed GB)
+        return 1.0;
     }
 
     /**
@@ -1743,11 +1904,13 @@ final class ProxyShop
         }
 
         $api = $this->traffic_provider_api($service);
-        if (!is_object($api) || !method_exists($api, 'package_info') || !method_exists($api, 'traffic_details')) {
+        if (!is_object($api) || !method_exists($api, 'package_info')) {
             return ['ok' => false, 'error' => 'Traffic refresh is not supported for this service type.'];
         }
         $info = $api->package_info($packageKey);
-        $details = $api->traffic_details($packageKey, 'all');
+        $details = method_exists($api, 'package_usage')
+            ? $api->package_usage($packageKey)
+            : (method_exists($api, 'traffic_details') ? $api->traffic_details($packageKey, 'all') : null);
         $usage = $this->extract_traffic_usage($info, $details, (float)$this->money_float($service['traffic_limit_gb'] ?? $service['traffic_total_gb'] ?? 0));
 
         $service['provider_info_response'] = $info;
@@ -1761,6 +1924,9 @@ final class ProxyShop
         if ($usage['total_gb'] > 0.0 && $usage['remaining_gb'] <= 0.0) {
             $service['status'] = 'traffic_exhausted';
             $service['disable_reason'] = 'Traffic limit exhausted.';
+        } elseif (($service['status'] ?? '') === 'traffic_exhausted' && $usage['remaining_gb'] > 0.0) {
+            $service['status'] = 'active';
+            unset($service['disable_reason']);
         }
 
         return ['ok' => true, 'usage' => $usage, 'info' => $info, 'traffic_details' => $details];
@@ -2321,8 +2487,8 @@ final class ProxyShop
                 WHERE table_name = :table_name
                   AND status <> 'delete'
                   AND (
-                      table_index = :table_index
-                      OR table_index = to_jsonb(:table_index::text)::text
+                      table_index::text = :table_index
+                      OR table_index::text = to_jsonb(:table_index::text)::text
                       OR name = :table_index
                       OR table_value->>'service_id' = :table_index
                       OR table_value->>'vendor_package_key' = :table_index
@@ -2351,8 +2517,8 @@ final class ProxyShop
             WHERE table_name = :table_name
               AND status <> 'delete'
               AND (
-                  table_index = :table_index
-                  OR table_index = to_jsonb(:table_index::text)::text
+                  table_index::text = :table_index
+                  OR table_index::text = to_jsonb(:table_index::text)::text
                   OR name = :table_index
                   OR table_value->>'service_id' = :table_index
                   OR table_value->>'vendor_package_key' = :table_index
@@ -3133,6 +3299,14 @@ final class ProxyShop
             $value = $this->str($response[$key] ?? '');
             if ($value !== '') {
                 return $value;
+            }
+        }
+        if (isset($response['results']) && is_array($response['results'])) {
+            foreach (['id', 'list_id', 'proxy_list_id'] as $key) {
+                $value = $this->str($response['results'][$key] ?? '');
+                if ($value !== '') {
+                    return $value;
+                }
             }
         }
         if (isset($response['data']) && is_array($response['data'])) {

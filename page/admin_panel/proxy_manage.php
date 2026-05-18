@@ -351,9 +351,9 @@ Sogerien::Page()->mainmenu();
                         <div class="col-md-4">
                             <label class="form-label" for="pmListFormat">Proxy format</label>
                             <select class="form-select" id="pmListFormat" name="format">
+                                <option value="3" selected>http://login:password@host:port</option>
                                 <option value="1">login:password@host:port</option>
                                 <option value="2">host,port,login,password</option>
-                                <option value="3">http://login:password@host:port</option>
                                 <option value="4">socks5://login:password@host:port</option>
                                 <option value="5">login:password:host:port</option>
                                 <option value="6">host:port:login:password</option>
@@ -450,8 +450,8 @@ Sogerien::Page()->mainmenu();
                 <input id="pmDetailsSearch" type="text" placeholder="Start typing..." aria-label="Search">
                 <button class="close" id="pmDetailsClose" type="button" aria-label="Close">Esc</button>
             </div>
-            <div class="list" id="pmDetailsList" style="padding:6px 12px"></div>
-            <div class="hint" style="padding:8px 12px">Click row or Copy to copy. Esc - close</div>
+            <div class="list" id="pmDetailsList" style="padding:10px 12px"></div>
+            <div class="hint" style="padding:8px 12px">Text is selected manually or copied by Copy. Esc - close</div>
         </div>
     </div>
 </main>
@@ -466,6 +466,7 @@ Sogerien::Page()->mainmenu();
     var serviceId = modal.getAttribute('data-service-id') || '';
 
     var allRows = [];
+    var activeTab = 'text';
 
     function esc(s){
         return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){
@@ -496,14 +497,87 @@ Sogerien::Page()->mainmenu();
             setMessage('<div class="text-muted small p-2">Nothing found.</div>');
             return;
         }
-        var html = '';
-        visible.forEach(function(line, i){
-            html += '<div class="pal-row pm-details-row" data-value="' + esc(line) + '" tabindex="0" style="padding:6px 8px;border-bottom:1px solid var(--line,#444);cursor:default;display:flex;align-items:center;gap:8px;">'
-                  + '<code style="flex:1;word-break:break-all;background:transparent;color:inherit;font-size:13px;padding:0">' + esc(line) + '</code>'
-                  + '<button class="btn btn-sm btn-outline-primary pm-copy-btn" type="button" data-value="' + esc(line) + '">Copy</button>'
-                  + '</div>';
-        });
-        listEl.innerHTML = html;
+        var textValue = visible.join('\n');
+        var jsonValue = JSON.stringify(visible.map(proxyLineToObject), null, 2);
+        var value = activeTab === 'json' ? jsonValue : textValue;
+        listEl.innerHTML =
+            '<div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">'
+          + '<div class="btn-group btn-group-sm" role="tablist" aria-label="Proxy output format">'
+          + '<button class="btn ' + (activeTab === 'text' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="text">Text</button>'
+          + '<button class="btn ' + (activeTab === 'json' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="json">JSON</button>'
+          + '</div>'
+          + '<button class="btn btn-sm btn-outline-primary pm-copy-btn" type="button">Copy</button>'
+          + '</div>'
+          + '<textarea class="form-control pm-details-textarea" spellcheck="false" rows="18" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.45;white-space:pre;overflow:auto;">' + esc(value) + '</textarea>'
+          + '<div class="text-muted small mt-2">' + visible.length + ' proxies</div>';
+    }
+
+    function proxyLineToObject(line){
+        var raw = String(line || '').trim();
+        var out = {
+            protocol: '',
+            server: '',
+            username: '',
+            password: '',
+            host: '',
+            port: null,
+            url: raw
+        };
+
+        try {
+            var parsed = new URL(raw);
+            out.protocol = parsed.protocol.replace(/:$/, '');
+            if (['http', 'https', 'socks4', 'socks5'].indexOf(out.protocol) !== -1) {
+                out.username = decodeURIComponent(parsed.username || '');
+                out.password = decodeURIComponent(parsed.password || '');
+                out.host = parsed.hostname || '';
+                out.port = parsed.port !== '' ? Number(parsed.port) : null;
+                out.server = out.protocol && out.host && out.port ? (out.protocol + '://' + out.host + ':' + out.port) : '';
+                return out;
+            }
+        } catch(e) {}
+
+        if (raw.indexOf(',') !== -1) {
+            var csv = raw.split(',').map(function(part){ return part.trim(); });
+            if (csv.length >= 4) {
+                return buildProxyObject(out, csv[2], csv[3], csv[0], csv[1]);
+            }
+        }
+
+        var atParts = raw.split('@');
+        if (atParts.length === 2) {
+            var auth = atParts[0].split(':');
+            var hostPort = atParts[1].split(':');
+            return buildProxyObject(out, auth[0], auth.slice(1).join(':'), hostPort[0], hostPort[1]);
+        }
+        if (atParts.length === 4) {
+            return buildProxyObject(out, atParts[0], atParts[1], atParts[2], atParts[3]);
+        }
+
+        var colon = raw.split(':');
+        if (colon.length === 4) {
+            if (looksLikePort(colon[1])) {
+                return buildProxyObject(out, colon[2], colon[3], colon[0], colon[1]);
+            }
+            return buildProxyObject(out, colon[0], colon[1], colon[2], colon[3]);
+        }
+
+        return out;
+    }
+
+    function buildProxyObject(out, username, password, host, port){
+        out.protocol = 'http';
+        out.username = String(username || '');
+        out.password = String(password || '');
+        out.host = String(host || '');
+        out.port = looksLikePort(port) ? Number(port) : null;
+        out.server = out.host && out.port ? ('http://' + out.host + ':' + out.port) : '';
+        return out;
+    }
+
+    function looksLikePort(value){
+        var n = Number(value);
+        return Number.isInteger(n) && n > 0 && n <= 65535;
     }
 
     function extractRows(payload){
@@ -542,6 +616,7 @@ Sogerien::Page()->mainmenu();
         openModal(listName || login);
         setMessage('<div class="text-muted small p-2">Loading...</div>');
         allRows = [];
+        activeTab = 'text';
 
         var fd = new FormData();
         fd.append('action', 'view_proxy_list');
@@ -607,22 +682,15 @@ Sogerien::Page()->mainmenu();
         var copyBtn = e.target.closest('.pm-copy-btn');
         if (copyBtn){
             e.preventDefault(); e.stopPropagation();
-            copyValue(copyBtn.getAttribute('data-value') || '', function(ok){ flash(copyBtn, ok); });
+            var area = listEl.querySelector('.pm-details-textarea');
+            copyValue(area ? area.value : '', function(ok){ flash(copyBtn, ok); });
             return;
         }
-        var row = e.target.closest('.pm-details-row');
-        if (row && listEl.contains(row)){
-            var rowBtn = row.querySelector('.pm-copy-btn');
-            copyValue(row.getAttribute('data-value') || '', function(ok){ if (rowBtn) flash(rowBtn, ok); });
-        }
-    });
-
-    listEl.addEventListener('keydown', function(e){
-        var row = e.target.closest('.pm-details-row'); if (!row) return;
-        if (e.key === 'Enter' || e.key === ' '){
+        var tabBtn = e.target.closest('.pm-details-tab');
+        if (tabBtn){
             e.preventDefault();
-            var rowBtn = row.querySelector('.pm-copy-btn');
-            copyValue(row.getAttribute('data-value') || '', function(ok){ if (rowBtn) flash(rowBtn, ok); });
+            activeTab = tabBtn.getAttribute('data-tab') === 'json' ? 'json' : 'text';
+            renderRows(allRows, searchEl.value);
         }
     });
 
