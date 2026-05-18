@@ -177,7 +177,14 @@ final class Users
 }
 
     private function should_use_impersonation_token(): bool
-    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); } 
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); }
+        // Impersonation токен использовать ТОЛЬКО если он реально есть в куках,
+        // иначе откатываемся на обычный access_token. Иначе любой /client/* путь
+        // ломается у обычных юзеров - они даже не админы, нет impersonation cookie.
+        $cookieName = Sogerien::AccessToken()->COOKIE_NAME_IMPERSONATE;
+        if ($cookieName === '' || !isset($_COOKIE[$cookieName]) || trim((string)$_COOKIE[$cookieName]) === '') {
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
         $path = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
         return   Sogerien::Debager()->capture_return($path === 'client' || str_starts_with($path, 'client/'), __CLASS__, __FUNCTION__);
 }
