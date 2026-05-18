@@ -1086,14 +1086,20 @@ final class ProxyShop
         if (!$cache->is_interval_elapsed($cacheFile, 30 * 86400)) {
             $cached = $cache->load($cacheFile, $updatedAt);
             if (is_array($cached)) {
-                return $this->normalize_access_geo_options($cached, $category);
+                $cachedOptions = $this->normalize_access_geo_options($cached, $category);
+                if (count($cachedOptions['countries']) > 1 && (count($cachedOptions['regions']) > 1 || count($cachedOptions['cities']) > 1)) {
+                    return $cachedOptions;
+                }
             }
         }
 
         $raw = null;
         try {
-            $api = Sogerien::API()->InfaticaIo()->Catalog()->core();
-            $raw = $api->client_geo_nodes($category === 'mobile', $category === 'dc', $category === 'residential_ipv6');
+            $raw = match ($category) {
+                'mobile' => Sogerien::API()->InfaticaIo()->Mobile()->geo_db(),
+                'residential', 'residential_ipv6' => Sogerien::API()->InfaticaIo()->Residential()->geo_db(),
+                default => null,
+            };
         } catch (Throwable) {
             $raw = null;
         }
@@ -1226,15 +1232,18 @@ final class ProxyShop
                     $listName = 'ProxyMint ' . date('Y-m-d H:i');
                     $accessOptions['list_name'] = $listName;
                 }
+                $authMode = $this->str($accessOptions['auth_mode'] ?? 'login_password');
                 $login = $this->str($accessOptions['login'] ?? '');
-                if ($login === '') {
-                    $login = 'pm' . substr(bin2hex(random_bytes(5)), 0, 10);
-                    $accessOptions['login'] = $login;
-                }
                 $password = $this->str($accessOptions['password'] ?? '');
-                if ($password === '') {
-                    $password = bin2hex(random_bytes(6));
-                    $accessOptions['password'] = $password;
+                if ($authMode !== 'ip_whitelist') {
+                    if ($login === '') {
+                        $login = 'pm' . substr(bin2hex(random_bytes(5)), 0, 10);
+                        $accessOptions['login'] = $login;
+                    }
+                    if ($password === '') {
+                        $password = bin2hex(random_bytes(6));
+                        $accessOptions['password'] = $password;
+                    }
                 }
                 $country = $this->first_country($accessOptions['countries'] ?? $accessOptions['country'] ?? ($service['country'] ?? ''));
                 $apiResult = $this->provider_generate_access_from_options(
@@ -2696,6 +2705,7 @@ final class ProxyShop
         $countries = [];
         $regions = [];
         $cities = [];
+        $this->collect_infatica_geo_options($raw, $countries, $regions, $cities);
         $this->collect_access_geo_options($raw, $countries, $regions, $cities);
         ksort($countries);
         asort($regions);
@@ -2715,6 +2725,44 @@ final class ProxyShop
         }
 
         return ['countries' => $countries, 'regions' => $regions, 'cities' => $cities];
+    }
+
+    /**
+     * @param array<mixed> $raw
+     * @param array<string,string> $countries
+     * @param array<string,string> $regions
+     * @param array<string,string> $cities
+     */
+    private function collect_infatica_geo_options(array $raw, array &$countries, array &$regions, array &$cities): void
+    {
+        foreach ($raw as $countryNode) {
+            if (!is_array($countryNode)) {
+                continue;
+            }
+            $country = $this->first_country($countryNode['code'] ?? $countryNode['country'] ?? '');
+            if ($country !== '') {
+                $label = $this->str($countryNode['name'] ?? $countryNode['country_name'] ?? $country);
+                $countries[$country] = $label !== '' && preg_match('/^[A-Z]{2}$/', $label) !== 1 ? $label : $country;
+            }
+            foreach (($countryNode['regions'] ?? []) as $regionNode) {
+                if (!is_array($regionNode)) {
+                    continue;
+                }
+                $region = $this->str($regionNode['name'] ?? $regionNode['region'] ?? '');
+                if ($region !== '') {
+                    $regions[$region] = $region;
+                }
+                foreach (($regionNode['cities'] ?? []) as $cityNode) {
+                    if (!is_array($cityNode)) {
+                        continue;
+                    }
+                    $city = $this->str($cityNode['name'] ?? $cityNode['city'] ?? '');
+                    if ($city !== '') {
+                        $cities[$city] = $city;
+                    }
+                }
+            }
+        }
     }
 
     /**

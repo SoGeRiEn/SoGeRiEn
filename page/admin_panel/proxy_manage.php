@@ -276,15 +276,15 @@ Sogerien::Page()->mainmenu();
                                 <option value="ip_whitelist">IP whitelist</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 pm-auth-login-field">
                             <label class="form-label" for="pmListLogin">Login</label>
                             <input class="form-control" id="pmListLogin" name="login" placeholder="Auto">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 pm-auth-login-field">
                             <label class="form-label" for="pmListPassword">Password</label>
                             <input class="form-control" id="pmListPassword" name="password" placeholder="Auto">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6 pm-auth-ip-field d-none">
                             <label class="form-label" for="pmListNetwork">IP whitelist</label>
                             <input class="form-control" id="pmListNetwork" name="network" placeholder="1.2.3.4, 5.6.7.0/24">
                         </div>
@@ -315,10 +315,6 @@ Sogerien::Page()->mainmenu();
                                     <option value="<?= pm_h($city) ?>"><?= pm_h($label) ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="pmListIsp">ISP</label>
-                            <input class="form-control" id="pmListIsp" name="isp" placeholder="All or provider id">
                         </div>
                         <div class="col-md-3">
                             <?php $defaultPortCount = ($category === 'residential' || $category === 'residential_ipv6') ? 1000 : 100; ?>
@@ -457,6 +453,31 @@ Sogerien::Page()->mainmenu();
 </main>
 <script>
 (function(){
+    var authModeEl = document.getElementById('pmAuthMode');
+    var loginFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-login-field'));
+    var ipFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-ip-field'));
+    var loginInput = document.getElementById('pmListLogin');
+    var passwordInput = document.getElementById('pmListPassword');
+    var networkInput = document.getElementById('pmListNetwork');
+
+    function syncAuthFields(){
+        if (!authModeEl) return;
+        var isWhitelist = authModeEl.value === 'ip_whitelist';
+        loginFields.forEach(function(el){ el.classList.toggle('d-none', isWhitelist); });
+        ipFields.forEach(function(el){ el.classList.toggle('d-none', !isWhitelist); });
+        if (loginInput) loginInput.disabled = isWhitelist;
+        if (passwordInput) passwordInput.disabled = isWhitelist;
+        if (networkInput) {
+            networkInput.disabled = !isWhitelist;
+            networkInput.required = isWhitelist;
+        }
+    }
+
+    if (authModeEl) {
+        authModeEl.addEventListener('change', syncAuthFields);
+        syncAuthFields();
+    }
+
     var modal    = document.getElementById('pmDetailsModal');
     if (!modal) return;
     var titleEl  = document.getElementById('pmDetailsTitle');
