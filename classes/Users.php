@@ -507,6 +507,86 @@ final class Users
 }
 
     /**
+     * Проверить, существует ли пользователь с таким логином (ВКЛЮЧАЯ удалённых).
+     * Сравнение регистронезависимое.
+     */
+    public function login_exists_anywhere(string $login): bool
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); }
+        $this->fail('');
+
+        $login = trim($login);
+        if ($login === '') {
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+        if (!$this->ensureDbAlias()) {
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+
+        $sql = "
+            SELECT 1
+            FROM sogerien
+            WHERE table_name = 'user'
+              AND lower(trim(table_value->>'login')) = :login
+            LIMIT 1;
+            ";
+        $res = $this->dbQuery($sql, ['login' => mb_strtolower($login)]);
+        if (($res['result'] ?? false) !== true) {
+            return   Sogerien::Debager()->capture_return(false, __CLASS__, __FUNCTION__);
+        }
+        $rows = $res['rows'] ?? [];
+        $exists = is_array($rows) && count($rows) > 0;
+        $this->ok();
+        return   Sogerien::Debager()->capture_return($exists, __CLASS__, __FUNCTION__);
+    }
+
+    /**
+     * Подобрать уникальный логин на основе переданного.
+     * Если base уже занят (в любом статусе) - добавляет суффикс _2, _3, ...
+     * Возвращает '' если не удалось подобрать.
+     */
+    public function find_unique_login(string $base): string
+    { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); }
+        $this->fail('');
+
+        $base = trim($base);
+        // Оставляем только разрешённые символы (тот же набор что в register_user).
+        $base = preg_replace('/[^a-zA-Z0-9._-]/', '', $base) ?? '';
+        if ($base === '') {
+            return   Sogerien::Debager()->capture_return('', __CLASS__, __FUNCTION__);
+        }
+        if (mb_strlen($base) < 3) {
+            $base = 'user' . substr(bin2hex(random_bytes(4)), 0, 6);
+        }
+        if (mb_strlen($base) > 60) {
+            $base = mb_substr($base, 0, 60);
+        }
+
+        if (!$this->login_exists_anywhere($base)) {
+            $this->ok();
+            return   Sogerien::Debager()->capture_return($base, __CLASS__, __FUNCTION__);
+        }
+
+        for ($n = 2; $n <= 9999; $n++) {
+            $suffix = '_' . $n;
+            $maxBaseLen = 64 - mb_strlen($suffix);
+            $candidate = mb_substr($base, 0, $maxBaseLen) . $suffix;
+            if (!$this->login_exists_anywhere($candidate)) {
+                $this->ok();
+                return   Sogerien::Debager()->capture_return($candidate, __CLASS__, __FUNCTION__);
+            }
+        }
+
+        // Fallback: случайный 6-символьный суффикс на случай если все 2..9999 заняты.
+        $fallback = mb_substr($base, 0, 57) . '_' . bin2hex(random_bytes(3));
+        if (!$this->login_exists_anywhere($fallback)) {
+            $this->ok();
+            return   Sogerien::Debager()->capture_return($fallback, __CLASS__, __FUNCTION__);
+        }
+        $this->fail('Cannot find unique login');
+        return   Sogerien::Debager()->capture_return('', __CLASS__, __FUNCTION__);
+    }
+
+    /**
      * Получить пользователя по email (email: нормализуем lower(trim(email))).
      *
      * @return array<string,mixed>|null
@@ -808,14 +888,14 @@ final class Users
             return   Sogerien::Debager()->capture_return(null, __CLASS__, __FUNCTION__);
         }
 
-        $existsByLogin = $this->get_user_by_login($login);
-        if ($existsByLogin !== null) {
-            $this->fail('Login already exists');
+        // Логин - уникальный. Если совпадает с любой записью (включая удалённые) -
+        // авто-инкрементируем: base, base_2, base_3 и т.д.
+        $uniqueLogin = $this->find_unique_login($login);
+        if ($uniqueLogin === '') {
+            $this->fail('Failed to generate unique login');
             return   Sogerien::Debager()->capture_return(null, __CLASS__, __FUNCTION__);
         }
-        if ($this->error !== 'User not found') {
-            return   Sogerien::Debager()->capture_return(null, __CLASS__, __FUNCTION__);
-        }
+        $login = $uniqueLogin;
 
         $existsByEmail = $this->get_user_by_email($email);
         if ($existsByEmail !== null) {
