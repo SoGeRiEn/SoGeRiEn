@@ -175,13 +175,13 @@ final class Routes
     { if (Sogerien::$debag) { Sogerien::Debager()->log_input(__CLASS__, __FUNCTION__, func_get_args()); }
         $d = Sogerien::$SOGERIEN_DIR;
 
-        // 1) РЅРѕСЂРјР°Р»РёР·СѓРµРј С‚РµРєСѓС‰РёР№ URL
+        // 1) нормализуем текущий URL
         $current_url = (string) (Sogerien::InputRequest()->url ?? '/');
         $current_url = '/' . ltrim($current_url, '/');
         $current_url = rtrim($current_url, '/');
         if ($current_url === '') { $current_url = '/'; }
 
-        // 2) Р±Р°Р·РѕРІР°СЏ РєР°СЂС‚Р° РјР°СЂС€СЂСѓС‚РѕРІ
+        // 2) базовая карта маршрутов
         $t = [
             '/users' => $d . '/page/page_users.php',
             '/test1' => $d . '/page/test1.php',
@@ -223,23 +223,23 @@ final class Routes
             '/proxy/manage' => $d . '/page/proxy_manage.php',
         ];
 
-        // 3) РґРѕР±Р°РІР»РµРЅРЅС‹Рµ С‚РµСЃС‚РѕРІС‹Рµ РјР°СЂС€СЂСѓС‚С‹ (РїРµСЂРµРєСЂС‹РІР°СЋС‚ Р±Р°Р·РѕРІС‹Рµ РїСЂРё СЃРѕРІРїР°РґРµРЅРёРё РєР»СЋС‡Р°)
+        // 3) добавленные тестовые маршруты перекрывают базовые при совпадении ключа
         if ($this->templates) {
-            $t = $this->templates + $t; // РґРѕР±Р°РІР»РµРЅРЅС‹Рµ РёРјРµСЋС‚ РїСЂРёРѕСЂРёС‚РµС‚
+            $t = $this->templates + $t; // добавленные имеют приоритет
         }
 
-        // 4) СЂРѕСѓС‚РёРЅРі
+        // 4) роутинг
         if (isset($t[$current_url])) {
             $path = $t[$current_url];
             if (is_file($path)) { include $path; do { Sogerien::Debager()->capture_void(__CLASS__, __FUNCTION__); return; } while (false); }
             http_response_code(500);
-            echo "С€Р°Р±Р»РѕРЅ РЅРµ РЅР°Р№РґРµРЅ - $path";
+            echo "шаблон не найден - $path";
             do { Sogerien::Debager()->capture_void(__CLASS__, __FUNCTION__); return; } while (false);
         }
 
         // 5) 404
         http_response_code(404);
         $this->log_404_request($current_url);
-        echo "404 - СЃС‚СЂР°РЅРёС†Р° РЅРµ РЅР°Р№РґРµРЅР°";
+        echo "404 - страница не найдена";
     }
 }
