@@ -14,13 +14,14 @@ if ($blogEditUrl === '') { $blogEditUrl = '/api/news_edit.php'; }
 if ($blogApiUrl === '') { $blogApiUrl = '/api/news_api.php'; }
 
 news_auth_require_admin_page();
+$currentLang = Sogerien::Lang()->get_current_lang();
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars($currentLang, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Blog Admin</title>
+  <title><?= htmlspecialchars(news_t('blog.admin', 'Blog Admin'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
   <style>
     <?= news_nav_css() ?>
     :root { --bg:#f4f7fc; --panel:#fff; --line:#d9e1ef; --text:#1a2235; --muted:#63708b; --brand:#0d6ad8; --danger:#c62828; }
@@ -58,28 +59,28 @@ news_auth_require_admin_page();
   </style>
 </head>
 <body>
-  <?php news_render_nav(); ?>
+  <?php news_render_nav($currentLang); ?>
   <div class="wrap">
     <div class="panel">
       <div class="top">
-        <a class="btn primary" href="<?= htmlspecialchars($blogAddUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">+ Add News</a>
-        <a class="btn" href="<?= htmlspecialchars($blogPublicUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank">Open Blog</a>
-        <button id="seedBtn">Create Demo News</button>
-        <input id="q" type="text" placeholder="Search..." style="min-width:240px;">
-        <input id="tag" type="text" placeholder="Tag slug..." style="min-width:180px;">
-        <button id="searchBtn">Search</button>
-        <button id="resetBtn">Reset</button>
+        <a class="btn primary" href="<?= htmlspecialchars($blogAddUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">+ <?= htmlspecialchars(news_t('blog.add_news', 'Add News'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+        <a class="btn" href="<?= htmlspecialchars($blogPublicUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank"><?= htmlspecialchars(news_t('blog.open_blog', 'Open Blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+        <button id="seedBtn"><?= htmlspecialchars(news_t('blog.create_demo_news', 'Create Demo News'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
+        <input id="q" type="text" placeholder="<?= htmlspecialchars(news_t('blog.search_placeholder', 'Search...'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" style="min-width:240px;">
+        <input id="tag" type="text" placeholder="<?= htmlspecialchars(news_t('blog.tag_slug_placeholder', 'Tag slug...'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" style="min-width:180px;">
+        <button id="searchBtn"><?= htmlspecialchars(news_t('common.search', 'Search'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
+        <button id="resetBtn"><?= htmlspecialchars(news_t('common.reset', 'Reset'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
       </div>
 
       <table>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Published</th>
-            <th>Tags</th>
-            <th>Actions</th>
+            <th><?= htmlspecialchars(news_t('common.id', 'ID'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(news_t('blog.field.title', 'Title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(news_t('common.status', 'Status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(news_t('blog.published', 'Published'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(news_t('blog.tags', 'Tags'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(news_t('common.actions', 'Actions'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -95,6 +96,16 @@ news_auth_require_admin_page();
     const tagEl = document.getElementById('tag');
     const blogApiUrl = <?= json_encode($blogApiUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const blogEditUrl = <?= json_encode($blogEditUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const txt = <?= json_encode([
+      'error' => news_t('common.error', 'Error'),
+      'unknown' => news_t('common.unknown', 'unknown'),
+      'edit' => news_t('common.edit', 'Edit'),
+      'delete' => news_t('common.delete', 'Delete'),
+      'delete_post' => news_t('blog.delete_post_confirm', 'Delete post #'),
+      'delete_error' => news_t('blog.delete_error', 'Delete error:'),
+      'seed_error' => news_t('blog.seed_error', 'Seed error:'),
+      'done' => news_t('auth.title_ready', 'Done'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     let state = { page: 1, q: '', tag: '' };
 
     function makeEditUrl(id) {
@@ -120,7 +131,7 @@ news_auth_require_admin_page();
     async function load() {
       const r = await api('list_admin', { page: state.page, per_page: 15, q: state.q, tag: state.tag });
       if (!r.result) {
-        rowsEl.innerHTML = '<tr><td colspan="6">Error: ' + esc(r.error || 'unknown') + '</td></tr>';
+        rowsEl.innerHTML = '<tr><td colspan="6">' + esc(txt.error) + ': ' + esc(r.error || txt.unknown) + '</td></tr>';
         pagerEl.innerHTML = '';
         return;
       }
@@ -136,8 +147,8 @@ news_auth_require_admin_page();
           <td>${esc(row.published_at || row.created_at || '')}</td>
           <td class="tags">${esc(tags)}</td>
           <td>
-            <a class="btn" href="${makeEditUrl(Number(row.id || 0))}">Edit</a>
-            <button class="btn" data-del="${Number(row.id || 0)}" style="border-color:#f1b0b0;color:#8b1b1b;">Delete</button>
+            <a class="btn" href="${makeEditUrl(Number(row.id || 0))}">${esc(txt.edit)}</a>
+            <button class="btn" data-del="${Number(row.id || 0)}" style="border-color:#f1b0b0;color:#8b1b1b;">${esc(txt.delete)}</button>
           </td>
         `;
         rowsEl.appendChild(tr);
@@ -146,10 +157,10 @@ news_auth_require_admin_page();
       document.querySelectorAll('[data-del]').forEach((btn) => {
         btn.addEventListener('click', async () => {
           const id = Number(btn.getAttribute('data-del'));
-          if (!confirm('Delete post #' + id + '?')) return;
+          if (!confirm(txt.delete_post + id + '?')) return;
           const del = await api('delete', { id });
           if (del.result) load();
-          else alert('Delete error: ' + (del.error || 'unknown'));
+          else alert(txt.delete_error + ' ' + (del.error || txt.unknown));
         });
       });
 
@@ -183,10 +194,10 @@ news_auth_require_admin_page();
     document.getElementById('seedBtn').onclick = async () => {
       const r = await api('seed_demo');
       if (!r.result) {
-        alert('Seed error: ' + (r.error || 'unknown'));
+        alert(txt.seed_error + ' ' + (r.error || txt.unknown));
         return;
       }
-      alert((r.data && r.data.message) ? r.data.message : 'Done');
+      alert((r.data && r.data.message) ? r.data.message : txt.done);
       load();
     };
 

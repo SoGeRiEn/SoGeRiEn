@@ -1,14 +1,33 @@
 <?php
 declare(strict_types=1);
+
+$pmLandingLang = Sogerien::Lang()->get_current_lang();
+$pmLandingT = static function (string $key, string $fallback = ''): string {
+    $value = Sogerien::Lang()->get($key);
+    return $fallback !== '' && $value === $key ? $fallback : $value;
+};
+$pmLandingH = static function (string $value): string {
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
+$pmLandingTextMap = [];
+foreach (Sogerien::Lang()->get_current_lang_map() as $pmLandingKey => $pmLandingValue) {
+    if (!is_string($pmLandingKey) || !is_string($pmLandingValue) || strpos($pmLandingKey, 'landing.text.') !== 0) {
+        continue;
+    }
+    $pmLandingSource = Sogerien::Lang()->get($pmLandingKey, 'en');
+    if ($pmLandingSource !== '' && $pmLandingValue !== $pmLandingSource) {
+        $pmLandingTextMap[$pmLandingSource] = $pmLandingValue;
+    }
+}
 ?>
 <!DOCTYPE html>
-<html lang="en" data-pm-default-theme="midnight">
+<html lang="<?= $pmLandingH($pmLandingLang) ?>" data-pm-default-theme="midnight">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta data-pm-theme-color content="#0a101b">
-<title>proxymint — access any public data. power any workflow.</title>
-<meta name="description" content="100M+ residential IPs. 195 countries. 99.4% uptime. The proxy infrastructure that scales with you.">
+<title><?= $pmLandingH($pmLandingT('landing.meta.title', 'proxymint - access any public data. power any workflow.')) ?></title>
+<meta name="description" content="<?= $pmLandingH($pmLandingT('landing.meta.description', '100M+ residential IPs. 195 countries. 99.4% uptime. The proxy infrastructure that scales with you.')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Figtree:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -327,23 +346,41 @@ body.pm-theme-ice .nav-links a:hover{background:rgba(0,0,0,0.04);}
 .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .nav-login{font-size:14px;font-weight:600;color:var(--text-2);padding:7px 14px;border-radius:var(--r-s);transition:color 0.15s;}
 .nav-login:hover{color:var(--text);}
-.lang-switch{
-  min-width:170px;
-  height:36px;
-  padding:0 12px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,0.06);
-  color:var(--text);
-  font-family:var(--font-b);
-  font-size:13px;
-  font-weight:600;
-  outline:none;
+.pm-lang-dropdown{position:relative;min-width:170px;}
+.pm-lang-dd-toggle{
+  width:100%;height:36px;padding:0 12px 0 14px;border-radius:999px;border:1px solid var(--line);
+  display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(255,255,255,0.06);color:var(--text);font-family:var(--font-b);
+  font-size:13px;font-weight:700;line-height:1;cursor:pointer;outline:none;
+  transition:border-color 0.16s,background 0.16s,box-shadow 0.16s;
 }
-.lang-switch:focus{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));}
-body.pm-theme-ice .lang-switch{background:rgba(5,35,34,0.05);}
+.pm-lang-dd-toggle:hover,
+.pm-lang-dropdown.is-open .pm-lang-dd-toggle{background:rgba(255,255,255,0.09);border-color:color-mix(in srgb,var(--accent) 48%,var(--line));}
+.pm-lang-dd-toggle:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 24%,transparent);}
+.pm-lang-current{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pm-lang-chevron{width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.72;transition:transform .16s;}
+.pm-lang-dropdown.is-open .pm-lang-chevron{transform:rotate(225deg) translateY(-1px);}
+.pm-lang-dd-menu{
+  position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:700;display:none;padding:6px;
+  border-radius:16px;border:1px solid color-mix(in srgb,var(--line) 82%,var(--accent));
+  background:rgba(8,14,26,0.97);box-shadow:0 18px 42px rgba(0,0,0,0.36);
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+}
+.pm-lang-dropdown.is-open .pm-lang-dd-menu{display:block;}
+.pm-lang-dd-item{
+  width:100%;border:0;border-radius:11px;padding:10px 11px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:transparent;color:var(--text-2);font-family:var(--font-b);font-size:13px;font-weight:700;text-align:left;cursor:pointer;
+}
+.pm-lang-dd-item:hover{background:rgba(255,255,255,0.07);color:var(--text);}
+.pm-lang-dd-item.is-active{background:rgba(123,110,255,0.18);color:#fff;}
+.pm-lang-code{font-family:var(--font-c);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
+body.pm-theme-ice .pm-lang-dd-toggle{background:rgba(5,35,34,0.05);}
+body.pm-theme-ice .pm-lang-dd-toggle:hover,
+body.pm-theme-ice .pm-lang-dropdown.is-open .pm-lang-dd-toggle{background:rgba(5,35,34,0.08);}
+body.pm-theme-ice .pm-lang-dd-menu{background:rgba(246,252,250,0.97);box-shadow:0 18px 42px rgba(20,56,67,0.14);}
+body.pm-theme-ice .pm-lang-dd-item.is-active{background:rgba(107,78,255,0.12);color:var(--text);}
 @media(max-width:1000px){.nav-links{display:none;}.nav-inner{padding:0 24px;}}
-@media(max-width:700px){.lang-switch{display:none;}}
+@media(max-width:700px){.pm-lang-dropdown{display:none;}}
 @media(max-width:540px){.nav-right .btn-outline{display:none;}}
 
 /* ═══════════════════════════════════════════
@@ -887,31 +924,109 @@ body.pm-theme-ice .f-legal a:hover{color:var(--accent);}
       <span class="nav-wordmark">proxy<span>mint</span></span>
     </a>
     <ul class="nav-links">
-      <li><a href="#products" class="has-arrow">Proxies</a></li>
-      <li><a href="#products" class="has-arrow">Scrapers</a></li>
-      <li><a href="#use-cases" class="has-arrow">Solutions</a></li>
-      <li><a href="#" class="has-arrow">Enterprise</a></li>
-      <li><a href="/blog" class="has-arrow">Blog</a></li>
-      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#products" class="has-arrow"><?= $pmLandingH($pmLandingT('menu.proxy', 'Proxies')) ?></a></li>
+      <li><a href="#products" class="has-arrow"><?= $pmLandingH($pmLandingT('menu.scraper', 'Scrapers')) ?></a></li>
+      <li><a href="#use-cases" class="has-arrow"><?= $pmLandingH($pmLandingT('landing.nav.solutions', 'Solutions')) ?></a></li>
+      <li><a href="#" class="has-arrow"><?= $pmLandingH($pmLandingT('landing.nav.enterprise', 'Enterprise')) ?></a></li>
+      <li><a href="/blog" class="has-arrow"><?= $pmLandingH($pmLandingT('blog.nav.blog', 'Blog')) ?></a></li>
+      <li><a href="#pricing"><?= $pmLandingH($pmLandingT('landing.nav.pricing', 'Pricing')) ?></a></li>
     </ul>
     <div class="nav-right">
-      <select class="lang-switch" id="lang-switch" aria-label="Select language">
-        <option value="en" selected>🇺🇸 United States</option>
-        <option value="ru">🇷🇺 Russia</option>
-        <option value="de">🇩🇪 Germany</option>
-        <option value="fr">🇫🇷 France</option>
-        <option value="es">🇪🇸 Spain</option>
-      </select>
-      <a href="/admin" class="nav-login">Sign in</a>
+      <div class="pm-lang-dropdown" id="lang-switch" data-current-lang="<?= $pmLandingH($pmLandingLang) ?>">
+        <button class="pm-lang-dd-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="<?= $pmLandingH($pmLandingT('menu.language', 'Language')) ?>">
+          <span class="pm-lang-current"><?= $pmLandingH($pmLandingT('lang.' . $pmLandingLang, 'English')) ?></span>
+          <span class="pm-lang-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="pm-lang-dd-menu" role="menu">
+          <button class="pm-lang-dd-item<?= $pmLandingLang === 'en' ? ' is-active' : '' ?>" type="button" role="menuitem" data-lang="en"><span><?= $pmLandingH($pmLandingT('lang.en', 'English')) ?></span><span class="pm-lang-code">EN</span></button>
+          <button class="pm-lang-dd-item<?= $pmLandingLang === 'ru' ? ' is-active' : '' ?>" type="button" role="menuitem" data-lang="ru"><span><?= $pmLandingH($pmLandingT('lang.ru', 'Russian')) ?></span><span class="pm-lang-code">RU</span></button>
+          <button class="pm-lang-dd-item<?= $pmLandingLang === 'de' ? ' is-active' : '' ?>" type="button" role="menuitem" data-lang="de"><span><?= $pmLandingH($pmLandingT('lang.de', 'German')) ?></span><span class="pm-lang-code">DE</span></button>
+        </div>
+      </div>
+      <a href="/admin" class="nav-login"><?= $pmLandingH($pmLandingT('auth.sign_in', 'Sign in')) ?></a>
       <!-- Apple-style theme switch — no labels, pure toggle -->
-      <button class="theme-switch" id="theme-switch" role="switch" aria-checked="false" aria-label="Toggle light mode" tabindex="0">
+      <button class="theme-switch" id="theme-switch" role="switch" aria-checked="false" aria-label="<?= $pmLandingH($pmLandingT('theme.toggle_light', 'Toggle light mode')) ?>" tabindex="0">
         <span class="theme-switch-thumb"></span>
       </button>
-      <a href="/blog" class="btn btn-outline btn-sm">Blog</a>
-      <a href="/admin" class="btn btn-purple btn-sm">Sign in</a>
+      <a href="/blog" class="btn btn-outline btn-sm"><?= $pmLandingH($pmLandingT('blog.nav.blog', 'Blog')) ?></a>
+      <a href="/admin" class="btn btn-purple btn-sm"><?= $pmLandingH($pmLandingT('auth.sign_in', 'Sign in')) ?></a>
     </div>
   </div>
 </nav>
+<script>
+(function(){
+  var box = document.getElementById('lang-switch');
+  if (!box) return;
+  var toggle = box.querySelector('.pm-lang-dd-toggle');
+  var items = box.querySelectorAll('.pm-lang-dd-item[data-lang]');
+  function setOpen(open) {
+    box.classList.toggle('is-open', open);
+    if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function changeLang(lang) {
+    lang = String(lang || 'en').toLowerCase();
+    try {
+      document.cookie = 'sogerien_lang=' + encodeURIComponent(lang) + '; path=/; max-age=31536000; samesite=lax';
+      var url = new URL(window.location.href);
+      if (lang === 'en') url.searchParams.delete('lang'); else url.searchParams.set('lang', lang);
+      window.location.href = url.toString();
+    } catch (e) {
+      window.location.href = lang === 'en' ? '/' : ('/?lang=' + encodeURIComponent(lang));
+    }
+  }
+  if (toggle) {
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      setOpen(!box.classList.contains('is-open'));
+    });
+  }
+  items.forEach(function(item) {
+    item.addEventListener('click', function() {
+      setOpen(false);
+      changeLang(item.getAttribute('data-lang'));
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!box.contains(e.target)) setOpen(false);
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') setOpen(false);
+  });
+})();
+</script>
+<script>
+window.pmLandingTextMap = <?= json_encode($pmLandingTextMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) ?: '{}' ?>;
+(function(){
+  var map = window.pmLandingTextMap || {};
+  if (!Object.keys(map).length || !document.createTreeWalker) return;
+  function applyLandingTextMap() {
+    if (!document.body) return;
+    var skip = {SCRIPT:1, STYLE:1, PRE:1, CODE:1, TEXTAREA:1, SELECT:1, OPTION:1};
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node) {
+        var parent = node.parentElement;
+        if (!parent || skip[parent.tagName]) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('pre,code,.db-pre,.kw,.fn,.key,.str,.num,.op')) return NodeFilter.FILTER_REJECT;
+        return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var node;
+    while ((node = walker.nextNode())) {
+      var text = node.nodeValue || '';
+      var trimmed = text.trim();
+      if (!Object.prototype.hasOwnProperty.call(map, trimmed)) continue;
+      var prefix = text.match(/^\s*/)[0];
+      var suffix = text.match(/\s*$/)[0];
+      node.nodeValue = prefix + map[trimmed] + suffix;
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyLandingTextMap, {once:true});
+  } else {
+    applyLandingTextMap();
+  }
+})();
+</script>
 
 <!-- ═══════════════════════════════════════════
      HERO — DARK ROUNDED CARD
@@ -934,7 +1049,7 @@ body.pm-theme-ice .f-legal a:hover{color:var(--accent);}
           Residential, ISP, datacenter &amp; mobile proxies. 100M+ IPs across 195 countries, 99.4% uptime. The proxy infrastructure that scales without limits.
         </p>
         <div class="hero-form">
-          <input class="hero-input" type="text" placeholder="Enter a URL to scrape">
+          <input class="hero-input" type="text" placeholder="<?= $pmLandingH($pmLandingT('landing.hero.input_placeholder', 'Enter a URL to scrape')) ?>">
           <a href="#" class="btn btn-purple btn-lg">Start free trial</a>
         </div>
         <a href="#" class="hero-book">
@@ -1982,4 +2097,5 @@ body.pm-theme-ice .f-legal a:hover{color:var(--accent);}
 
 </body>
 </html>
+
 

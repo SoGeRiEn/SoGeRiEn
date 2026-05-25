@@ -1,6 +1,17 @@
 <?php
 declare(strict_types=1);
 
+function news_h(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function news_t(string $key, string $fallback = ''): string
+{
+    $value = Sogerien::Lang()->get($key);
+    return $fallback !== '' && $value === $key ? $fallback : $value;
+}
+
 function news_nav_css(): string
 {
     return <<<'CSS'
@@ -167,16 +178,35 @@ CSS;
 function news_render_nav(string $currentLang = 'en'): void
 {
     $lang = strtolower(trim($currentLang));
-    if (!in_array($lang, ['en', 'ru'], true)) {
+    if (!in_array($lang, ['en', 'ru', 'de'], true)) {
         $lang = 'en';
     }
-    $langLabel = $lang === 'ru' ? 'Русский' : 'English';
+
+    $langLabel = news_t('lang.' . $lang, strtoupper($lang));
     $langCode = strtoupper($lang);
     $blogHref = $lang === 'en' ? '/blog' : ('/blog?lang=' . rawurlencode($lang));
     $langRuHref = '/blog?lang=ru';
     $langEnHref = '/blog?lang=en';
+    $langDeHref = '/blog?lang=de';
     $langRuActive = $lang === 'ru' ? ' active' : '';
     $langEnActive = $lang === 'en' ? ' active' : '';
+    $langDeActive = $lang === 'de' ? ' active' : '';
+
+    $labelLanguage = news_h(news_t('menu.language', 'Language'));
+    $labelRu = news_h(news_t('lang.ru', 'Russian'));
+    $labelEn = news_h(news_t('lang.en', 'English'));
+    $labelDe = news_h(news_t('lang.de', 'German'));
+    $labelProxies = news_h(news_t('menu.proxy', 'Proxies'));
+    $labelScrapers = news_h(news_t('menu.scraper', 'Scrapers'));
+    $labelSolutions = news_h(news_t('landing.nav.solutions', 'Solutions'));
+    $labelPricing = news_h(news_t('landing.nav.pricing', 'Pricing'));
+    $labelBlog = news_h(news_t('blog.nav.blog', 'Blog'));
+    $labelTheme = news_h(news_t('theme.switcher', 'Theme switcher'));
+    $labelIce = news_h(news_t('theme.ice', 'Ice'));
+    $labelMidnight = news_h(news_t('theme.midnight', 'Midnight'));
+    $labelSignIn = news_h(news_t('auth.sign_in', 'Sign in'));
+    $langLabelEsc = news_h($langLabel);
+
     echo <<<HTML
 <nav class="pm-nav" id="pm-nav">
   <div class="nav-inner">
@@ -185,16 +215,16 @@ function news_render_nav(string $currentLang = 'en'): void
       <span class="nav-wordmark">proxy<span>mint</span></span>
     </a>
     <ul class="nav-links">
-      <li><a href="/#products" class="has-arrow">Proxies</a></li>
-      <li><a href="/#products" class="has-arrow">Scrapers</a></li>
-      <li><a href="/#use-cases" class="has-arrow">Solutions</a></li>
-      <li><a href="/#pricing">Pricing</a></li>
-      <li><a href="{$blogHref}" class="is-active">Blog</a></li>
+      <li><a href="/#products" class="has-arrow">{$labelProxies}</a></li>
+      <li><a href="/#products" class="has-arrow">{$labelScrapers}</a></li>
+      <li><a href="/#use-cases" class="has-arrow">{$labelSolutions}</a></li>
+      <li><a href="/#pricing">{$labelPricing}</a></li>
+      <li><a href="{$blogHref}" class="is-active">{$labelBlog}</a></li>
     </ul>
     <div class="nav-right pm-topbar-right">
-      <div class="pm-pill-group" role="group" aria-label="Theme switcher"><button type="button" class="pm-pill-btn" data-pm-theme="ice">Ice</button><button type="button" class="pm-pill-btn" data-pm-theme="midnight">Midnight</button></div>
-      <div class="pm-lang-control" role="group" aria-label="Язык"><span class="pm-lang-control-label">Язык</span><div class="dropdown pm-lang-dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle pm-lang-dd-toggle" type="button" id="pm_lang_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false" title="{$langLabel}"><span class="pm-lang-code" id="pm-lang-code">{$langCode}</span><span class="pm-lang-name" id="pm-lang-name">{$langLabel}</span></button><div class="dropdown-menu p-2 pm-lang-dd-menu" aria-labelledby="pm_lang_dropdown_toggle"><a class="dropdown-item pm-lang-dd-item{$langRuActive}" href="{$langRuHref}" data-pm-lang="ru" title="Русский" aria-label="Русский"><span class="pm-lang-code">RU</span><span class="pm-lang-name">Русский</span></a><a class="dropdown-item pm-lang-dd-item{$langEnActive}" href="{$langEnHref}" data-pm-lang="en" title="English" aria-label="English"><span class="pm-lang-code">EN</span><span class="pm-lang-name">English</span></a></div></div></div>
-      <a href="/admin" class="pm-btn pm-btn-primary">Sign in</a>
+      <div class="pm-pill-group" role="group" aria-label="{$labelTheme}"><button type="button" class="pm-pill-btn" data-pm-theme="ice">{$labelIce}</button><button type="button" class="pm-pill-btn" data-pm-theme="midnight">{$labelMidnight}</button></div>
+      <div class="pm-lang-control" role="group" aria-label="{$labelLanguage}"><span class="pm-lang-control-label">{$labelLanguage}</span><div class="dropdown pm-lang-dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle pm-lang-dd-toggle" type="button" id="pm_lang_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false" title="{$langLabelEsc}"><span class="pm-lang-code" id="pm-lang-code">{$langCode}</span><span class="pm-lang-name" id="pm-lang-name">{$langLabelEsc}</span></button><div class="dropdown-menu p-2 pm-lang-dd-menu" aria-labelledby="pm_lang_dropdown_toggle"><a class="dropdown-item pm-lang-dd-item{$langRuActive}" href="{$langRuHref}" data-pm-lang="ru" title="{$labelRu}" aria-label="{$labelRu}"><span class="pm-lang-code">RU</span><span class="pm-lang-name">{$labelRu}</span></a><a class="dropdown-item pm-lang-dd-item{$langEnActive}" href="{$langEnHref}" data-pm-lang="en" title="{$labelEn}" aria-label="{$labelEn}"><span class="pm-lang-code">EN</span><span class="pm-lang-name">{$labelEn}</span></a><a class="dropdown-item pm-lang-dd-item{$langDeActive}" href="{$langDeHref}" data-pm-lang="de" title="{$labelDe}" aria-label="{$labelDe}"><span class="pm-lang-code">DE</span><span class="pm-lang-name">{$labelDe}</span></a></div></div></div>
+      <a href="/admin" class="pm-btn pm-btn-primary">{$labelSignIn}</a>
     </div>
   </div>
 </nav>
@@ -210,7 +240,7 @@ function news_nav_script(): string
   var themeButtons = document.querySelectorAll('.pm-pill-btn[data-pm-theme]');
   var storageKey = 'pm-blog-theme';
   var langKey = 'pm-blog-lang';
-  var allowedLangs = ['en', 'ru'];
+  var allowedLangs = ['en', 'ru', 'de'];
 
   function normalizeLang(raw) {
     var next = String(raw || 'en').toLowerCase();
@@ -273,7 +303,7 @@ function news_nav_script(): string
     });
   }
 
-  function syncLangUi(lang){var langCode=document.getElementById('pm-lang-code');var langName=document.getElementById('pm-lang-name');var isRu=lang==='ru';if(langCode){langCode.textContent=isRu?'RU':'EN';}if(langName){langName.textContent=isRu?'Русский':'English';}var menuItems=document.querySelectorAll('.pm-lang-dd-item[data-pm-lang]');menuItems.forEach(function(item){var isActive=String(item.getAttribute('data-pm-lang')||'')===lang;item.classList.toggle('active',isActive);});}
+  function syncLangUi(lang){var langCode=document.getElementById('pm-lang-code');var langName=document.getElementById('pm-lang-name');var names={en:'English',ru:'Русский',de:'Deutsch'};if(langCode){langCode.textContent=String(lang||'en').toUpperCase();}if(langName){langName.textContent=names[lang]||String(lang||'en').toUpperCase();}var menuItems=document.querySelectorAll('.pm-lang-dd-item[data-pm-lang]');menuItems.forEach(function(item){var isActive=String(item.getAttribute('data-pm-lang')||'')===lang;item.classList.toggle('active',isActive);});}
 
   function applyTheme(theme, persist) {
     if (!body) return;
@@ -349,6 +379,7 @@ function news_nav_script(): string
 })();
 JS;
 }
+
 
 
 

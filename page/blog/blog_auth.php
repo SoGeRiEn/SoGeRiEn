@@ -96,9 +96,13 @@ function news_auth_require_admin_page(): void
 
     http_response_code(403);
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Access Denied</title></head><body>';
-    echo '<p>Access denied - allowed role: admin.</p>';
-    echo '<p><a href="' . htmlspecialchars($payload['login_url'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Sign in as admin</a></p>';
+    $lang = Sogerien::Lang()->get_current_lang();
+    $title = htmlspecialchars(Sogerien::Lang()->get('common.access_denied'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $message = htmlspecialchars(Sogerien::Lang()->get('common.access_denied_admin_only'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $link = htmlspecialchars(Sogerien::Lang()->get('auth.sign_in_admin'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    echo '<!doctype html><html lang="' . htmlspecialchars($lang, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . $title . '</title></head><body>';
+    echo '<p>' . $message . '</p>';
+    echo '<p><a href="' . htmlspecialchars($payload['login_url'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">' . $link . '</a></p>';
     echo '</body></html>';
     exit;
 }

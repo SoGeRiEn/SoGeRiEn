@@ -14,12 +14,14 @@ if ($blogApiUrl === '') { $blogApiUrl = '/api/news_api.php'; }
 if ($blogEditUrl === '') { $blogEditUrl = '/api/news_edit.php'; }
 
 news_auth_require_admin_page();
+$currentLang = Sogerien::Lang()->get_current_lang();
+$pageTitle = $mode === 'edit' ? news_t('blog.edit_news', 'Edit News') : news_t('blog.add_news', 'Add News');
 ?><!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars($currentLang, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= $mode === 'edit' ? 'Edit News' : 'Add News' ?></title>
+  <title><?= htmlspecialchars($pageTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
@@ -95,82 +97,82 @@ news_auth_require_admin_page();
   </style>
 </head>
 <body>
-  <?php news_render_nav(); ?>
+  <?php news_render_nav($currentLang); ?>
   <div class="wrap">
     <div class="panel">
-      <h1><?= $mode === 'edit' ? 'Edit News' : 'Add News' ?></h1>
+      <h1><?= htmlspecialchars($pageTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h1>
       <input type="hidden" id="id" value="<?= $postId ?>">
 
       <div class="row">
-        <label for="title">Title</label>
+        <label for="title"><?= htmlspecialchars(news_t('blog.field.title', 'Title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
         <input id="title" type="text">
       </div>
 
       <div class="grid3">
         <div class="row">
-          <label for="slug">Unique URL slug</label>
-          <input id="slug" type="text" placeholder="generated-from-title">
+          <label for="slug"><?= htmlspecialchars(news_t('blog.field.slug', 'Unique URL slug'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
+          <input id="slug" type="text" placeholder="<?= htmlspecialchars(news_t('blog.placeholder.slug', 'generated-from-title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
         </div>
         <div class="row">
-          <label for="status">Status</label>
+          <label for="status"><?= htmlspecialchars(news_t('common.status', 'Status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <select id="status">
-            <option value="draft">draft</option>
-            <option value="published">published</option>
+            <option value="draft"><?= htmlspecialchars(news_t('blog.status.draft', 'draft'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
+            <option value="published"><?= htmlspecialchars(news_t('blog.status.published', 'published'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
           </select>
         </div>
         <div class="row">
-          <label for="published_at">Published at (ISO datetime)</label>
+          <label for="published_at"><?= htmlspecialchars(news_t('blog.field.published_at', 'Published at (ISO datetime)'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <input id="published_at" type="text" placeholder="2026-04-01T13:00:00+03:00">
         </div>
       </div>
 
       <div class="grid2">
         <div class="row">
-          <label for="author_name">Author</label>
-          <input id="author_name" type="text" placeholder="Editorial Team">
+          <label for="author_name"><?= htmlspecialchars(news_t('blog.field.author', 'Author'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
+          <input id="author_name" type="text" placeholder="<?= htmlspecialchars(news_t('blog.editorial_team', 'Editorial Team'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
         </div>
         <div class="row">
-          <label for="cover_image_url">Cover image URL</label>
+          <label for="cover_image_url"><?= htmlspecialchars(news_t('blog.field.cover_image_url', 'Cover image URL'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <input id="cover_image_url" type="text" placeholder="https://...">
         </div>
       </div>
 
       <div class="row">
-        <label for="tags">Tags (categories)</label>
+        <label for="tags"><?= htmlspecialchars(news_t('blog.tags_categories', 'Tags (categories)'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
         <select id="tags" multiple></select>
-        <div class="tags-hint">Type to search or add new tags</div>
+        <div class="tags-hint"><?= htmlspecialchars(news_t('blog.tags_hint', 'Type to search or add new tags'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
       </div>
 
       <div class="row">
-        <label for="excerpt">Excerpt</label>
+        <label for="excerpt"><?= htmlspecialchars(news_t('blog.field.excerpt', 'Excerpt'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
         <textarea id="excerpt"></textarea>
       </div>
 
       <div class="row">
-        <label for="editor">Content (TinyMCE)</label>
+        <label for="editor"><?= htmlspecialchars(news_t('blog.field.content', 'Content (TinyMCE)'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
         <textarea id="editor"></textarea>
       </div>
 
       <div class="row">
-        <h3>SEO + Schema.org</h3>
+        <h3><?= htmlspecialchars(news_t('blog.seo_schema', 'SEO + Schema.org'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h3>
       </div>
       <div class="grid2">
         <div class="row">
-          <label for="seo_title">SEO title</label>
+          <label for="seo_title"><?= htmlspecialchars(news_t('blog.field.seo_title', 'SEO title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <input id="seo_title" type="text">
         </div>
         <div class="row">
-          <label for="canonical_url">Canonical URL</label>
+          <label for="canonical_url"><?= htmlspecialchars(news_t('blog.field.canonical_url', 'Canonical URL'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <input id="canonical_url" type="text" placeholder="https://example.com/news/slug">
         </div>
       </div>
       <div class="grid2">
         <div class="row">
-          <label for="seo_keywords">SEO keywords</label>
+          <label for="seo_keywords"><?= htmlspecialchars(news_t('blog.field.seo_keywords', 'SEO keywords'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <input id="seo_keywords" type="text" placeholder="proxy, privacy, cybersecurity">
         </div>
         <div class="row">
-          <label for="schema_type">Schema type</label>
+          <label for="schema_type"><?= htmlspecialchars(news_t('blog.field.schema_type', 'Schema type'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
           <select id="schema_type">
             <option value="NewsArticle">NewsArticle</option>
             <option value="BlogPosting">BlogPosting</option>
@@ -179,17 +181,17 @@ news_auth_require_admin_page();
         </div>
       </div>
       <div class="row">
-        <label for="seo_description">SEO description</label>
+        <label for="seo_description"><?= htmlspecialchars(news_t('blog.field.seo_description', 'SEO description'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></label>
         <textarea id="seo_description"></textarea>
       </div>
 
       <div class="actions">
-        <button class="primary" id="saveBtn" type="button">Save</button>
-        <button class="danger" id="deleteBtn" type="button">Delete</button>
-        <a class="btn" href="<?= htmlspecialchars($blogAdminUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Back to Admin</a>
-        <a class="btn" href="<?= htmlspecialchars($blogPublicUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank">Open Blog</a>
+        <button class="primary" id="saveBtn" type="button"><?= htmlspecialchars(news_t('common.save', 'Save'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
+        <button class="danger" id="deleteBtn" type="button"><?= htmlspecialchars(news_t('common.delete', 'Delete'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
+        <a class="btn" href="<?= htmlspecialchars($blogAdminUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars(news_t('blog.back_to_admin', 'Back to Admin'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+        <a class="btn" href="<?= htmlspecialchars($blogPublicUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank"><?= htmlspecialchars(news_t('blog.open_blog', 'Open Blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
       </div>
-      <div class="hint" id="hint">Ready.</div>
+      <div class="hint" id="hint"><?= htmlspecialchars(news_t('blog.ready', 'Ready.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
     </div>
   </div>
 
@@ -199,6 +201,20 @@ news_auth_require_admin_page();
     const blogApiUrl = <?= json_encode($blogApiUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const blogAdminUrl = <?= json_encode($blogAdminUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const blogEditUrl = <?= json_encode($blogEditUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const txt = <?= json_encode([
+      'tags_load_failed' => news_t('blog.tags_load_failed', 'tags_load_failed'),
+      'tags_placeholder' => news_t('blog.tags_placeholder', 'security, proxies, startup'),
+      'loading_post' => news_t('blog.loading_post', 'Loading post...'),
+      'load_error' => news_t('blog.load_error', 'Load error:'),
+      'unknown' => news_t('common.unknown', 'unknown'),
+      'loaded_post' => news_t('blog.loaded_post', 'Loaded post #'),
+      'saving' => news_t('common.saving', 'Saving...'),
+      'save_error' => news_t('blog.save_error', 'Save error:'),
+      'saved' => news_t('forms.saved', 'Saved'),
+      'nothing_to_delete' => news_t('blog.nothing_to_delete', 'Nothing to delete'),
+      'delete_post' => news_t('blog.delete_post_confirm', 'Delete post #'),
+      'delete_error' => news_t('blog.delete_error', 'Delete error:'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const hintEl = document.getElementById('hint');
     const byId = (id) => document.getElementById(id);
     const hint = (s) => { hintEl.textContent = s; };
@@ -229,7 +245,7 @@ news_auth_require_admin_page();
       if (tagsLoaded) return;
       const r = await api('tags', {});
       if (!r.result) {
-        throw new Error(String(r.error || 'tags_load_failed'));
+        throw new Error(String(r.error || txt.tags_load_failed));
       }
       const rows = Array.isArray(r.data) ? r.data : [];
       tagsOptions = rows
@@ -265,7 +281,7 @@ news_auth_require_admin_page();
       $tags.select2({
         theme: 'bootstrap-5',
         width: '100%',
-        placeholder: 'security, proxies, startup',
+        placeholder: txt.tags_placeholder,
         tags: true,
         tokenSeparators: [','],
         closeOnSelect: false,
@@ -328,18 +344,18 @@ news_auth_require_admin_page();
 
     async function loadPost(id) {
       if (id <= 0) return;
-      hint('Loading post...');
+      hint(txt.loading_post);
       const r = await api('get', { id });
       if (!r.result) {
-        hint('Load error: ' + (r.error || 'unknown'));
+        hint(txt.load_error + ' ' + (r.error || txt.unknown));
         return;
       }
       await fill(r.data || {});
-      hint('Loaded post #' + id);
+      hint(txt.loaded_post + id);
     }
 
     async function savePost() {
-      hint('Saving...');
+      hint(txt.saving);
       const payload = {
         id: Number(byId('id').value || '0'),
         title: byId('title').value.trim(),
@@ -359,11 +375,11 @@ news_auth_require_admin_page();
       };
       const r = await api('save', payload);
       if (!r.result) {
-        hint('Save error: ' + (r.error || 'unknown'));
+        hint(txt.save_error + ' ' + (r.error || txt.unknown));
         return;
       }
       await fill(r.data || {});
-      hint('Saved');
+      hint(txt.saved);
       if (mode === 'add' && Number(byId('id').value || '0') > 0) {
         const id = Number(byId('id').value);
         history.replaceState(null, '', makeEditUrl(id));
@@ -372,10 +388,10 @@ news_auth_require_admin_page();
 
     async function deletePost() {
       const id = Number(byId('id').value || '0');
-      if (id <= 0) { hint('Nothing to delete'); return; }
-      if (!confirm('Delete post #' + id + '?')) return;
+      if (id <= 0) { hint(txt.nothing_to_delete); return; }
+      if (!confirm(txt.delete_post + id + '?')) return;
       const r = await api('delete', { id });
-      if (!r.result) { hint('Delete error: ' + (r.error || 'unknown')); return; }
+      if (!r.result) { hint(txt.delete_error + ' ' + (r.error || txt.unknown)); return; }
       window.location.href = blogAdminUrl;
     }
 

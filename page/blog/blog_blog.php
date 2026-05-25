@@ -192,7 +192,7 @@ function blog_preview_text(string $text, int $maxLen = 220): string
 function blog_lang_normalize(mixed $raw): string
 {
     $lang = strtolower(trim((string)$raw));
-    return in_array($lang, ['en', 'ru'], true) ? $lang : 'en';
+    return in_array($lang, ['en', 'ru', 'de'], true) ? $lang : 'en';
 }
 
 /**
@@ -442,8 +442,8 @@ try {
     $errorText = $e->getMessage();
 }
 
-$metaTitle = 'ProxyMint Blog';
-$metaDescription = 'Latest news and imported knowledge pages from proxymint.com';
+$metaTitle = news_t('blog.meta.title', 'ProxyMint Blog');
+$metaDescription = news_t('blog.meta.description', 'Latest news and imported knowledge pages from proxymint.com');
 $canonical = blog_abs_url(blog_apply_lang_to_url(current_url(), $lang));
 if ($q !== '') {
     $canonical = blog_abs_url(blog_url(['lang' => $lang]));
@@ -459,7 +459,7 @@ foreach ($allTags as $dbTag) {
 }
 
 if (is_array($post)) {
-    $metaTitle = blog_str($post['seo_title'] ?? '') !== '' ? blog_str($post['seo_title']) : blog_str($post['title'] ?? 'News');
+    $metaTitle = blog_str($post['seo_title'] ?? '') !== '' ? blog_str($post['seo_title']) : blog_str($post['title'] ?? news_t('blog.news', 'News'));
     $metaDescription = blog_str($post['seo_description'] ?? '') !== '' ? blog_str($post['seo_description']) : blog_str($post['excerpt'] ?? '');
     $postCanonicalRaw = blog_str($post['canonical_url'] ?? '');
     if ($postCanonicalRaw === '') {
@@ -508,12 +508,12 @@ if (is_array($post)) {
     <div class="pm-admin-shell">
       <?php news_render_nav($lang); ?>
       <header class="pm-hero wrap reveal">
-        <p class="eyebrow">ProxyMint Blog Engine</p>
-        <h1 class="h1">Latest From ProxyMint</h1>
+        <p class="eyebrow"><?= esc(news_t('blog.hero.eyebrow', 'ProxyMint Blog Engine')) ?></p>
+        <h1 class="h1"><?= esc(news_t('blog.hero.title', 'Latest From ProxyMint')) ?></h1>
         <div class="pm-actions">
-          <a class="btn btn-outline" href="/">Main page</a>
-          <a class="btn btn-purple" href="/admin">Sign in</a>
-          <a class="btn btn-outline" href="<?= esc(blog_admin_url()) ?>">Blog admin</a>
+          <a class="btn btn-outline" href="/"><?= esc(news_t('menu.main_page', 'Main page')) ?></a>
+          <a class="btn btn-purple" href="/admin"><?= esc(news_t('auth.sign_in', 'Sign in')) ?></a>
+          <a class="btn btn-outline" href="<?= esc(blog_admin_url()) ?>"><?= esc(news_t('blog.admin', 'Blog admin')) ?></a>
         </div>
       </header>
 
@@ -526,12 +526,12 @@ if (is_array($post)) {
             'method' => 'GET',
             'ajax' => false,
         ]);
-$form->addInput('q', 'Search', 'text', ['placeholder' => 'Search...', 'list' => 'pm_blog_filters__q_suggestions', 'autocomplete' => 'off'], $q)->col(12, 12, 5, 5);
-$form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->col(12, 12, 4, 4);
+$form->addInput('q', news_t('common.search', 'Search'), 'text', ['placeholder' => news_t('blog.search_placeholder', 'Search...'), 'list' => 'pm_blog_filters__q_suggestions', 'autocomplete' => 'off'], $q)->col(12, 12, 5, 5);
+$form->addFacetDropdownMulti('tag', news_t('blog.tags', 'Tags'), $tagOptions, [], $tagSlugs, true)->col(12, 12, 4, 4);
         $form->addHTML(
             '<div class="pm-form-actions">'
-            . '<button class="btn btn-purple" type="submit">Search</button>'
-            . '<a class="btn btn-outline" href="' . esc(blog_url()) . '">Reset</a>'
+            . '<button class="btn btn-purple" type="submit">' . esc(news_t('common.search', 'Search')) . '</button>'
+            . '<a class="btn btn-outline" href="' . esc(blog_url()) . '">' . esc(news_t('common.reset', 'Reset')) . '</a>'
             . '</div>',
             [],
             'pm_form_actions'
@@ -553,14 +553,14 @@ $form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->c
       <main class="pm-main wrap reveal reveal-d2">
         <?php if ($errorText !== ''): ?>
           <article class="pm-card pm-post">
-            <h2>Database Error</h2>
+            <h2><?= esc(news_t('blog.database_error', 'Database Error')) ?></h2>
             <div class="pm-meta"><?= esc($errorText) ?></div>
           </article>
         <?php elseif ($post !== null): ?>
           <article class="pm-card pm-article">
             <h2><?= esc((string)$post['title']) ?></h2>
             <div class="pm-meta">
-              <?= esc((string)($post['author_name'] ?: 'Editorial Team')) ?> |
+              <?= esc((string)($post['author_name'] ?: news_t('blog.editorial_team', 'Editorial Team'))) ?> |
               <?= esc((string)($post['published_at'] ?: $post['created_at'])) ?>
             </div>
             <?php if (blog_str($post['cover_image_url'] ?? '') !== ''): ?>
@@ -584,7 +584,7 @@ $form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->c
               'description' => blog_str($post['seo_description'] ?? '') !== '' ? (string)$post['seo_description'] : (string)($post['excerpt'] ?? ''),
               'datePublished' => (string)($post['published_at'] ?? $post['created_at'] ?? ''),
               'dateModified' => (string)($post['updated_at'] ?? ''),
-              'author' => ['@type' => 'Person', 'name' => (string)($post['author_name'] ?: 'Editorial Team')],
+              'author' => ['@type' => 'Person', 'name' => (string)($post['author_name'] ?: news_t('blog.editorial_team', 'Editorial Team'))],
               'publisher' => ['@type' => 'Organization', 'name' => 'proxymint.com'],
               'mainEntityOfPage' => $canonical,
               'keywords' => (string)($post['seo_keywords'] ?? ''),
@@ -601,8 +601,8 @@ $form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->c
         <?php else: ?>
           <?php if ($items === []): ?>
             <article class="pm-card pm-post">
-              <h2>No Posts Found</h2>
-              <p class="pm-excerpt">Try another query or tag.</p>
+              <h2><?= esc(news_t('blog.no_posts', 'No Posts Found')) ?></h2>
+              <p class="pm-excerpt"><?= esc(news_t('blog.no_posts_hint', 'Try another query or tag.')) ?></p>
             </article>
           <?php else: ?>
             <div class="blog-grid">
@@ -610,7 +610,7 @@ $form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->c
                 <?php
                 $postUrl = blog_post_url($row);
                 $postDate = (string)($row['published_at'] ?: $row['created_at']);
-                $postTag = 'news';
+                $postTag = news_t('blog.news', 'news');
                 if (is_array($row['tags'] ?? null) && $row['tags'] !== []) {
                     $postTag = strtolower((string)$row['tags'][0]);
                 }
@@ -632,7 +632,7 @@ $form->addFacetDropdownMulti('tag', 'Tags', $tagOptions, [], $tagSlugs, true)->c
                           <a class="blog-thumb-fallback-link" href="<?= esc(blog_url(['tag' => $tagSlug])) ?>"><?= esc($tagName) ?></a>
                         <?php endforeach; ?>
                       <?php else: ?>
-                        <a class="blog-thumb-fallback-link" href="<?= esc($postUrl) ?>">news</a>
+                        <a class="blog-thumb-fallback-link" href="<?= esc($postUrl) ?>"><?= esc(news_t('blog.news', 'news')) ?></a>
                       <?php endif; ?>
                     </div>
                   <?php endif; ?>

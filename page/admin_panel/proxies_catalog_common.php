@@ -6,6 +6,12 @@ function pm_h(mixed $value): string
     return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function pm_t(string $key, string $fallback = ''): string
+{
+    $value = Sogerien::Lang()->get($key);
+    return $fallback !== '' && $value === $key ? $fallback : $value;
+}
+
 function pm_render_infatica_catalog(string $type, string $title): void
 {
     $tpl = Sogerien::Template();
@@ -22,7 +28,7 @@ function pm_render_infatica_catalog(string $type, string $title): void
 
     echo '<main class="pm-content"><section class="pm-panel"><div class="pm-panel-head"><h1>' . pm_h($title) . '</h1></div>';
     if (($resp['ok'] ?? false) !== true) {
-        echo '<div class="alert alert-danger">' . pm_h((string)($resp['error'] ?? 'API error')) . '</div>';
+        echo '<div class="alert alert-danger">' . pm_h((string)($resp['error'] ?? pm_t('common.api_error', 'API error'))) . '</div>';
     }
     if (isset($resp['warning'])) {
         echo '<div class="alert alert-warning">' . pm_h((string)$resp['warning']) . '</div>';

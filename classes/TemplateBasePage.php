@@ -22,6 +22,16 @@ final class TemplateBasePage
     public function get_head_css_urls(): array
     {
         $domain = $this->get_sogerien_domain();
+        $mainMenuCssVersion = (string)@filemtime(Sogerien::$SOGERIEN_DIR . '/page/css/admin_panel/main_menu.css');
+        $mainMenuCssUrl = $domain . '/page/css/admin_panel/main_menu.css';
+        if ($mainMenuCssVersion !== '') {
+            $mainMenuCssUrl .= '?v=' . rawurlencode($mainMenuCssVersion . '-client-account-2');
+        }
+        $mainCssVersion = (string)@filemtime(Sogerien::$SOGERIEN_DIR . '/page/css/admin_panel/main.css');
+        $mainCssUrl = $domain . '/page/css/admin_panel/main.css';
+        if ($mainCssVersion !== '') {
+            $mainCssUrl .= '?v=' . rawurlencode($mainCssVersion . '-select-theme-1');
+        }
 
         return array_merge([
             'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
@@ -29,10 +39,10 @@ final class TemplateBasePage
             'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
             'https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css',
             'https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css',
-            $domain . '/page/css/admin_panel/main_menu.css',
+            $mainMenuCssUrl,
             $domain . '/page/css/BasePage/forms.css',
             $domain . '/page/css/BasePage/table_renderer.css',
-            $domain . '/page/css/admin_panel/main.css',
+            $mainCssUrl,
         ], Affects::get_head_css_urls($domain));
     }
 
@@ -253,7 +263,7 @@ final class TemplateBasePage
         echo                    $this->admin_brand_logo_html();
         echo '                  <div class="pm-brand-copy">';
         echo '                      <div class="pm-brand-title">' . $h($t('app.name', 'ProxyMint')) . '</div>';
-        echo '                      <div class="pm-brand-sub">admin catalog</div>';
+        echo '                      <div class="pm-brand-sub">' . $h($t('app.admin_catalog', 'admin catalog')) . '</div>';
         echo '                  </div>';
         echo '              </div>';
         echo '              <div class="pm-sidebar-section pm-infatica-nav">';
@@ -271,9 +281,9 @@ final class TemplateBasePage
         echo '                  <div class="pm-page-title">' . $h($page_title) . '</div>';
         echo '              </div>';
         echo '              <div class="pm-topbar-right">';
-        echo '                  <div class="pm-pill-group" role="group" aria-label="Theme switcher">';
-        echo '                      <button type="button" class="pm-pill-btn" data-pm-theme="ice">Ice</button>';
-        echo '                      <button type="button" class="pm-pill-btn" data-pm-theme="midnight">Midnight</button>';
+        echo '                  <div class="pm-pill-group" role="group" aria-label="' . $h($t('theme.switcher', 'Theme switcher')) . '">';
+        echo '                      <button type="button" class="pm-pill-btn" data-pm-theme="ice">' . $h($t('theme.ice', 'Ice')) . '</button>';
+        echo '                      <button type="button" class="pm-pill-btn" data-pm-theme="midnight">' . $h($t('theme.midnight', 'Midnight')) . '</button>';
         echo '                  </div>';
         $lang_toggle_id = 'pm_lang_dropdown_toggle';
         $current_lang_label = $t('lang.' . $current_lang, $langFallbackNames[$current_lang] ?? strtoupper($current_lang));

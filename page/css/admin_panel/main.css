@@ -317,6 +317,49 @@ body.pm-theme-midnight .btn-close {
     box-shadow: none !important;
 }
 
+body.pm-theme-midnight .form-select {
+    color-scheme: dark;
+}
+
+body.pm-theme-ice .form-select {
+    color-scheme: light;
+}
+
+.form-select option,
+.form-select optgroup {
+    background-color: var(--surface-strong);
+    color: var(--text);
+}
+
+body.pm-theme-midnight .form-select option,
+body.pm-theme-midnight .form-select optgroup {
+    background-color: #0d1424;
+    color: #f6f7ff;
+}
+
+body.pm-theme-ice .form-select option,
+body.pm-theme-ice .form-select optgroup {
+    background-color: #ffffff;
+    color: #172027;
+}
+
+.form-select option:checked {
+    background-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.form-select option:disabled {
+    color: color-mix(in srgb, var(--muted) 72%, var(--text));
+}
+
+body.pm-theme-midnight .form-select option:disabled {
+    color: #8f9ab8;
+}
+
+body.pm-theme-ice .form-select option:disabled {
+    color: #64748b;
+}
+
 .form-control::placeholder {
     color: var(--muted);
 }
