@@ -3584,10 +3584,10 @@ final class APIInfaticaIo_transport
         }
 
         $raw = strtolower(trim((string)$value));
-        if ($raw === 'sticky' || $raw === 'no_rotation') {
+        if ($raw === 'sticky' || $raw === 'no_rotation' || $raw === '-1') {
             return Sogerien::Debager()->capture_return(-1, __CLASS__, __FUNCTION__);
         }
-        if ($raw === 'each_request' || $raw === 'per_request') {
+        if ($raw === 'each_request' || $raw === 'per_request' || $raw === '0') {
             return Sogerien::Debager()->capture_return(0, __CLASS__, __FUNCTION__);
         }
         if (preg_match('/^([1-9][0-9]*)m$/', $raw, $m)) {
@@ -3928,4 +3928,3 @@ final class APIInfaticaIo_transport
         $this->error = $msg;
     }
 }
-

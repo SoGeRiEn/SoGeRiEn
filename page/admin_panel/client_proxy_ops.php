@@ -44,6 +44,31 @@ $pageKey = match ($path) {
 $shop = new ProxyShop();
 $shop->init_db_alias($dbAlias);
 $request = Sogerien::InputRequest()->request_post_get_cookie_json;
+$isAjaxRequest = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+if ($isAjaxRequest && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $pageKey === 'access') {
+    $serviceId = cpo_s($request['service_id'] ?? '');
+    $targetService = null;
+    foreach ($shop->list_user_services($userId) as $row) {
+        if (is_array($row) && cpo_s($row['service_id'] ?? '') === $serviceId) {
+            $targetService = $row;
+            break;
+        }
+    }
+    $values = [];
+    if (is_array($targetService)) {
+        $category = cpo_s($targetService['provider_pool_category'] ?? '');
+        $country = cpo_s($request['country'] ?? '');
+        $values = cpo_s($request['action'] ?? '') === 'geo_cities'
+            ? $shop->infatica_access_cities($category, $country, cpo_s($request['region'] ?? ''))
+            : $shop->infatica_access_regions($category, $country);
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode(['ok' => true, 'values' => $values], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    Sogerien::markDone();
+    return;
+}
 $alertType = '';
 $alertText = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $pageKey === 'access') {
@@ -179,23 +204,11 @@ Sogerien::Page()->mainmenu();
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label" for="cpoListName">List name</label>
-                    <input class="form-control" id="cpoListName" name="list_name" value="<?= (int)$userId ?>-ProxyMint-<?= cpo_h(date('Y-m-d')) ?>">
-                </div>
-                <div class="col-md-4">
                     <label class="form-label" for="cpoAuthMode">Authorization</label>
                     <select class="form-select" id="cpoAuthMode" name="auth_mode">
                         <option value="login_password">Login / password</option>
                         <option value="ip_whitelist">IP whitelist</option>
                     </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="cpoLogin">Login</label>
-                    <input class="form-control" id="cpoLogin" name="login" placeholder="Auto">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="cpoPassword">Password</label>
-                    <input class="form-control" id="cpoPassword" name="password" placeholder="Auto">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" for="cpoNetwork">IP whitelist</label>
@@ -211,20 +224,14 @@ Sogerien::Page()->mainmenu();
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoRegion">Region</label>
-                    <select class="form-select" id="cpoRegion" name="region">
+                    <select class="form-select" id="cpoRegion" name="region" disabled>
                         <option value="">All regions</option>
-                        <?php foreach (($geoOptions['regions'] ?? []) as $region => $label): ?>
-                            <option value="<?= cpo_h((string)$region) ?>"><?= cpo_h((string)$label) ?></option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="cpoCity">City</label>
-                    <select class="form-select" id="cpoCity" name="city">
+                    <select class="form-select" id="cpoCity" name="city" disabled>
                         <option value="">All cities</option>
-                        <?php foreach (($geoOptions['cities'] ?? []) as $city => $label): ?>
-                            <option value="<?= cpo_h((string)$city) ?>"><?= cpo_h((string)$label) ?></option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -359,5 +366,53 @@ Sogerien::Page()->mainmenu();
         <section class="card shadow-sm"><div class="card-body text-muted">Client keys are not exposed here. Production flow: client - ProxyMint gateway - Infatica scraper API.</div></section>
     <?php endif; ?>
 </main>
+<?php if ($pageKey === 'access'): ?>
+<script>
+(function(){
+    var service = document.getElementById('cpoServiceId');
+    var country = document.getElementById('cpoCountries');
+    var region = document.getElementById('cpoRegion');
+    var city = document.getElementById('cpoCity');
+    if (!service || !country || !region || !city) return;
+    function fill(select, values, label){
+        select.innerHTML = '<option value="">' + label + '</option>';
+        (values || []).forEach(function(value){
+            var option = document.createElement('option');
+            option.value = String(value);
+            option.textContent = String(value);
+            select.appendChild(option);
+        });
+        select.disabled = false;
+    }
+    function load(action, select, label){
+        var form = new FormData();
+        form.append('action', action);
+        form.append('service_id', service.value);
+        form.append('country', country.value);
+        if (action === 'geo_cities') form.append('region', region.value);
+        select.disabled = true;
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            credentials: 'same-origin',
+            body: form
+        }).then(function(response){ return response.json(); })
+          .then(function(payload){ fill(select, payload && payload.ok ? payload.values : [], label); })
+          .catch(function(){ fill(select, [], label); });
+    }
+    function refreshRegions(){
+        fill(city, [], 'All cities');
+        load('geo_regions', region, 'All regions');
+    }
+    country.addEventListener('change', refreshRegions);
+    service.addEventListener('change', refreshRegions);
+    region.addEventListener('change', function(){
+        if (!region.value) { fill(city, [], 'All cities'); return; }
+        load('geo_cities', city, 'All cities');
+    });
+    if (country.value) refreshRegions();
+})();
+</script>
+<?php endif; ?>
 <?php
 Sogerien::Page()->footer();

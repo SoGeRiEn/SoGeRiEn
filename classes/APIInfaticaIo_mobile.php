@@ -92,6 +92,24 @@ final class APIInfaticaIo_mobile
     }
 
     /** @return array<mixed>|null */
+    public function countries(): ?array
+    {
+        return $this->with_mobile_api_key(fn(): ?array => $this->api->proxylist_countries());
+    }
+
+    /** @return array<mixed>|null */
+    public function regions(string $country): ?array
+    {
+        return $this->with_mobile_api_key(fn(): ?array => $this->api->regions($country));
+    }
+
+    /** @return array<mixed>|null */
+    public function cities(string $country, string $region): ?array
+    {
+        return $this->with_mobile_api_key(fn(): ?array => $this->api->cities($country, $region));
+    }
+
+    /** @return array<mixed>|null */
     public function packages(): ?array
     {
         return $this->with_mobile_api_key(fn(): ?array => $this->api->reseller_packages());
@@ -332,4 +350,3 @@ final class APIInfaticaIo_mobile
         return (int)round($gib * 1024 * 1024 * 1024);
     }
 }
-

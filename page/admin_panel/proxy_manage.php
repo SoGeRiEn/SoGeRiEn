@@ -68,6 +68,29 @@ if ($isAjaxRequest && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId >
         Sogerien::markDone();
         return;
     }
+    if (($ajaxAction === 'geo_regions' || $ajaxAction === 'geo_cities') && $ajaxServiceId !== '') {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        $targetService = null;
+        foreach ($shop->list_user_services($userId) as $row) {
+            if (is_array($row) && pm_s($row['service_id'] ?? '') === $ajaxServiceId) {
+                $targetService = $row;
+                break;
+            }
+        }
+        $values = [];
+        if (is_array($targetService)) {
+            $targetCategory = pm_s($targetService['provider_pool_category'] ?? '');
+            $targetCountry = pm_s($request['country'] ?? '');
+            $values = $ajaxAction === 'geo_cities'
+                ? $shop->infatica_access_cities($targetCategory, $targetCountry, pm_s($request['region'] ?? ''))
+                : $shop->infatica_access_regions($targetCategory, $targetCountry);
+        }
+        echo json_encode(['ok' => true, 'values' => $values], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        Sogerien::markDone();
+        return;
+    }
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
@@ -266,23 +289,11 @@ Sogerien::Page()->mainmenu();
                         <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                         <input type="hidden" name="action" value="generate_proxy_list">
                         <div class="col-md-3">
-                            <label class="form-label" for="pmListName">List name</label>
-                            <input class="form-control" id="pmListName" name="list_name" value="<?= (int)$userId ?>-ProxyMint-<?= pm_h(date('Y-m-d')) ?>">
-                        </div>
-                        <div class="col-md-3">
                             <label class="form-label" for="pmAuthMode">Authorization</label>
                             <select class="form-select" id="pmAuthMode" name="auth_mode">
                                 <option value="login_password">Login / password</option>
                                 <option value="ip_whitelist">IP whitelist</option>
                             </select>
-                        </div>
-                        <div class="col-md-3 pm-auth-login-field">
-                            <label class="form-label" for="pmListLogin">Login</label>
-                            <input class="form-control" id="pmListLogin" name="login" placeholder="Auto">
-                        </div>
-                        <div class="col-md-3 pm-auth-login-field">
-                            <label class="form-label" for="pmListPassword">Password</label>
-                            <input class="form-control" id="pmListPassword" name="password" placeholder="Auto">
                         </div>
                         <div class="col-md-6 pm-auth-ip-field d-none">
                             <label class="form-label" for="pmListNetwork">IP whitelist</label>
@@ -300,27 +311,15 @@ Sogerien::Page()->mainmenu();
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="pmListRegion">Region</label>
-                            <select class="form-select" id="pmListRegion" name="region">
+                            <select class="form-select" id="pmListRegion" name="region" disabled>
                                 <option value="">All regions</option>
-                                <?php foreach (($geoOptions['regions'] ?? []) as $region => $label): ?>
-                                    <option value="<?= pm_h($region) ?>"><?= pm_h($label) ?></option>
-                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="pmListCity">City</label>
-                            <select class="form-select" id="pmListCity" name="city">
+                            <select class="form-select" id="pmListCity" name="city" disabled>
                                 <option value="">All cities</option>
-                                <?php foreach (($geoOptions['cities'] ?? []) as $city => $label): ?>
-                                    <option value="<?= pm_h($city) ?>"><?= pm_h($label) ?></option>
-                                <?php endforeach; ?>
                             </select>
-                        </div>
-                        <div class="col-md-3">
-                            <?php $defaultPortCount = ($category === 'residential' || $category === 'residential_ipv6') ? 1000 : 100; ?>
-                            <label class="form-label" for="pmListPortCount">Quantity</label>
-                            <input class="form-control" id="pmListPortCount" name="port_count" type="number" min="1" max="1000" value="<?= (int)$defaultPortCount ?>">
-                            <div class="form-text">Ports per access list (max 1000).</div>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label" for="pmRotation">Rotation</label>
@@ -456,17 +455,16 @@ Sogerien::Page()->mainmenu();
     var authModeEl = document.getElementById('pmAuthMode');
     var loginFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-login-field'));
     var ipFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-ip-field'));
-    var loginInput = document.getElementById('pmListLogin');
-    var passwordInput = document.getElementById('pmListPassword');
     var networkInput = document.getElementById('pmListNetwork');
+    var countryInput = document.getElementById('pmListCountries');
+    var regionInput = document.getElementById('pmListRegion');
+    var cityInput = document.getElementById('pmListCity');
 
     function syncAuthFields(){
         if (!authModeEl) return;
         var isWhitelist = authModeEl.value === 'ip_whitelist';
         loginFields.forEach(function(el){ el.classList.toggle('d-none', isWhitelist); });
         ipFields.forEach(function(el){ el.classList.toggle('d-none', !isWhitelist); });
-        if (loginInput) loginInput.disabled = isWhitelist;
-        if (passwordInput) passwordInput.disabled = isWhitelist;
         if (networkInput) {
             networkInput.disabled = !isWhitelist;
             networkInput.required = isWhitelist;
@@ -476,6 +474,53 @@ Sogerien::Page()->mainmenu();
     if (authModeEl) {
         authModeEl.addEventListener('change', syncAuthFields);
         syncAuthFields();
+    }
+
+    function setGeoOptions(select, values, emptyLabel){
+        if (!select) return;
+        select.innerHTML = '<option value="">' + emptyLabel + '</option>';
+        (values || []).forEach(function(value){
+            var option = document.createElement('option');
+            option.value = String(value);
+            option.textContent = String(value);
+            select.appendChild(option);
+        });
+        select.disabled = false;
+    }
+
+    function loadGeo(action, country, region, select, emptyLabel){
+        if (!select) return;
+        select.disabled = true;
+        var fd = new FormData();
+        fd.append('action', action);
+        fd.append('service_id', '<?= pm_h($serviceId) ?>');
+        fd.append('country', country || '');
+        if (region) fd.append('region', region);
+        fetch(window.location.pathname + window.location.search, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd,
+            credentials: 'same-origin'
+        }).then(function(response){ return response.json(); }).then(function(payload){
+            setGeoOptions(select, payload && payload.ok ? payload.values : [], emptyLabel);
+        }).catch(function(){ setGeoOptions(select, [], emptyLabel); });
+    }
+
+    if (countryInput && regionInput && cityInput) {
+        countryInput.addEventListener('change', function(){
+            setGeoOptions(cityInput, [], 'All cities');
+            loadGeo('geo_regions', countryInput.value, '', regionInput, 'All regions');
+        });
+        regionInput.addEventListener('change', function(){
+            if (!regionInput.value) {
+                setGeoOptions(cityInput, [], 'All cities');
+                return;
+            }
+            loadGeo('geo_cities', countryInput.value, regionInput.value, cityInput, 'All cities');
+        });
+        if (countryInput.value) {
+            loadGeo('geo_regions', countryInput.value, '', regionInput, 'All regions');
+        }
     }
 
     var modal    = document.getElementById('pmDetailsModal');

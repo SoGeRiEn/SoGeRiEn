@@ -454,8 +454,8 @@ final class ProxyShop
             'created_at' => date('c'),
         ];
 
-        $this->insert_row('proxy_order', $orderId, 'Proxy order ' . $orderId, $value);
-        $this->insert_row('payment', $paymentId, 'Payment ' . $paymentId, [
+        $orderSaved = $this->insert_row('proxy_order', $orderId, 'Proxy order ' . $orderId, $value);
+        $paymentSaved = $this->insert_row('payment', $paymentId, 'Payment ' . $paymentId, [
             'payment_id' => $paymentId,
             'order_id' => $orderId,
             'user_id' => $user_id,
@@ -465,6 +465,10 @@ final class ProxyShop
             'status' => 'draft',
             'created_at' => date('c'),
         ]);
+
+        if (!$orderSaved || !$paymentSaved) {
+            return ['ok' => false, 'error' => 'Failed to save order before payment.'];
+        }
 
         return ['ok' => true, 'order_id' => $orderId, 'payment_id' => $paymentId];
     }
@@ -1083,21 +1087,23 @@ final class ProxyShop
         $cacheFile = 'infatica/access_geo_' . $category . '.json';
         $cache = Sogerien::Cache();
         $updatedAt = 0;
-        if (!$cache->is_interval_elapsed($cacheFile, 30 * 86400)) {
-            $cached = $cache->load($cacheFile, $updatedAt);
-            if (is_array($cached)) {
-                $cachedOptions = $this->normalize_access_geo_options($cached, $category);
-                if (count($cachedOptions['countries']) > 1 && (count($cachedOptions['regions']) > 1 || count($cachedOptions['cities']) > 1)) {
-                    return $cachedOptions;
-                }
+        $cachedOptions = null;
+        $cached = $cache->load($cacheFile, $updatedAt);
+        if (is_array($cached)) {
+            $normalizedCache = $this->normalize_access_geo_options($cached, $category);
+            if (count($normalizedCache['countries']) > 1) {
+                $cachedOptions = $normalizedCache;
             }
+        }
+        if (!$cache->is_interval_elapsed($cacheFile, 86400) && is_array($cachedOptions)) {
+            return $cachedOptions;
         }
 
         $raw = null;
         try {
+            $api = $this->traffic_provider_api(['provider_pool_category' => $category]);
             $raw = match ($category) {
-                'mobile' => Sogerien::API()->InfaticaIo()->Mobile()->geo_db(),
-                'residential', 'residential_ipv6' => Sogerien::API()->InfaticaIo()->Residential()->geo_db(),
+                'mobile', 'residential', 'residential_ipv6' => is_object($api) && method_exists($api, 'countries') ? ['countries' => $api->countries()] : null,
                 default => null,
             };
         } catch (Throwable) {
@@ -1105,12 +1111,24 @@ final class ProxyShop
         }
 
         $options = $this->normalize_access_geo_options(is_array($raw) ? $raw : [], $category);
-        if ($options['countries'] === []) {
-            $options = $this->fallback_access_geo_options($category);
+        if (count($options['countries']) <= 1) {
+            return is_array($cachedOptions) ? $cachedOptions : $this->fallback_access_geo_options($category);
         }
         $cache->save($options, $cacheFile, time());
 
         return $options;
+    }
+
+    /** @return array<int,string> */
+    public function infatica_access_regions(string $category, string $country): array
+    {
+        return $this->infatica_access_location_values($category, 'regions', strtoupper($this->str($country)), '');
+    }
+
+    /** @return array<int,string> */
+    public function infatica_access_cities(string $category, string $country, string $region): array
+    {
+        return $this->infatica_access_location_values($category, 'cities', strtoupper($this->str($country)), $this->str($region));
     }
 
     /**
@@ -1227,23 +1245,16 @@ final class ProxyShop
                     return ['ok' => false, 'error' => 'Traffic limit exhausted.'];
                 }
                 $accessOptions = $this->proxy_access_options_from_request($request, $service);
-                $listName = $this->str($accessOptions['list_name'] ?? '');
-                if ($listName === '') {
-                    $listName = 'ProxyMint ' . date('Y-m-d H:i');
-                    $accessOptions['list_name'] = $listName;
-                }
+                $listName = (string)$user_id . '-ProxyMint-' . date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+                $accessOptions['list_name'] = $listName;
                 $authMode = $this->str($accessOptions['auth_mode'] ?? 'login_password');
-                $login = $this->str($accessOptions['login'] ?? '');
-                $password = $this->str($accessOptions['password'] ?? '');
+                $login = '';
+                $password = '';
                 if ($authMode !== 'ip_whitelist') {
-                    if ($login === '') {
-                        $login = 'pm' . substr(bin2hex(random_bytes(5)), 0, 10);
-                        $accessOptions['login'] = $login;
-                    }
-                    if ($password === '') {
-                        $password = bin2hex(random_bytes(6));
-                        $accessOptions['password'] = $password;
-                    }
+                    $login = 'pm' . substr(bin2hex(random_bytes(5)), 0, 10);
+                    $password = bin2hex(random_bytes(8));
+                    $accessOptions['login'] = $login;
+                    $accessOptions['password'] = $password;
                 }
                 $country = $this->first_country($accessOptions['countries'] ?? $accessOptions['country'] ?? ($service['country'] ?? ''));
                 $apiResult = $this->provider_generate_access_from_options(
@@ -1272,7 +1283,7 @@ final class ProxyShop
                     'isp' => $accessOptions['isp'] ?? '',
                     'isp_id' => $accessOptions['isp_id'] ?? '',
                     'zip' => $accessOptions['zip'] ?? '',
-                    'port_count' => (int)($accessOptions['port_count'] ?? 0),
+                    'port_count' => 1000,
                     'rotation_period' => $accessOptions['rotation_period'] ?? 0,
                     'rotation_mode' => $accessOptions['rotation_mode'] ?? '',
                     'format' => $accessOptions['format'] ?? '',
@@ -1287,6 +1298,14 @@ final class ProxyShop
                     $service['proxy_lists'] = [];
                 }
                 $service['proxy_lists'][] = $generated;
+                $providerApi = $this->traffic_provider_api($service);
+                if (is_object($providerApi) && method_exists($providerApi, 'core')) {
+                    $providerCore = $providerApi->core();
+                    $service['connection_host'] = $this->str($providerCore->shared_proxy_host ?? '');
+                    $service['connection_port'] = $this->str($providerCore->shared_proxy_port ?? '');
+                }
+                $service['connection_login'] = $login;
+                $service['connection_password'] = $password;
             } elseif ($action === 'disable_proxy_list') {
                 $listId = $this->str($request['list_id'] ?? '');
                 $listName = $this->str($request['list_name'] ?? '');
@@ -1924,6 +1943,9 @@ final class ProxyShop
 
         $service['provider_info_response'] = $info;
         $service['provider_traffic_response'] = $details;
+        if (method_exists($api, 'lists')) {
+            $this->sync_provider_proxy_lists($service, $packageKey, $api->lists($packageKey), $api);
+        }
         $service['traffic_total_gb'] = number_format($usage['total_gb'], 2, '.', '');
         $service['traffic_used_gb'] = number_format($usage['used_gb'], 2, '.', '');
         $service['traffic_remaining_gb'] = number_format($usage['remaining_gb'], 2, '.', '');
@@ -2470,17 +2492,18 @@ final class ProxyShop
     /**
      * @param array<string,mixed> $value
      */
-    private function insert_row(string $table_name, string $table_index, string $name, array $value): void
+    private function insert_row(string $table_name, string $table_index, string $name, array $value): bool
     {
-        $this->sql("
+        $resp = $this->sql("
             INSERT INTO sogerien (table_name, table_index, name, status, table_value, created_at, updated_at)
-            VALUES (:table_name, :table_index, :name, 'active', :table_value::jsonb, now(), now())
+            VALUES (:table_name, to_jsonb(:table_index::text), :name, 'active', :table_value::jsonb, now(), now())
         ", [
             'table_name' => $table_name,
             'table_index' => $table_index,
             'name' => $name,
             'table_value' => $value,
         ]);
+        return ($resp['result'] ?? false) === true && (int)($resp['rowCount'] ?? 0) > 0;
     }
 
     /**
@@ -2615,7 +2638,6 @@ final class ProxyShop
             'isp' => ['isp', 'proxy-list-isp'],
             'isp_id' => ['isp_id'],
             'zip' => ['zip', 'proxy-zip-code', 'proxy-list-zip'],
-            'port_count' => ['port_count', 'quantity', 'proxy-list-port-count'],
             'rotation_period' => ['rotation_period', 'proxy-list-rotation-period'],
             'rotation_mode' => ['rotation_mode', 'proxy-list-rotation-mode'],
             'format' => ['format', 'proxy-list-format'],
@@ -2694,6 +2716,91 @@ final class ProxyShop
             return 'socks5';
         }
         return 'mixed';
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function infatica_access_location_values(string $category, string $method, string $country, string $region): array
+    {
+        if (!preg_match('/^[A-Z]{2}$/', $country)) {
+            return [];
+        }
+        $api = $this->traffic_provider_api(['provider_pool_category' => $category]);
+        if (!is_object($api) || !method_exists($api, $method)) {
+            return [];
+        }
+        try {
+            $raw = $method === 'cities' ? $api->cities($country, $region) : $api->regions($country);
+        } catch (Throwable) {
+            return [];
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+        $values = [];
+        foreach ($raw as $key => $value) {
+            $label = $this->str(is_string($value) || is_numeric($value) ? $value : $key);
+            if ($label !== '') {
+                $values[] = $label;
+            }
+        }
+        $values = array_values(array_unique($values));
+        sort($values);
+        return $values;
+    }
+
+    /**
+     * @param array<string,mixed> $service
+     * @param array<mixed>|null $response
+     */
+    private function sync_provider_proxy_lists(array &$service, string $packageKey, ?array $response, object $api): void
+    {
+        $providerLists = isset($response['results']) && is_array($response['results']) ? $response['results'] : [];
+        if ($providerLists === []) {
+            return;
+        }
+        $stored = isset($service['proxy_lists']) && is_array($service['proxy_lists']) ? $service['proxy_lists'] : [];
+        $storedById = [];
+        foreach ($stored as $list) {
+            if (is_array($list)) {
+                $storedById[$this->str($list['vendor_list_id'] ?? $list['id'] ?? '')] = $list;
+            }
+        }
+        $synced = [];
+        foreach ($providerLists as $providerList) {
+            if (!is_array($providerList)) {
+                continue;
+            }
+            $id = $this->str($providerList['id'] ?? '');
+            $geo = isset($providerList['geo'][0]) && is_array($providerList['geo'][0]) ? $providerList['geo'][0] : [];
+            $synced[] = array_merge($storedById[$id] ?? [], [
+                'id' => $id,
+                'vendor_list_id' => $id,
+                'package_key' => $packageKey,
+                'name' => $this->str($providerList['name'] ?? ''),
+                'login' => $this->str($providerList['login'] ?? ''),
+                'password' => $this->str($providerList['password'] ?? ''),
+                'country' => $this->str($geo['country'] ?? ''),
+                'region' => $this->str($geo['region'] ?? ''),
+                'city' => $this->str($geo['city'] ?? ''),
+                'format' => $this->str($providerList['format'] ?? ''),
+                'status' => 'active',
+                'provider_synced_at' => date('c'),
+            ]);
+        }
+        if ($synced === []) {
+            return;
+        }
+        $service['proxy_lists'] = $synced;
+        $primary = $synced[0];
+        if (method_exists($api, 'core')) {
+            $core = $api->core();
+            $service['connection_host'] = $this->str($core->shared_proxy_host ?? '');
+            $service['connection_port'] = $this->str($core->shared_proxy_port ?? '');
+        }
+        $service['connection_login'] = $this->str($primary['login'] ?? '');
+        $service['connection_password'] = $this->str($primary['password'] ?? '');
     }
 
     /**
