@@ -240,6 +240,6 @@ final class Routes
         // 5) 404
         http_response_code(404);
         $this->log_404_request($current_url);
-        echo "404 - СЃС‚СЂР°РЅРёС†Р° РЅРµ РЅР°Р№РґРµРЅР°";
+        echo "404 - страница не найдена";
     }
 }
