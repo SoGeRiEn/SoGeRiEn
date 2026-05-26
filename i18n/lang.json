@@ -720,6 +720,11 @@
                        "ru":  "Дни",
                        "en":  "Days"
                    },
+    "proxy.duration_12_months":  {
+                                   "ru":  "12 месяцев",
+                                   "en":  "12 months",
+                                   "de":  "12 Monate"
+                               },
     "proxy.access":  {
                          "ru":  "Доступ",
                          "en":  "Access"

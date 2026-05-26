@@ -157,7 +157,7 @@ Sogerien::Page()->mainmenu();
             <?php endif; ?>
             <?php
             $trafficLabel = ((float)$group['traffic'] === 1.0 ? '1 GB' : rtrim(rtrim(number_format((float)$group['traffic'], 2, '.', ''), '0'), '.') . ' GB');
-            $badge = $group['is_trial'] ? 'Trial' : ($group['days'] === '7' ? '7 days' : '12 месяцев');
+            $badge = $group['is_trial'] ? 'Trial' : ($group['days'] === '7' ? '7 days' : pli_t('proxy.duration_12_months', '12 months'));
             ?>
             <article class="pm-plan-card">
                 <div class="pm-plan-badge"><?= pli_h($badge) ?></div>
@@ -355,6 +355,5 @@ Sogerien::Page()->mainmenu();
 
 <?php
 Sogerien::Page()->footer();
-
 
 

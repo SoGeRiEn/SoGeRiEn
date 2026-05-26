@@ -175,6 +175,7 @@
     "proxy.category":  "Category",
     "proxy.stock":  "Stock",
     "proxy.days":  "Days",
+    "proxy.duration_12_months":  "12 months",
     "proxy.access":  "Access",
     "proxy.access_short":  "access",
     "proxy.auto_renewal":  "auto renewal",

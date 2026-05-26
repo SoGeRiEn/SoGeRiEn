@@ -175,6 +175,7 @@
     "proxy.category":  "Категория",
     "proxy.stock":  "Наличие",
     "proxy.days":  "Дни",
+    "proxy.duration_12_months":  "12 месяцев",
     "proxy.access":  "Доступ",
     "proxy.access_short":  "доступ",
     "proxy.auto_renewal":  "автопродление",
