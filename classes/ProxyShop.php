@@ -1951,6 +1951,7 @@ final class ProxyShop
         $service['traffic_remaining_gb'] = number_format($usage['remaining_gb'], 2, '.', '');
         $service['traffic_remains'] = number_format($usage['remaining_gb'], 2, '.', '') . ' GB';
         $service['traffic_updated_at'] = date('c');
+        $this->append_traffic_history_snapshot($service);
 
         if ($usage['total_gb'] > 0.0 && $usage['remaining_gb'] <= 0.0) {
             $service['status'] = 'traffic_exhausted';
@@ -1961,6 +1962,23 @@ final class ProxyShop
         }
 
         return ['ok' => true, 'usage' => $usage, 'info' => $info, 'traffic_details' => $details];
+    }
+
+    /**
+     * @param array<string,mixed> $service
+     */
+    private function append_traffic_history_snapshot(array &$service): void
+    {
+        $history = isset($service['traffic_history']) && is_array($service['traffic_history'])
+            ? array_values($service['traffic_history'])
+            : [];
+        $history[] = [
+            'at' => $this->str($service['traffic_updated_at'] ?? date('c')),
+            'used_gb' => number_format($this->money_float($service['traffic_used_gb'] ?? 0), 4, '.', ''),
+            'remaining_gb' => number_format($this->money_float($service['traffic_remaining_gb'] ?? 0), 4, '.', ''),
+            'total_gb' => number_format($this->money_float($service['traffic_total_gb'] ?? 0), 4, '.', ''),
+        ];
+        $service['traffic_history'] = array_slice($history, -400);
     }
 
     /**

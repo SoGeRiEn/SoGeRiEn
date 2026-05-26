@@ -123,11 +123,41 @@ if ($userId > 0 && $serviceId !== '') {
     }
 }
 
-Sogerien::Page()->title = 'Manage Proxy';
+Sogerien::Page()->title = 'Detailed product information';
 Sogerien::Page()->header();
 Sogerien::Page()->mainmenu();
 ?>
-<main class="container my-4 sog-ui">
+<main class="container my-4 sog-ui pm-service-page">
+    <style>
+        .pm-service-page{--pm-service-border:rgba(148,163,184,.28);--pm-service-accent:#367fe8;--pm-service-ink:var(--text,#17243d);--pm-service-muted:var(--muted,#68758a);max-width:1180px}
+        .pm-service-page .pm-service-card{border:1px solid var(--pm-service-border);border-radius:9px;background:var(--surface,#fff);box-shadow:var(--shadow,0 5px 18px rgba(15,23,42,.05));margin-bottom:16px}
+        .pm-service-page .pm-service-card > .card-header{font-size:18px;font-weight:700;padding:18px 20px 0;background:transparent;border:0;color:var(--pm-service-ink)}
+        .pm-service-page .pm-service-card > .card-body{padding:18px 20px}
+        .pm-service-heading h1{font-size:27px;font-weight:800;line-height:1.18;margin:0 0 7px;color:var(--pm-service-ink)}
+        .pm-service-heading p{margin:0;color:var(--pm-service-muted)}
+        .pm-service-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+        .pm-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:20px;padding-top:18px;border-top:1px solid var(--pm-service-border)}
+        .pm-detail-grid .label,.pm-usage-stat .label{font-size:12px;color:var(--pm-service-muted);margin-bottom:5px}
+        .pm-detail-grid .value{font-weight:600;overflow-wrap:anywhere}
+        .pm-usage-header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+        .pm-usage-header h2{font-size:18px;font-weight:700;margin:0}
+        .pm-usage-track{height:18px;background:#eaf3ff;border-radius:3px;overflow:hidden;position:relative}
+        .pm-usage-fill{height:100%;background:var(--pm-service-accent);min-width:0;transition:width .25s ease}
+        .pm-usage-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--pm-service-muted);margin-bottom:6px}
+        .pm-usage-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}
+        .pm-usage-stat{border:1px solid var(--pm-service-border);border-radius:7px;padding:9px 12px}
+        .pm-usage-stat strong{font-size:17px;color:var(--pm-service-ink)}
+        .pm-list-table th{font-size:12px;color:var(--pm-service-muted);font-weight:700;white-space:nowrap}
+        .pm-list-table td{vertical-align:middle}
+        .pm-chart-card .card-body{padding-top:12px}
+        .pm-chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+        .pm-chart-tabs{display:flex;gap:7px}
+        .pm-chart-tabs button{border:1px solid #9fc3fb;background:transparent;color:var(--pm-service-accent);border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600}
+        .pm-chart-tabs button.is-active{background:var(--pm-service-accent);border-color:var(--pm-service-accent);color:#fff}
+        .pm-chart{height:300px;border:1px solid var(--pm-service-border);border-radius:7px}
+        @media(max-width:820px){.pm-detail-grid,.pm-usage-values{grid-template-columns:1fr 1fr}}
+        @media(max-width:520px){.pm-detail-grid,.pm-usage-values{grid-template-columns:1fr}.pm-service-heading h1{font-size:23px}.pm-chart{height:250px}}
+    </style>
     <?php if ($alertText !== ''): ?>
         <div class="alert alert-<?= pm_h($alertType !== '' ? $alertType : 'info') ?>" role="alert"><?= pm_h($alertText) ?></div>
     <?php endif; ?>
@@ -141,18 +171,28 @@ Sogerien::Page()->mainmenu();
         <?php $isTrafficService = $category === 'mobile' || $category === 'residential' || $category === 'residential_ipv6'; ?>
         <?php $isStaticIpService = $category === 'isp' || $category === 'dc'; ?>
         <?php $geoOptions = $shop->infatica_access_geo_options($category); ?>
-        <div class="card shadow-sm mb-3">
+        <?php
+        $trafficTotal = max(0.0, (float)pm_s($service['traffic_total_gb'] ?? 0));
+        $trafficUsed = max(0.0, (float)pm_s($service['traffic_used_gb'] ?? 0));
+        $trafficRemaining = max(0.0, (float)pm_s($service['traffic_remaining_gb'] ?? $service['traffic_remains'] ?? 0));
+        $trafficPercent = $trafficTotal > 0.0 ? min(100.0, round(($trafficUsed / $trafficTotal) * 100, 2)) : 0.0;
+        $trafficHistory = isset($service['traffic_history']) && is_array($service['traffic_history']) ? $service['traffic_history'] : [];
+        if ($trafficHistory === [] && $isTrafficService) {
+            $trafficHistory[] = [
+                'at' => pm_s($service['traffic_updated_at'] ?? date('c')),
+                'used_gb' => $trafficUsed,
+                'remaining_gb' => $trafficRemaining,
+                'total_gb' => $trafficTotal,
+            ];
+        }
+        $trafficHistoryJson = json_encode($trafficHistory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ?>
+        <div class="card pm-service-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                    <div class="d-flex align-items-start gap-2 flex-wrap">
-                        <a class="btn btn-outline-secondary btn-sm mt-1" href="/client/my/proxies">MyServices</a>
-                        <div>
-                        <h1 class="h4 mb-1"><?= pm_h($service['title'] ?? '') ?></h1>
-                        <div class="text-muted small">Service ID: <code><?= pm_h($serviceId) ?></code></div>
-                        <div class="text-muted small">Provider pool: <code><?= pm_h($service['provider_pool_category'] ?? '-') ?></code></div>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
+                <div class="pm-service-heading">
+                    <h1>Detailed product information</h1>
+                    <p><?= pm_h($service['title'] ?? '-') ?> - <code><?= pm_h($serviceId) ?></code></p>
+                    <div class="pm-service-actions">
                         <?php if ($isTrafficService): ?>
                             <form method="post" action="/client/proxy/manage">
                                 <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
@@ -173,89 +213,62 @@ Sogerien::Page()->mainmenu();
                         <a class="btn btn-outline-secondary" href="/client/my/proxies">Back to My Proxies</a>
                     </div>
                 </div>
-                <hr>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="small text-muted">Host</div>
-                        <div><?= pm_h($service['connection_host'] ?? '-') ?></div>
+                <div class="pm-detail-grid">
+                    <div>
+                        <div class="label">Product name</div>
+                        <div class="value"><?= pm_h($service['title'] ?? '-') ?></div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="small text-muted">Port</div>
-                        <div><?= pm_h($service['connection_port'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Proxy type</div>
+                        <div class="value"><?= pm_h(ucfirst($category !== '' ? $category : '-')) ?></div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Login</div>
-                        <div><?= pm_h($service['connection_login'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Country</div>
+                        <div class="value"><?= pm_h($service['country'] ?? '-') ?></div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Password</div>
-                        <div><?= pm_h($service['connection_password'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Status</div>
+                        <div class="value"><?= pm_h($service['status'] ?? '-') ?></div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Country</div>
-                        <div><?= pm_h($service['country'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Host</div>
+                        <div class="value"><?= pm_h($service['connection_host'] ?? '-') ?>:<?= pm_h($service['connection_port'] ?? '-') ?></div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Status</div>
-                        <div><?= pm_h($service['status'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Expires</div>
+                        <div class="value"><?= pm_h($service['expires_at'] ?? '-') ?></div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="small text-muted">Disable reason</div>
-                        <div><?= pm_h($service['disable_reason'] ?? '-') ?></div>
+                    <div>
+                        <div class="label">Auto-renew</div>
+                        <div class="value"><?= !empty($service['auto_renew_request']) ? 'On' : 'Off' ?></div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Expires</div>
-                        <div><?= pm_h($service['expires_at'] ?? '-') ?></div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Auto-renew</div>
-                        <div><?= !empty($service['auto_renew_request']) ? 'On' : 'Off' ?></div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted">Public IP</div>
-                        <div><?= pm_h($service['public_ipaddress'] ?? '-') ?></div>
-                    </div>
-                    <?php if ($isStaticIpService): ?>
-                        <div class="col-md-3">
-                            <div class="small text-muted">IP count</div>
-                            <div><?= pm_h($service['ip_count'] ?? '-') ?></div>
-                        </div>
-                    <?php else: ?>
-                        <div class="col-md-3">
-                            <div class="small text-muted">Traffic limit</div>
-                            <div><?= pm_h($service['traffic_total_gb'] ?? '-') ?> GB</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="small text-muted">Traffic used</div>
-                            <div><?= pm_h($service['traffic_used_gb'] ?? '0.00') ?> GB</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="small text-muted">Traffic left</div>
-                            <div><?= pm_h($service['traffic_remaining_gb'] ?? $service['traffic_remains'] ?? '-') ?> GB</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="small text-muted">Traffic updated</div>
-                            <div><?= pm_h($service['traffic_updated_at'] ?? '-') ?></div>
-                        </div>
-                    <?php endif; ?>
-                    <div class="col-md-6">
-                        <div class="small text-muted">OVPN config</div>
-                        <div>
-                            <?php $ovpn = pm_s($service['ovpn_config_link'] ?? ''); ?>
-                            <?php if ($ovpn !== ''): ?>
-                                <a href="<?= pm_h($ovpn) ?>" target="_blank" rel="noopener noreferrer"><?= pm_h($ovpn) ?></a>
-                            <?php else: ?>
-                                -
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="small text-muted">Xray settings</div>
-                        <pre class="mb-0"><?= pm_h($service['xray_settings_str'] ?? '-') ?></pre>
+                    <div>
+                        <div class="label"><?= $isStaticIpService ? 'IP count' : 'Last traffic update' ?></div>
+                        <div class="value"><?= pm_h($isStaticIpService ? ($service['ip_count'] ?? '-') : ($service['traffic_updated_at'] ?? '-')) ?></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <?php if ($isTrafficService): ?>
+            <section class="card pm-service-card" aria-label="Traffic statistics">
+                <div class="card-body">
+                    <div class="pm-usage-header">
+                        <h2>Traffic statistics</h2>
+                        <span class="small text-muted"><?= pm_h(number_format($trafficPercent, 2)) ?>% used</span>
+                    </div>
+                    <div class="pm-usage-scale"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                    <div class="pm-usage-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= pm_h($trafficPercent) ?>">
+                        <div class="pm-usage-fill" style="width:<?= pm_h($trafficPercent) ?>%"></div>
+                    </div>
+                    <div class="pm-usage-values">
+                        <div class="pm-usage-stat"><div class="label">Used traffic</div><strong><?= pm_h(number_format($trafficUsed, 2)) ?> GB</strong></div>
+                        <div class="pm-usage-stat"><div class="label">Available</div><strong><?= pm_h(number_format($trafficRemaining, 2)) ?> GB</strong></div>
+                        <div class="pm-usage-stat"><div class="label">Traffic package</div><strong><?= pm_h(number_format($trafficTotal, 2)) ?> GB</strong></div>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <?php if ($isStaticIpService): ?>
             <div class="card shadow-sm mb-3">
@@ -277,8 +290,77 @@ Sogerien::Page()->mainmenu();
             </div>
         <?php endif; ?>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-header">Generate proxy access list</div>
+        <?php $proxyLists = isset($service['proxy_lists']) && is_array($service['proxy_lists']) ? $service['proxy_lists'] : []; ?>
+        <section class="card pm-service-card" aria-label="Generated proxy lists">
+            <div class="card-header">Generated proxy lists</div>
+            <div class="card-body">
+                <?php if ($proxyLists === []): ?>
+                    <p class="text-muted mb-0">No proxy lists generated yet.</p>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0 pm-list-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Country</th>
+                                    <th>Protocol</th>
+                                    <th>Status</th>
+                                    <th>Used</th>
+                                    <th>Created</th>
+                                    <th>Details</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach (array_reverse($proxyLists) as $list): ?>
+                                <?php if (!is_array($list)) { continue; } ?>
+                                <tr>
+                                    <td><?= pm_h($list['name'] ?? '-') ?></td>
+                                    <td>
+                                        <?= pm_h($list['country'] ?? '-') ?>
+                                        <?php $targetBits = array_filter([
+                                            pm_s($list['region'] ?? ''),
+                                            pm_s($list['city'] ?? ''),
+                                            pm_s($list['isp_id'] ?? $list['isp'] ?? ''),
+                                            pm_s($list['zip'] ?? ''),
+                                        ]); ?>
+                                        <?php if ($targetBits !== []): ?>
+                                            <div class="small text-muted"><?= pm_h(implode(' / ', $targetBits)) ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= pm_h($list['protocol'] ?? '-') ?></td>
+                                    <td><?= pm_h($list['status'] ?? 'active') ?></td>
+                                    <td><?= pm_h($list['traffic_used_gb'] ?? '0.0000') ?> GB</td>
+                                    <td><?= pm_h($list['created_at'] ?? '-') ?></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary pm-proxy-details-btn" type="button"
+                                            data-list-id="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>"
+                                            data-list-name="<?= pm_h($list['name'] ?? '') ?>">Details</button>
+                                    </td>
+                                    <td>
+                                        <?php if (pm_s($list['status'] ?? 'active') === 'active'): ?>
+                                            <form method="post" action="/client/proxy/manage" class="m-0">
+                                                <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
+                                                <input type="hidden" name="action" value="disable_proxy_list">
+                                                <input type="hidden" name="list_id" value="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>">
+                                                <input type="hidden" name="list_name" value="<?= pm_h($list['name'] ?? '') ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Disable</button>
+                                            </form>
+                                        <?php else: ?>
+                                            -
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <div class="card pm-service-card">
+            <div class="card-header">Generate proxy list</div>
             <div class="card-body">
                 <?php if ($isStaticIpService): ?>
                     <div class="alert alert-secondary mb-0"><?= $category === 'dc' ? 'Dedicated DC' : 'ISP' ?> services are managed as country + IP count. Traffic access lists are not used for this product.</div>
@@ -363,77 +445,35 @@ Sogerien::Page()->mainmenu();
             </div>
         </div>
 
-        <?php $proxyLists = isset($service['proxy_lists']) && is_array($service['proxy_lists']) ? $service['proxy_lists'] : []; ?>
-        <?php if ($proxyLists !== []): ?>
-            <div class="card shadow-sm mb-3">
-                <div class="card-header">Generated proxy lists</div>
+        <?php if ($isTrafficService): ?>
+            <section class="card pm-service-card pm-chart-card" aria-label="Internet speed usage charts">
+                <div class="card-header">Infographic diagrams - internet speed usage</div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Country</th>
-                                    <th>Protocol</th>
-                                    <th>Login</th>
-                                    <th>Password</th>
-                                    <th>Status</th>
-                                    <th>Used</th>
-                                    <th>Created</th>
-                                    <th>Details</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <?php foreach (array_reverse($proxyLists) as $list): ?>
-                                <?php if (!is_array($list)) { continue; } ?>
-                                <tr>
-                                    <td><?= pm_h($list['name'] ?? '-') ?></td>
-                                    <td>
-                                        <?= pm_h($list['country'] ?? '-') ?>
-                                        <?php $targetBits = array_filter([
-                                            pm_s($list['region'] ?? ''),
-                                            pm_s($list['city'] ?? ''),
-                                            pm_s($list['isp_id'] ?? $list['isp'] ?? ''),
-                                            pm_s($list['zip'] ?? ''),
-                                        ]); ?>
-                                        <?php if ($targetBits !== []): ?>
-                                            <div class="small text-muted"><?= pm_h(implode(' / ', $targetBits)) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= pm_h($list['protocol'] ?? '-') ?></td>
-                                    <td><code><?= pm_h($list['login'] ?? '-') ?></code></td>
-                                    <td><code><?= pm_h($list['password'] ?? '-') ?></code></td>
-                                    <td><?= pm_h($list['status'] ?? 'active') ?></td>
-                                    <td><?= pm_h($list['traffic_used_gb'] ?? '0.0000') ?> GB</td>
-                                    <td><?= pm_h($list['created_at'] ?? '-') ?></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary pm-proxy-details-btn" type="button"
-                                            data-list-id="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>"
-                                            data-list-name="<?= pm_h($list['name'] ?? '') ?>"
-                                            data-login="<?= pm_h($list['login'] ?? '') ?>"
-                                            data-password="<?= pm_h($list['password'] ?? '') ?>">Details</button>
-                                    </td>
-                                    <td>
-                                        <?php if (pm_s($list['status'] ?? 'active') === 'active'): ?>
-                                            <form method="post" action="/client/proxy/manage" class="m-0">
-                                                <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
-                                                <input type="hidden" name="action" value="disable_proxy_list">
-                                                <input type="hidden" name="list_id" value="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>">
-                                                <input type="hidden" name="list_name" value="<?= pm_h($list['name'] ?? '') ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Disable</button>
-                                            </form>
-                                        <?php else: ?>
-                                            -
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <div class="pm-chart-head">
+                        <span class="text-muted small">Traffic consumption speed by selected period</span>
+                        <div class="pm-chart-tabs" data-chart-tabs="speed">
+                            <button class="is-active" type="button" data-period="day">Daily</button>
+                            <button type="button" data-period="week">Weekly</button>
+                            <button type="button" data-period="month">Monthly</button>
+                        </div>
                     </div>
+                    <div class="pm-chart" id="pmSpeedChart" aria-label="Internet speed usage chart"></div>
                 </div>
-            </div>
+            </section>
+            <section class="card pm-service-card pm-chart-card" aria-label="Traffic usage charts">
+                <div class="card-header">Infographic diagrams - traffic usage</div>
+                <div class="card-body">
+                    <div class="pm-chart-head">
+                        <span class="text-muted small">Used traffic balance by selected period</span>
+                        <div class="pm-chart-tabs" data-chart-tabs="traffic">
+                            <button class="is-active" type="button" data-period="day">Daily</button>
+                            <button type="button" data-period="week">Weekly</button>
+                            <button type="button" data-period="month">Monthly</button>
+                        </div>
+                    </div>
+                    <div class="pm-chart" id="pmTrafficChart" aria-label="Traffic usage chart"></div>
+                </div>
+            </section>
         <?php endif; ?>
 
     <?php endif; ?>
@@ -450,6 +490,73 @@ Sogerien::Page()->mainmenu();
         </div>
     </div>
 </main>
+<?php if (isset($isTrafficService) && $isTrafficService): ?>
+<script>
+(function(){
+    var raw = <?= $trafficHistoryJson !== false ? $trafficHistoryJson : '[]' ?>;
+    var history = (Array.isArray(raw) ? raw : []).map(function(item){
+        return {
+            at: new Date(String(item.at || '')),
+            used: Number(item.used_gb || 0),
+            total: Number(item.total_gb || 0)
+        };
+    }).filter(function(item){ return !Number.isNaN(item.at.getTime()); }).sort(function(a, b){ return a.at - b.at; });
+    var speedEl = document.getElementById('pmSpeedChart');
+    var trafficEl = document.getElementById('pmTrafficChart');
+    if (!speedEl || !trafficEl || typeof echarts === 'undefined') return;
+
+    function bucketKey(date, period){
+        var d = new Date(date.getTime());
+        if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        if (period === 'week') {
+            var day = (d.getDay() + 6) % 7;
+            d.setDate(d.getDate() - day);
+        }
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function aggregate(period){
+        var grouped = {};
+        history.forEach(function(item){ grouped[bucketKey(item.at, period)] = item; });
+        var labels = Object.keys(grouped).sort();
+        var usage = labels.map(function(label){ return grouped[label].used; });
+        var speed = usage.map(function(value, index){ return index === 0 ? 0 : Math.max(0, Number((value - usage[index - 1]).toFixed(4))); });
+        return {labels: labels, usage: usage, speed: speed};
+    }
+
+    var speedChart = echarts.init(speedEl);
+    var trafficChart = echarts.init(trafficEl);
+    function options(title, labels, values, color){
+        return {
+            color: [color],
+            tooltip: {trigger: 'axis', valueFormatter: function(value){ return Number(value).toFixed(4) + ' GB'; }},
+            grid: {left: 56, right: 28, top: 44, bottom: 44},
+            legend: {data: [title], top: 12, right: 20},
+            xAxis: {type: 'category', boundaryGap: false, data: labels, axisLabel: {color: '#64748b'}},
+            yAxis: {type: 'value', name: 'GB', axisLabel: {color: '#64748b'}, splitLine: {lineStyle: {color: '#e6edf6'}}},
+            series: [{name: title, type: 'line', smooth: true, showSymbol: true, symbolSize: 7, areaStyle: {opacity: .1}, data: values}]
+        };
+    }
+    function render(period){
+        var data = aggregate(period);
+        speedChart.setOption(options('Consumption (GB)', data.labels, data.speed, '#397eee'), true);
+        trafficChart.setOption(options('Traffic used (GB)', data.labels, data.usage, '#6b52e5'), true);
+    }
+    document.querySelectorAll('.pm-chart-tabs button').forEach(function(button){
+        button.addEventListener('click', function(){
+            var period = button.getAttribute('data-period') || 'day';
+            document.querySelectorAll('.pm-chart-tabs button[data-period="' + period + '"]').forEach(function(match){
+                match.parentElement.querySelectorAll('button').forEach(function(peer){ peer.classList.remove('is-active'); });
+                match.classList.add('is-active');
+            });
+            render(period);
+        });
+    });
+    render('day');
+    window.addEventListener('resize', function(){ speedChart.resize(); trafficChart.resize(); });
+})();
+</script>
+<?php endif; ?>
 <script>
 (function(){
     var authModeEl = document.getElementById('pmAuthMode');
@@ -676,10 +783,8 @@ Sogerien::Page()->mainmenu();
     function fetchDetails(btn){
         var listId   = btn.getAttribute('data-list-id') || '';
         var listName = btn.getAttribute('data-list-name') || '';
-        var login    = btn.getAttribute('data-login') || '';
-        var password = btn.getAttribute('data-password') || '';
 
-        openModal(listName || login);
+        openModal(listName);
         setMessage('<div class="text-muted small p-2">Loading...</div>');
         allRows = [];
         activeTab = 'text';
