@@ -1940,11 +1940,20 @@ final class ProxyShop
             ? $api->package_usage($packageKey)
             : (method_exists($api, 'traffic_details') ? $api->traffic_details($packageKey, 'all') : null);
         $usage = $this->extract_traffic_usage($info, $details, (float)$this->money_float($service['traffic_limit_gb'] ?? $service['traffic_total_gb'] ?? 0));
+        $trafficDetails = method_exists($api, 'traffic_details')
+            ? [
+                'daily' => $api->traffic_details($packageKey, 'daily'),
+                'weekly' => $api->traffic_details($packageKey, 'weekly'),
+                'monthly' => $api->traffic_details($packageKey, 'monthly'),
+                'all' => $api->traffic_details($packageKey, 'all'),
+            ]
+            : [];
 
         $service['provider_info_response'] = $info;
         $service['provider_traffic_response'] = $details;
+        $service['provider_traffic_details'] = $trafficDetails;
         if (method_exists($api, 'lists')) {
-            $this->sync_provider_proxy_lists($service, $packageKey, $api->lists($packageKey), $api);
+            $this->sync_provider_proxy_lists($service, $packageKey, $api->lists($packageKey), $api, $trafficDetails['all'] ?? null);
         }
         $service['traffic_total_gb'] = number_format($usage['total_gb'], 2, '.', '');
         $service['traffic_used_gb'] = number_format($usage['used_gb'], 2, '.', '');
@@ -2771,8 +2780,9 @@ final class ProxyShop
     /**
      * @param array<string,mixed> $service
      * @param array<mixed>|null $response
+     * @param array<mixed>|null $trafficDetails
      */
-    private function sync_provider_proxy_lists(array &$service, string $packageKey, ?array $response, object $api): void
+    private function sync_provider_proxy_lists(array &$service, string $packageKey, ?array $response, object $api, ?array $trafficDetails = null): void
     {
         $providerLists = isset($response['results']) && is_array($response['results']) ? $response['results'] : [];
         if ($providerLists === []) {
@@ -2803,6 +2813,7 @@ final class ProxyShop
                 'region' => $this->str($geo['region'] ?? ''),
                 'city' => $this->str($geo['city'] ?? ''),
                 'format' => $this->str($providerList['format'] ?? ''),
+                'traffic_used_gb' => number_format($this->proxy_list_traffic_used_gb($providerList, $trafficDetails), 4, '.', ''),
                 'status' => 'active',
                 'provider_synced_at' => date('c'),
             ]);
@@ -2819,6 +2830,39 @@ final class ProxyShop
         }
         $service['connection_login'] = $this->str($primary['login'] ?? '');
         $service['connection_password'] = $this->str($primary['password'] ?? '');
+    }
+
+    /**
+     * @param array<mixed> $providerList
+     * @param array<mixed>|null $trafficDetails
+     */
+    private function proxy_list_traffic_used_gb(array $providerList, ?array $trafficDetails): float
+    {
+        $trafficUsageBytes = $this->nested_number($providerList, ['traffic_usage', 'common']);
+        if ($trafficUsageBytes > 0.0) {
+            return round($this->bytes_to_gb($trafficUsageBytes), 4);
+        }
+        $flat = [];
+        $this->flatten_assoc($providerList, '', $flat);
+        $used = $this->first_flat_number_gb($flat, ['traffic_used', 'used_traffic', 'used_gb']);
+        if ($used > 0.0) {
+            return round($used, 4);
+        }
+
+        $login = $this->str($providerList['login'] ?? '');
+        $rows = is_array($trafficDetails) && isset($trafficDetails['results']) && is_array($trafficDetails['results'])
+            ? $trafficDetails['results']
+            : ($trafficDetails ?? []);
+        if ($login === '' || !isset($rows[$login]) || !is_array($rows[$login])) {
+            return 0.0;
+        }
+        $bytes = 0.0;
+        foreach ($rows[$login] as $rawBytes) {
+            if (is_numeric($rawBytes)) {
+                $bytes += (float)$rawBytes;
+            }
+        }
+        return round($this->bytes_to_gb($bytes), 4);
     }
 
     /**

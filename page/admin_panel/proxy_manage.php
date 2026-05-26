@@ -170,22 +170,20 @@ Sogerien::Page()->mainmenu();
         <?php $category = strtolower(pm_s($service['provider_pool_category'] ?? '')); ?>
         <?php $isTrafficService = $category === 'mobile' || $category === 'residential' || $category === 'residential_ipv6'; ?>
         <?php $isStaticIpService = $category === 'isp' || $category === 'dc'; ?>
+        <?php if ($isTrafficService && pm_s($service['vendor_package_key'] ?? '') !== '' && !isset($service['provider_traffic_details'])): ?>
+            <?php $shop->service_action($userId, $serviceId, 'refresh_traffic'); ?>
+            <?php foreach ($shop->list_user_services($userId) as $freshService): ?>
+                <?php if (is_array($freshService) && pm_s($freshService['service_id'] ?? '') === $serviceId) { $service = $freshService; break; } ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
         <?php $geoOptions = $shop->infatica_access_geo_options($category); ?>
         <?php
         $trafficTotal = max(0.0, (float)pm_s($service['traffic_total_gb'] ?? 0));
         $trafficUsed = max(0.0, (float)pm_s($service['traffic_used_gb'] ?? 0));
         $trafficRemaining = max(0.0, (float)pm_s($service['traffic_remaining_gb'] ?? $service['traffic_remains'] ?? 0));
         $trafficPercent = $trafficTotal > 0.0 ? min(100.0, round(($trafficUsed / $trafficTotal) * 100, 2)) : 0.0;
-        $trafficHistory = isset($service['traffic_history']) && is_array($service['traffic_history']) ? $service['traffic_history'] : [];
-        if ($trafficHistory === [] && $isTrafficService) {
-            $trafficHistory[] = [
-                'at' => pm_s($service['traffic_updated_at'] ?? date('c')),
-                'used_gb' => $trafficUsed,
-                'remaining_gb' => $trafficRemaining,
-                'total_gb' => $trafficTotal,
-            ];
-        }
-        $trafficHistoryJson = json_encode($trafficHistory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $trafficDetails = isset($service['provider_traffic_details']) && is_array($service['provider_traffic_details']) ? $service['provider_traffic_details'] : [];
+        $trafficDetailsJson = json_encode($trafficDetails, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         ?>
         <div class="card pm-service-card">
             <div class="card-body">
@@ -244,7 +242,7 @@ Sogerien::Page()->mainmenu();
                     </div>
                     <div>
                         <div class="label"><?= $isStaticIpService ? 'IP count' : 'Last traffic update' ?></div>
-                        <div class="value"><?= pm_h($isStaticIpService ? ($service['ip_count'] ?? '-') : ($service['traffic_updated_at'] ?? '-')) ?></div>
+                        <div class="value"><?= $isStaticIpService ? pm_h($service['ip_count'] ?? '-') : '<span data-pm-local-time="' . pm_h($service['traffic_updated_at'] ?? '') . '">' . pm_h($service['traffic_updated_at'] ?? '-') . '</span>' ?></div>
                     </div>
                 </div>
             </div>
@@ -450,7 +448,7 @@ Sogerien::Page()->mainmenu();
                 <div class="card-header">Infographic diagrams - internet speed usage</div>
                 <div class="card-body">
                     <div class="pm-chart-head">
-                        <span class="text-muted small">Traffic consumption speed by selected period</span>
+                        <span class="text-muted small">Average download speed from provider traffic buckets</span>
                         <div class="pm-chart-tabs" data-chart-tabs="speed">
                             <button class="is-active" type="button" data-period="day">Daily</button>
                             <button type="button" data-period="week">Weekly</button>
@@ -493,54 +491,48 @@ Sogerien::Page()->mainmenu();
 <?php if (isset($isTrafficService) && $isTrafficService): ?>
 <script>
 (function(){
-    var raw = <?= $trafficHistoryJson !== false ? $trafficHistoryJson : '[]' ?>;
-    var history = (Array.isArray(raw) ? raw : []).map(function(item){
-        return {
-            at: new Date(String(item.at || '')),
-            used: Number(item.used_gb || 0),
-            total: Number(item.total_gb || 0)
-        };
-    }).filter(function(item){ return !Number.isNaN(item.at.getTime()); }).sort(function(a, b){ return a.at - b.at; });
+    var raw = <?= $trafficDetailsJson !== false ? $trafficDetailsJson : '{}' ?>;
     var speedEl = document.getElementById('pmSpeedChart');
     var trafficEl = document.getElementById('pmTrafficChart');
     if (!speedEl || !trafficEl || typeof echarts === 'undefined') return;
 
-    function bucketKey(date, period){
-        var d = new Date(date.getTime());
-        if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-        if (period === 'week') {
-            var day = (d.getDay() + 6) % 7;
-            d.setDate(d.getDate() - day);
-        }
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-
     function aggregate(period){
+        var source = raw[period === 'day' ? 'daily' : (period === 'week' ? 'weekly' : 'monthly')] || {};
+        var rows = source.results && typeof source.results === 'object' ? source.results : source;
         var grouped = {};
-        history.forEach(function(item){ grouped[bucketKey(item.at, period)] = item; });
+        Object.keys(rows || {}).forEach(function(login){
+            var points = rows[login];
+            if (!points || typeof points !== 'object') return;
+            Object.keys(points).forEach(function(label){
+                var bytes = Number(points[label] || 0);
+                if (!Number.isFinite(bytes)) return;
+                grouped[label] = (grouped[label] || 0) + bytes;
+            });
+        });
         var labels = Object.keys(grouped).sort();
-        var usage = labels.map(function(label){ return grouped[label].used; });
-        var speed = usage.map(function(value, index){ return index === 0 ? 0 : Math.max(0, Number((value - usage[index - 1]).toFixed(4))); });
+        var bucketSeconds = period === 'day' ? 3600 : 86400;
+        var usage = labels.map(function(label){ return Number((grouped[label] / 1024 / 1024 / 1024).toFixed(4)); });
+        var speed = labels.map(function(label){ return Number(((grouped[label] * 8) / bucketSeconds / 1000 / 1000).toFixed(4)); });
         return {labels: labels, usage: usage, speed: speed};
     }
 
     var speedChart = echarts.init(speedEl);
     var trafficChart = echarts.init(trafficEl);
-    function options(title, labels, values, color){
+    function options(title, labels, values, color, unit){
         return {
             color: [color],
-            tooltip: {trigger: 'axis', valueFormatter: function(value){ return Number(value).toFixed(4) + ' GB'; }},
+            tooltip: {trigger: 'axis', valueFormatter: function(value){ return Number(value).toFixed(4) + ' ' + unit; }},
             grid: {left: 56, right: 28, top: 44, bottom: 44},
             legend: {data: [title], top: 12, right: 20},
             xAxis: {type: 'category', boundaryGap: false, data: labels, axisLabel: {color: '#64748b'}},
-            yAxis: {type: 'value', name: 'GB', axisLabel: {color: '#64748b'}, splitLine: {lineStyle: {color: '#e6edf6'}}},
+            yAxis: {type: 'value', name: unit, axisLabel: {color: '#64748b'}, splitLine: {lineStyle: {color: '#e6edf6'}}},
             series: [{name: title, type: 'line', smooth: true, showSymbol: true, symbolSize: 7, areaStyle: {opacity: .1}, data: values}]
         };
     }
     function render(period){
         var data = aggregate(period);
-        speedChart.setOption(options('Consumption (GB)', data.labels, data.speed, '#397eee'), true);
-        trafficChart.setOption(options('Traffic used (GB)', data.labels, data.usage, '#6b52e5'), true);
+        speedChart.setOption(options('Download speed', data.labels, data.speed, '#397eee', 'Mbps'), true);
+        trafficChart.setOption(options('Traffic used', data.labels, data.usage, '#6b52e5', 'GB'), true);
     }
     document.querySelectorAll('.pm-chart-tabs button').forEach(function(button){
         button.addEventListener('click', function(){
@@ -559,6 +551,17 @@ Sogerien::Page()->mainmenu();
 <?php endif; ?>
 <script>
 (function(){
+    document.querySelectorAll('[data-pm-local-time]').forEach(function(element){
+        var rawTime = element.getAttribute('data-pm-local-time') || '';
+        var date = new Date(rawTime);
+        if (rawTime === '' || Number.isNaN(date.getTime())) return;
+        element.textContent = new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'medium'
+        }).format(date);
+        element.title = rawTime;
+    });
+
     var authModeEl = document.getElementById('pmAuthMode');
     var loginFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-login-field'));
     var ipFields = Array.prototype.slice.call(document.querySelectorAll('.pm-auth-ip-field'));
