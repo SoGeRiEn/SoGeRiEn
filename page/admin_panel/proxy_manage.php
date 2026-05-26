@@ -518,12 +518,15 @@ Sogerien::Page()->mainmenu();
 
     var speedChart = echarts.init(speedEl);
     var trafficChart = echarts.init(trafficEl);
+    function legendColor(){
+        return document.body.classList.contains('pm-theme-midnight') ? '#e2e8f0' : '#64748b';
+    }
     function options(title, labels, values, color, unit){
         return {
             color: [color],
             tooltip: {trigger: 'axis', valueFormatter: function(value){ return Number(value).toFixed(4) + ' ' + unit; }},
             grid: {left: 56, right: 28, top: 44, bottom: 44},
-            legend: {data: [title], top: 12, right: 20},
+            legend: {data: [title], top: 12, right: 20, textStyle: {color: legendColor()}},
             xAxis: {type: 'category', boundaryGap: false, data: labels, axisLabel: {color: '#64748b'}},
             yAxis: {type: 'value', name: unit, axisLabel: {color: '#64748b'}, splitLine: {lineStyle: {color: '#e6edf6'}}},
             series: [{name: title, type: 'line', smooth: true, showSymbol: true, symbolSize: 7, areaStyle: {opacity: .1}, data: values}]
@@ -545,6 +548,12 @@ Sogerien::Page()->mainmenu();
         });
     });
     render('day');
+    new MutationObserver(function(mutations){
+        if (mutations.some(function(mutation){ return mutation.attributeName === 'class'; })) {
+            var activePeriod = document.querySelector('.pm-chart-tabs button.is-active');
+            render(activePeriod ? (activePeriod.getAttribute('data-period') || 'day') : 'day');
+        }
+    }).observe(document.body, {attributes: true});
     window.addEventListener('resize', function(){ speedChart.resize(); trafficChart.resize(); });
 })();
 </script>
