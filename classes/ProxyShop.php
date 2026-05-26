@@ -92,7 +92,7 @@ final class ProxyShop
                         'id' => $category . '-trial-gb' . $this->compact_number($traffic),
                         'category' => $category,
                         'traffic_gb' => $this->compact_number($traffic),
-                        'days' => (string)((int)($trial[$category]['days'] ?? 7)),
+                        'days' => (string)((int)($trial[$category]['days'] ?? 30)),
                         'price_usd' => number_format($price, 2, '.', ''),
                         'price_per_gb' => number_format($price / max(1.0, $traffic), 2, '.', ''),
                         'provider_cost_usd' => $cost > 0.0 ? number_format($cost, 2, '.', '') : '',
@@ -277,13 +277,17 @@ final class ProxyShop
         $api = Sogerien::API()->InfaticaIo()->Catalog();
         $trial = $api->trial_retail_pricing();
         $trialCost = $api->trial_cost_pricing();
+        $trialOffer = isset($trial[$category]) && is_array($trial[$category]) ? $trial[$category] : null;
+        $isTrial = is_array($trialOffer)
+            && $days === (int)($trialOffer['days'] ?? 0)
+            && abs($traffic - (float)($trialOffer['traffic'] ?? 0)) < 0.001;
         $price = 0.0;
         $pricePerGb = 0.0;
         $cost = 0.0;
         $costPerGb = 0.0;
-        if ($days === 7 && isset($trial[$category]) && abs($traffic - (float)$trial[$category]['traffic']) < 0.001) {
-            $price = (float)$trial[$category]['price'];
-            $pricePerGb = $price / max(1.0, (float)$trial[$category]['traffic']);
+        if ($isTrial) {
+            $price = (float)$trialOffer['price'];
+            $pricePerGb = $price / max(1.0, (float)$trialOffer['traffic']);
             $costOffer = $trialCost[$category] ?? null;
             if (is_array($costOffer) && abs($traffic - (float)$costOffer['traffic']) < 0.001) {
                 $cost = (float)$costOffer['price'];
@@ -316,7 +320,7 @@ final class ProxyShop
             $countryTitle = $country;
         }
         $trafficText = rtrim(rtrim(number_format($traffic, 2, '.', ''), '0'), '.');
-        $suffix = $days === 7 ? 'trial-gb' . $trafficText : 'gb' . $trafficText;
+        $suffix = $isTrial ? 'trial-gb' . $trafficText : 'gb' . $trafficText;
 
         return [
             'id' => $category . '-' . $country . '-' . $suffix,
@@ -333,7 +337,7 @@ final class ProxyShop
             'provider_unit_price_usd' => $costPerGb > 0.0 ? number_format($costPerGb, 4, '.', '') : '',
             'provider_cost_usd' => $cost > 0.0 ? number_format($cost, 2, '.', '') : '',
             'profit_usd' => $cost > 0.0 ? number_format($price - $cost, 2, '.', '') : '',
-            'is_auto_renewal_possible' => $days === 7 ? '0' : '1',
+            'is_auto_renewal_possible' => $isTrial ? '0' : '1',
         ];
     }
 

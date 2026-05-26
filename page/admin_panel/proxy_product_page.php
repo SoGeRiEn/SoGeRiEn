@@ -402,7 +402,7 @@ foreach ($plans as $plan) {
     $traffic = ppp_s($plan['traffic_gb']);
     $label = $traffic . ' GB';
     if (!empty($plan['is_trial'])) {
-        $label .= ' trial';
+        $label .= ' trial - 1 month';
     }
     $label .= ' - $' . ppp_s($plan['price_usd']);
     $trafficPlanOptions[] = ['id' => ppp_s($plan['id']), 'title' => $label];
@@ -513,7 +513,7 @@ Sogerien::Page()->mainmenu();
                 <?php
                 $isTraffic = isset($plan['traffic_gb']);
                 $isSelected = $index === 0;
-                $badge = $isTraffic ? (!empty($plan['is_trial']) ? 'Trial' : 'Yearly window') : 'Monthly tier';
+                $badge = $isTraffic ? (!empty($plan['is_trial']) ? 'Trial - 1 month' : 'Yearly window') : 'Monthly tier';
                 $main = $isTraffic ? ppp_s($plan['traffic_gb']) . ' GB' : ppp_s($plan['ip_count'] ?? '') . ' IPs';
                 $price = '$' . ppp_s($plan['price_usd'] ?? '0.00');
                 $meta = $isTraffic

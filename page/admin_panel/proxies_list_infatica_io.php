@@ -157,7 +157,7 @@ Sogerien::Page()->mainmenu();
             <?php endif; ?>
             <?php
             $trafficLabel = ((float)$group['traffic'] === 1.0 ? '1 GB' : rtrim(rtrim(number_format((float)$group['traffic'], 2, '.', ''), '0'), '.') . ' GB');
-            $badge = $group['is_trial'] ? 'Trial' : ($group['days'] === '7' ? '7 days' : pli_t('proxy.duration_12_months', '12 months'));
+            $badge = $group['is_trial'] ? 'Trial - 1 month' : pli_t('proxy.duration_12_months', '12 months');
             ?>
             <article class="pm-plan-card">
                 <div class="pm-plan-badge"><?= pli_h($badge) ?></div>
@@ -170,6 +170,7 @@ Sogerien::Page()->mainmenu();
                     data-category="<?= pli_h($category) ?>"
                     data-price-usd="<?= pli_h((string)$group['price']) ?>"
                     data-days="<?= pli_h((string)$group['days']) ?>"
+                    data-is-trial="<?= $group['is_trial'] ? '1' : '0' ?>"
                     data-traffic="<?= pli_h((string)$group['traffic']) ?>">Select package</button>
             </article>
         <?php endforeach; ?>
@@ -232,7 +233,15 @@ Sogerien::Page()->mainmenu();
                 try {
                     const raw = localStorage.getItem(storageKey);
                     const parsed = raw ? JSON.parse(raw) : [];
-                    return Array.isArray(parsed) ? parsed : [];
+                    if (!Array.isArray(parsed)) {
+                        return [];
+                    }
+                    return parsed.map((item) => {
+                        if (String(item?.id || '').includes('-trial-gb') && item.days === '7') {
+                            return {...item, days: '30', auto_renew: false, auto_renew_possible: false};
+                        }
+                        return item;
+                    });
                 } catch (_err) {
                     return [];
                 }
@@ -254,7 +263,8 @@ Sogerien::Page()->mainmenu();
                 }
                 const title = countries[country] || country;
                 const traffic = String(Number.parseFloat(pendingPlan.traffic || '0')).replace(/\.0$/, '');
-                const suffix = pendingPlan.days === '7' && traffic === '1'
+                const isTrial = pendingPlan.is_trial === '1';
+                const suffix = isTrial && traffic === '1'
                     ? 'trial-gb1'
                     : `gb${traffic}`;
                 saveSingleItem({
@@ -267,7 +277,7 @@ Sogerien::Page()->mainmenu();
                     category: pendingPlan.category,
                     traffic,
                     auto_renew: false,
-                    auto_renew_possible: pendingPlan.days !== '7'
+                    auto_renew_possible: !isTrial
                 });
                 document.querySelectorAll('.pm-plan-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
                 document.querySelector(`.pm-plan-select-btn[data-category="${CSS.escape(pendingPlan.category)}"][data-traffic="${CSS.escape(pendingPlan.traffic)}"]`)?.closest('.pm-plan-card')?.classList.add('is-selected');
@@ -308,6 +318,7 @@ Sogerien::Page()->mainmenu();
                         category: planButton.dataset.category || '',
                         price_usd: planButton.dataset.priceUsd || '0.00',
                         days: planButton.dataset.days || '',
+                        is_trial: planButton.dataset.isTrial || '0',
                         traffic: planButton.dataset.traffic || ''
                     };
                     const options = countryOptions[pendingPlan.category] || {};
@@ -355,5 +366,3 @@ Sogerien::Page()->mainmenu();
 
 <?php
 Sogerien::Page()->footer();
-
-
