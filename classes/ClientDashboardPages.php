@@ -134,6 +134,7 @@ final class ClientDashboardPages
             Sogerien::markDone();
             return;
         }
+        $this->apply_user_timezone($user);
 
         $this->password_notice = $this->handle_account_action($userId, $user);
         if (is_array($this->password_notice) && $this->password_notice['ok']) {
@@ -144,18 +145,27 @@ final class ClientDashboardPages
         $shop->init_db_alias($this->db_alias);
         $services = $shop->list_user_services($userId);
         $payments = $shop->list_user_payments($userId);
+        if (in_array($page_key, ['add_funds', 'invoices'], true)) {
+            $payments = $this->paid_payments($payments);
+        }
         $charges = $shop->list_user_charges($userId);
+        if ($page_key === 'invoices') {
+            $charges = $this->paid_charges($charges);
+        }
         $tickets = $this->list_user_tickets($userId);
 
-        Sogerien::Page()->title = (string)$page['title'];
+        $title = $this->t('client.' . $page_key . '.title', (string)$page['title']);
+        $subtitle = $this->t('client.' . $page_key . '.subtitle', (string)$page['subtitle']);
+
+        Sogerien::Page()->title = $title;
         Sogerien::Page()->header();
         Sogerien::Page()->mainmenu();
 
         echo '<main class="container my-4 sog-ui client-dashboard-page">';
         $this->styles();
         echo '<div class="pm-dash-head">';
-        echo '<div><h1>' . $this->h((string)$page['title']) . '</h1><p>' . $this->h((string)$page['subtitle']) . '</p></div>';
-        echo '<div class="pm-dash-user">User #' . (int)$userId . '<br><strong>$' . $this->h($shop->get_user_balance_usd($userId)) . '</strong><br><a class="btn btn-sm btn-primary mt-2" href="/client/change-password">Change password</a></div>';
+        echo '<div><h1>' . $this->h($title) . '</h1><p>' . $this->h($subtitle) . '</p></div>';
+        echo '<div class="pm-dash-user">' . $this->h($this->t('client.user_number', 'User #')) . (int)$userId . '<br><strong>$' . $this->h($shop->get_user_balance_usd($userId)) . '</strong></div>';
         echo '</div>';
 
         if (isset($page['cards']) && is_array($page['cards'])) {
@@ -172,7 +182,9 @@ final class ClientDashboardPages
                 }
                 $valueKey = (string)($card['value'] ?? '');
                 echo '<section class="card shadow-sm"><div class="card-body">';
-                echo '<div class="text-muted small">' . $this->h((string)($card['label'] ?? '')) . '</div>';
+                $cardLabel = (string)($card['label'] ?? '');
+                $cardKey = strtolower(str_replace([' ', '&'], ['_', 'and'], $cardLabel));
+                echo '<div class="text-muted small">' . $this->h($this->t('client.card.' . $cardKey, $cardLabel)) . '</div>';
                 echo '<div class="pm-stat">' . $this->h($stats[$valueKey] ?? '-') . '</div>';
                 echo '</div></section>';
             }
@@ -199,6 +211,39 @@ final class ClientDashboardPages
     }
 
     /**
+     * @param array<int,array<string,mixed>> $payments
+     * @return array<int,array<string,mixed>>
+     */
+    private function paid_payments(array $payments): array
+    {
+        $rows = [];
+        foreach ($payments as $payment) {
+            $status = strtolower($this->s($payment['payment_status'] ?? $payment['status'] ?? ''));
+            if ($status === 'paid') {
+                $rows[] = $payment;
+            }
+        }
+        return $rows;
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $charges
+     * @return array<int,array<string,mixed>>
+     */
+    private function paid_charges(array $charges): array
+    {
+        $rows = [];
+        foreach ($charges as $charge) {
+            $checkoutStatus = strtolower($this->s($charge['checkout_status'] ?? ''));
+            $fulfillmentStatus = strtolower($this->s($charge['fulfillment_status'] ?? ''));
+            if ($checkoutStatus === 'paid' || in_array($fulfillmentStatus, ['fulfilled', 'provider_failed'], true)) {
+                $rows[] = $charge;
+            }
+        }
+        return $rows;
+    }
+
+    /**
      * @param array<int,array<string,mixed>> $services
      * @param array<int,array<string,mixed>> $payments
      * @param array<int,array<string,mixed>> $charges
@@ -209,8 +254,8 @@ final class ClientDashboardPages
     {
         if ($block === 'quick_actions') {
             echo '<div class="card shadow-sm mb-3"><div class="card-body"><div class="pm-actions">';
-            foreach ([['/client/all_proxy', 'Order proxies'], ['/client/add-funds', 'Add funds'], ['/client/support/tickets', 'Open ticket'], ['/client/manuals', 'Manuals']] as $link) {
-                echo '<a class="btn btn-primary" href="' . $this->h($link[0]) . '">' . $this->h($link[1]) . '</a>';
+            foreach ([['/client/all_proxy', 'order_proxies', 'Order proxies'], ['/client/add-funds', 'add_funds', 'Add funds'], ['/client/support/tickets', 'open_ticket', 'Open ticket'], ['/client/manuals', 'manuals', 'Manuals']] as $link) {
+                echo '<a class="btn btn-primary" href="' . $this->h($link[0]) . '">' . $this->h($this->t('client.action.' . $link[1], $link[2])) . '</a>';
             }
             echo '</div></div></div>';
             return;
@@ -235,10 +280,10 @@ final class ClientDashboardPages
                     'country' => $this->s($service['country'] ?? '-'),
                     'traffic' => $this->s($service['traffic_remains'] ?? '-'),
                     'expires' => $this->s($service['expires_at'] ?? '-'),
-                    'actions' => '<a class="pm-pill-btn is-active" href="/client/proxy/manage?service_id=' . $this->h(rawurlencode($this->s($service['service_id'] ?? ''))) . '">Manage</a>',
+                    'actions' => '<a class="pm-pill-btn is-active" href="/client/proxy/manage?service_id=' . $this->h(rawurlencode($this->s($service['service_id'] ?? ''))) . '">' . $this->h($this->t('client.action.manage', 'Manage')) . '</a>',
                 ];
             }
-            $this->table('Products & Services', $rows, ['title', 'status', 'country', 'traffic', 'expires', 'actions']);
+            $this->table($this->t('client.table.services', 'Products & Services'), $rows, ['title', 'status', 'country', 'traffic', 'expires', 'actions']);
             return;
         }
 
@@ -252,7 +297,7 @@ final class ClientDashboardPages
                     'amount' => $this->s($payment['amount_usd'] ?? '-') . ' ' . strtoupper($this->s($payment['currency'] ?? 'USD')),
                 ];
             }
-            $this->table('Payments', $rows, ['created', 'id', 'status', 'amount']);
+            $this->table($this->t('client.table.payments', 'Payments'), $rows, ['created', 'id', 'status', 'amount']);
             return;
         }
 
@@ -266,13 +311,13 @@ final class ClientDashboardPages
                     'amount' => $this->s($charge['amount_usd'] ?? '-') . ' ' . strtoupper($this->s($charge['currency'] ?? 'USD')),
                 ];
             }
-            $this->table('Charges', $rows, ['created', 'order', 'status', 'amount']);
+            $this->table($this->t('client.table.charges', 'Charges'), $rows, ['created', 'order', 'status', 'amount']);
             return;
         }
 
         if ($block === 'tickets') {
-            echo '<div class="d-flex justify-content-end mb-2"><a class="btn btn-primary" href="/client/support/tickets">Create ticket</a></div>';
-            $this->table('Support tickets', $tickets, ['created', 'subject', 'status', 'updated']);
+            echo '<div class="d-flex justify-content-end mb-2"><a class="btn btn-primary" href="/client/support/tickets">' . $this->h($this->t('client.action.create_ticket', 'Create ticket')) . '</a></div>';
+            $this->table($this->t('client.table.tickets', 'Support tickets'), $tickets, ['created', 'subject', 'status', 'updated']);
             return;
         }
 
@@ -406,12 +451,13 @@ final class ClientDashboardPages
     {
         echo '<section class="card shadow-sm mb-3"><div class="card-header">' . $this->h($title) . '</div><div class="card-body p-0">';
         if ($rows === []) {
-            echo '<div class="p-3 text-muted">No data yet.</div></div></section>';
+            echo '<div class="p-3 text-muted">' . $this->h($this->t('client.no_data_yet', 'No data yet.')) . '</div></div></section>';
             return;
         }
         echo '<div class="table-responsive"><table class="table table-striped table-bordered align-middle mb-0"><thead><tr>';
         foreach ($columns as $column) {
-            echo '<th>' . $this->h(ucwords(str_replace('_', ' ', $column))) . '</th>';
+            $fallback = ucwords(str_replace('_', ' ', $column));
+            echo '<th>' . $this->h($this->t('client.column.' . $column, $fallback)) . '</th>';
         }
         echo '</tr></thead><tbody>';
         foreach ($rows as $row) {
@@ -448,12 +494,14 @@ final class ClientDashboardPages
 
         $action = $this->s($post['action'] ?? '');
         if ($action === 'update_profile') {
+            $settings = isset($user['settings']) && is_array($user['settings']) ? $user['settings'] : [];
+            $timezone = $this->normalize_timezone($post['settings_tz'] ?? ($settings['tz'] ?? 'Europe/Warsaw'));
             return $this->update_user_patch($userId, [
                 'fio' => $this->s($post['fio'] ?? ''),
                 'email' => $this->s($post['email'] ?? ''),
                 'phone' => $this->s($post['phone'] ?? ''),
                 'settings' => [
-                    'tz' => $this->s($post['settings_tz'] ?? 'Europe/Warsaw'),
+                    'tz' => $timezone,
                     'lang' => $this->s($post['settings_lang'] ?? 'ru'),
                 ],
             ], 'Profile saved.');
@@ -841,6 +889,7 @@ final class ClientDashboardPages
     private function render_profile_form(int $userId, array $user): void
     {
         $settings = isset($user['settings']) && is_array($user['settings']) ? $user['settings'] : [];
+        $timezone = $this->normalize_timezone($settings['tz'] ?? 'Europe/Warsaw');
         $action = (string)($_SERVER['REQUEST_URI'] ?? '/client/profile');
         echo '<section class="card shadow-sm mb-3"><div class="card-header">Account Details</div><div class="card-body">';
         $this->render_notice();
@@ -856,9 +905,40 @@ final class ClientDashboardPages
             echo '<option value="' . $this->h($value) . '"' . ($this->s($settings['lang'] ?? 'ru') === $value ? ' selected' : '') . '>' . $this->h($label) . '</option>';
         }
         echo '</select></div>';
-        echo '<div class="col-md-2"><label class="form-label" for="pmTz">Timezone</label><input id="pmTz" class="form-control" name="settings_tz" value="' . $this->h($this->s($settings['tz'] ?? 'Europe/Warsaw')) . '"></div>';
-        echo '<div class="col-12"><button class="btn btn-primary" type="submit">Save profile</button></div>';
+        echo '<div class="col-md-2"><label class="form-label" for="pmTz">Timezone</label><select id="pmTz" class="form-select" name="settings_tz">';
+        foreach ($this->timezone_options() as $tz) {
+            echo '<option value="' . $this->h($tz) . '"' . ($timezone === $tz ? ' selected' : '') . '>' . $this->h($tz) . '</option>';
+        }
+        echo '</select></div>';
+        echo '<div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Save profile</button></div>';
         echo '</form></div></section>';
+    }
+
+    /**
+     * @param array<string,mixed> $user
+     */
+    private function apply_user_timezone(array $user): void
+    {
+        $settings = isset($user['settings']) && is_array($user['settings']) ? $user['settings'] : [];
+        date_default_timezone_set($this->normalize_timezone($settings['tz'] ?? 'Europe/Warsaw'));
+    }
+
+    private function normalize_timezone(mixed $timezone): string
+    {
+        $timezone = trim((string)$timezone);
+        return in_array($timezone, $this->timezone_options(), true) ? $timezone : 'Europe/Warsaw';
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function timezone_options(): array
+    {
+        static $timezones = null;
+        if ($timezones === null) {
+            $timezones = DateTimeZone::listIdentifiers();
+        }
+        return $timezones;
     }
 
     /**
@@ -899,33 +979,33 @@ final class ClientDashboardPages
     private function render_payment_methods(array $user): void
     {
         $methods = $this->list_from_user($user, 'payment_methods');
-        echo '<section class="card shadow-sm mb-3"><div class="card-header">Payment Methods</div><div class="card-body">';
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">' . $this->h($this->t('client.payment_methods.title', 'Payment Methods')) . '</div><div class="card-body">';
         echo '<div class="pm-card-wallet">';
         foreach ($methods as $method) {
             $id = $this->s($method['id'] ?? '');
             $isDefault = $this->s($method['is_default'] ?? '') === '1';
             echo '<article class="pm-card-method">';
-            echo '<div class="pm-card-chip"></div><div><strong>' . $this->h($this->s($method['brand'] ?? 'CARD')) . ' **** ' . $this->h($this->s($method['last4'] ?? '----')) . '</strong><span>' . $this->h($this->s($method['billing_name'] ?? 'Card holder')) . '</span></div>';
-            echo '<div class="pm-card-meta"><span>Expires ' . $this->h($this->s($method['exp_month'] ?? '--') . '/' . $this->s($method['exp_year'] ?? '----')) . '</span>' . ($isDefault ? '<b>Default</b>' : '') . '</div>';
+            echo '<div class="pm-card-chip"></div><div><strong>' . $this->h($this->s($method['brand'] ?? 'CARD')) . ' **** ' . $this->h($this->s($method['last4'] ?? '----')) . '</strong><span>' . $this->h($this->s($method['billing_name'] ?? $this->t('client.payment_methods.card_holder', 'Card holder'))) . '</span></div>';
+            echo '<div class="pm-card-meta"><span>' . $this->h($this->t('client.payment_methods.expires', 'Expires')) . ' ' . $this->h($this->s($method['exp_month'] ?? '--') . '/' . $this->s($method['exp_year'] ?? '----')) . '</span>' . ($isDefault ? '<b>' . $this->h($this->t('client.payment_methods.default_badge', 'Default')) . '</b>' : '') . '</div>';
             echo '<div class="pm-card-actions">';
             if (!$isDefault) {
-                echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="default_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-primary" type="submit">Default</button></form>';
+                echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="default_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-primary" type="submit">' . $this->h($this->t('client.payment_methods.default_action', 'Set default')) . '</button></form>';
             }
-            echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="remove_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-danger" type="submit">Remove</button></form>';
+            echo '<form method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '"><input type="hidden" name="action" value="remove_payment_method"><input type="hidden" name="payment_method_id" value="' . $this->h($id) . '"><button class="btn btn-sm btn-outline-danger" type="submit">' . $this->h($this->t('common.remove', 'Remove')) . '</button></form>';
             echo '</div></article>';
         }
         if ($methods === []) {
-            echo '<div class="text-muted">No saved payment methods yet.</div>';
+            echo '<div class="text-muted">' . $this->h($this->t('client.payment_methods.empty', 'No saved payment methods yet.')) . '</div>';
         }
         echo '</div></div></section>';
 
-        echo '<section class="card shadow-sm mb-3"><div class="card-header">Add Payment Method</div><div class="card-body">';
+        echo '<section class="card shadow-sm mb-3"><div class="card-header">' . $this->h($this->t('client.payment_methods.add_title', 'Add Payment Method')) . '</div><div class="card-body">';
         $this->render_notice();
         echo '<form class="row g-3" method="post" action="' . $this->h((string)($_SERVER['REQUEST_URI'] ?? '/client/payment-methods')) . '">';
         echo '<input type="hidden" name="action" value="add_payment_method">';
-        echo '<div class="col-md-8"><div class="text-muted">Visa and Mastercard are added through Stripe. ProxyMint stores only the Stripe payment method id, brand, last4 and expiry.</div></div>';
-        echo '<div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Add card in Stripe</button></div>';
-        echo '</form><div class="text-muted small mt-2">Saved cards can be used for automatic renewals and client-approved ordered services.</div></div></section>';
+        echo '<div class="col-md-8"><div class="text-muted">' . $this->h($this->t('client.payment_methods.stripe_hint', 'Visa and Mastercard are added through Stripe. ProxyMint stores only the Stripe payment method id, brand, last4 and expiry.')) . '</div></div>';
+        echo '<div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">' . $this->h($this->t('client.payment_methods.add_card_stripe', 'Add card in Stripe')) . '</button></div>';
+        echo '</form><div class="text-muted small mt-2">' . $this->h($this->t('client.payment_methods.autopay_hint', 'Saved cards can be used for automatic renewals and client-approved ordered services.')) . '</div></div></section>';
     }
 
     /**
@@ -937,19 +1017,190 @@ final class ClientDashboardPages
     private function render_email_history(array $user, array $payments, array $charges, array $tickets): void
     {
         $rows = [];
+        $recipient = $this->s($user['email'] ?? '-');
         foreach ($payments as $payment) {
-            $rows[] = ['date' => $this->s($payment['created_at'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Payment status: ' . $this->s($payment['status'] ?? $payment['payment_status'] ?? '-'), 'status' => 'sent'];
+            $status = $this->s($payment['status'] ?? $payment['payment_status'] ?? '-');
+            $amount = $this->s($payment['amount_usd'] ?? '');
+            $id = $this->s($payment['id'] ?? $payment['payment_id'] ?? $payment['stripe_session_id'] ?? '');
+            $rows[] = [
+                'date' => $this->s($payment['created_at'] ?? '-'),
+                'recipient' => $recipient,
+                'subject' => 'Payment status: ' . $status,
+                'status' => 'sent',
+                'body' => $this->email_body([
+                    'Hello,',
+                    '',
+                    'Your payment status was updated.',
+                    'Status: ' . $status,
+                    $amount !== '' ? ('Amount: $' . $amount) : '',
+                    $id !== '' ? ('Payment ID: ' . $id) : '',
+                    '',
+                    'ProxyMint',
+                ]),
+            ];
         }
         foreach ($charges as $charge) {
-            $rows[] = ['date' => $this->s($charge['created_at'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Invoice/order: ' . $this->s($charge['order_id'] ?? '-'), 'status' => $this->s($charge['fulfillment_status'] ?? 'sent')];
+            $orderId = $this->s($charge['order_id'] ?? '-');
+            $status = $this->s($charge['fulfillment_status'] ?? 'sent');
+            $amount = $this->s($charge['amount_usd'] ?? '');
+            $title = $this->s($charge['title'] ?? '');
+            $rows[] = [
+                'date' => $this->s($charge['created_at'] ?? '-'),
+                'recipient' => $recipient,
+                'subject' => 'Invoice/order: ' . $orderId,
+                'status' => $status,
+                'body' => $this->email_body([
+                    'Hello,',
+                    '',
+                    'Your order information is below.',
+                    'Order ID: ' . $orderId,
+                    $title !== '' ? ('Order: ' . $title) : '',
+                    $amount !== '' ? ('Amount: $' . $amount) : '',
+                    'Status: ' . $status,
+                    '',
+                    'ProxyMint',
+                ]),
+            ];
         }
         foreach ($tickets as $ticket) {
-            $rows[] = ['date' => $this->s($ticket['created'] ?? '-'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Support ticket: ' . $this->s($ticket['subject'] ?? '-'), 'status' => $this->s($ticket['status'] ?? '-')];
+            $subject = $this->s($ticket['subject'] ?? '-');
+            $status = $this->s($ticket['status'] ?? '-');
+            $message = '';
+            $messages = isset($ticket['messages']) && is_array($ticket['messages']) ? $ticket['messages'] : [];
+            if (isset($messages[0]) && is_array($messages[0])) {
+                $message = $this->s($messages[0]['body'] ?? '');
+            }
+            $rows[] = [
+                'date' => $this->s($ticket['created_at'] ?? $ticket['created'] ?? '-'),
+                'recipient' => $recipient,
+                'subject' => 'Support ticket: ' . $subject,
+                'status' => $status,
+                'body' => $this->email_body([
+                    'Hello,',
+                    '',
+                    'Your support ticket was received.',
+                    'Subject: ' . $subject,
+                    'Status: ' . $status,
+                    $message !== '' ? ('Message: ' . $message) : '',
+                    '',
+                    'ProxyMint',
+                ]),
+            ];
         }
         if ($rows === []) {
-            $rows[] = ['date' => date('Y-m-d'), 'recipient' => $this->s($user['email'] ?? '-'), 'subject' => 'Account created', 'status' => 'sent'];
+            $rows[] = [
+                'date' => date('Y-m-d'),
+                'recipient' => $recipient,
+                'subject' => 'Account created',
+                'status' => 'sent',
+                'body' => $this->email_body([
+                    'Hello,',
+                    '',
+                    'Your ProxyMint account has been created.',
+                    '',
+                    'ProxyMint',
+                ]),
+            ];
         }
-        $this->table('Email History', $rows, ['date', 'recipient', 'subject', 'status']);
+        $this->email_history_table($rows);
+    }
+
+    /**
+     * @param array<int,string> $lines
+     */
+    private function email_body(array $lines): string
+    {
+        $out = [];
+        foreach ($lines as $line) {
+            if ($line !== '') {
+                $out[] = $line;
+                continue;
+            }
+            if ($out !== [] && end($out) !== '') {
+                $out[] = '';
+            }
+        }
+        return trim(implode("\n", $out));
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $rows
+     */
+    private function email_history_table(array $rows): void
+    {
+        $columns = ['date', 'recipient', 'subject', 'status'];
+        echo '<section class="card shadow-sm mb-3 pm-email-history"><div class="card-header">Email History</div><div class="card-body p-0">';
+        echo '<div class="table-responsive"><table class="table table-striped table-bordered align-middle mb-0"><thead><tr>';
+        foreach ($columns as $column) {
+            $fallback = ucwords(str_replace('_', ' ', $column));
+            echo '<th>' . $this->h($this->t('client.column.' . $column, $fallback)) . '</th>';
+        }
+        echo '</tr></thead><tbody>';
+        foreach ($rows as $idx => $row) {
+            echo '<tr class="pm-email-row" tabindex="0" data-email-index="' . (int)$idx . '" role="button">';
+            foreach ($columns as $column) {
+                echo '<td>' . $this->h((string)($row[$column] ?? '-')) . '</td>';
+            }
+            echo '</tr>';
+        }
+        echo '</tbody></table></div></div></section>';
+
+        echo '<div id="pmEmailModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pmEmailModalTitle">';
+        echo '<div class="panel" tabindex="-1" style="width:min(94vw,820px)">';
+        echo '<div class="head"><strong id="pmEmailModalTitle">Email</strong><button class="close" id="pmEmailModalClose" type="button" aria-label="Close">Esc</button></div>';
+        echo '<div style="padding:16px;max-height:78vh;overflow:auto">';
+        echo '<div class="small text-muted mb-2" id="pmEmailModalMeta"></div>';
+        echo '<pre id="pmEmailModalBody" class="pm-code mb-0"></pre>';
+        echo '</div></div></div>';
+
+        $json = json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        echo '<script type="application/json" id="pmEmailRowsJson">' . ($json !== false ? $json : '[]') . '</script>';
+        echo '<script>
+(function(){
+    var modal = document.getElementById("pmEmailModal");
+    var rowsEl = document.getElementById("pmEmailRowsJson");
+    if (!modal || !rowsEl) return;
+    var rows = [];
+    try { rows = JSON.parse(rowsEl.textContent || "[]"); } catch (err) { rows = []; }
+    var titleEl = document.getElementById("pmEmailModalTitle");
+    var metaEl = document.getElementById("pmEmailModalMeta");
+    var bodyEl = document.getElementById("pmEmailModalBody");
+    var closeEl = document.getElementById("pmEmailModalClose");
+
+    function openEmail(idx){
+        var row = rows[idx] || {};
+        titleEl.textContent = row.subject || "Email";
+        metaEl.textContent = (row.date || "-") + " | " + (row.recipient || "-") + " | " + (row.status || "-");
+        bodyEl.textContent = row.body || "Email text is not stored for this record.";
+        modal.setAttribute("aria-hidden", "false");
+        document.documentElement.style.overflow = "hidden";
+        closeEl.focus();
+    }
+    function closeEmail(){
+        modal.setAttribute("aria-hidden", "true");
+        document.documentElement.style.overflow = "";
+    }
+    document.addEventListener("click", function(e){
+        var tr = e.target.closest(".pm-email-row");
+        if (!tr) return;
+        openEmail(parseInt(tr.getAttribute("data-email-index") || "0", 10));
+    });
+    document.addEventListener("keydown", function(e){
+        var tr = e.target.closest ? e.target.closest(".pm-email-row") : null;
+        if (tr && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            openEmail(parseInt(tr.getAttribute("data-email-index") || "0", 10));
+            return;
+        }
+        if (modal.getAttribute("aria-hidden") === "false" && e.key === "Escape") {
+            e.preventDefault();
+            closeEmail();
+        }
+    });
+    closeEl.addEventListener("click", closeEmail);
+    modal.addEventListener("click", function(e){ if (e.target === modal) closeEmail(); });
+})();
+</script>';
     }
 
     /**
@@ -1005,7 +1256,7 @@ final class ClientDashboardPages
     private function render_password_form(int $userId, array $user): void
     {
         $identity = $this->s($user['email'] ?? '') !== '' ? $this->s($user['email'] ?? '') : $this->s($user['login'] ?? '');
-        $action = (string)($_SERVER['REQUEST_URI'] ?? '/client/change-password');
+        $action = (string)($_SERVER['REQUEST_URI'] ?? '/client/profile');
 
         echo '<section class="card shadow-sm mb-3"><div class="card-header">Change Password</div><div class="card-body">';
         $this->render_notice();
@@ -1023,18 +1274,20 @@ final class ClientDashboardPages
         echo '<style>
             .pm-dash-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
             .pm-dash-head h1{font-size:28px;margin:0 0 6px}
-            .pm-dash-head p{margin:0;color:#64748b}
-            .pm-dash-user{text-align:right;color:#64748b}
+            .pm-dash-head p{margin:0;color:var(--muted)}
+            .pm-dash-user{text-align:right;color:var(--muted)}
             .pm-dash-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
             .pm-stat{font-size:24px;font-weight:700}
             .pm-actions{display:flex;flex-wrap:wrap;gap:10px}
             .pm-password-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
             .pm-password-actions{display:flex;align-items:end}
             .pm-code{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:14px;white-space:pre-wrap}
-            .pm-doc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-            .pm-doc-link{display:grid;gap:8px;border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:14px;background:rgba(255,255,255,.72)}
-            .pm-doc-link span{color:#334155}
-            .pm-doc-link small{color:#64748b}
+            .pm-doc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+            .pm-doc-link{display:grid;gap:8px;min-height:168px;border:1px solid var(--line);border-radius:var(--pm-radius-md);padding:16px;background:color-mix(in srgb,var(--surface-soft) 88%,transparent);color:var(--text);box-shadow:0 14px 34px color-mix(in srgb,var(--accent-2) 8%,transparent)}
+            .pm-doc-link strong{font-size:15px;line-height:1.25}
+            .pm-doc-link span{color:color-mix(in srgb,var(--text) 86%,var(--muted));line-height:1.35}
+            .pm-doc-link small{color:var(--muted);line-height:1.35}
+            .pm-doc-link:hover{border-color:color-mix(in srgb,var(--accent) 34%,var(--line));background:color-mix(in srgb,var(--surface-strong) 86%,var(--accent) 7%)}
             .pm-card-wallet{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
             .pm-card-method{display:grid;gap:14px;min-height:170px;border-radius:8px;padding:18px;color:#e5f0ff;background:linear-gradient(135deg,#172554,#0f766e);box-shadow:0 16px 34px rgba(15,23,42,.18)}
             .pm-card-method strong{display:block;font-size:18px;letter-spacing:1px}
@@ -1043,6 +1296,9 @@ final class ClientDashboardPages
             .pm-card-meta{display:flex;justify-content:space-between;gap:10px;align-items:center}
             .pm-card-meta b{border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:2px 8px;font-size:12px}
             .pm-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+            .pm-email-row{cursor:pointer}
+            .pm-email-row:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+            .pm-email-row:focus{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:-2px}
             @media(max-width:900px){.pm-dash-grid,.pm-doc-grid,.pm-password-form{grid-template-columns:1fr 1fr}.pm-dash-head{display:block}.pm-dash-user{text-align:left;margin-top:10px}}
             @media(max-width:560px){.pm-dash-grid,.pm-doc-grid,.pm-password-form{grid-template-columns:1fr}}
         </style>';
@@ -1051,6 +1307,15 @@ final class ClientDashboardPages
     private function h(mixed $value): string
     {
         return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function t(string $key, string $fallback = ''): string
+    {
+        $value = Sogerien::Lang()->get($key);
+        if ($fallback !== '' && $value === $key) {
+            return $fallback;
+        }
+        return $value;
     }
 
     private function s(mixed $value): string
