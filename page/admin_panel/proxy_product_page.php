@@ -38,13 +38,6 @@ function ppp_page_configs(): array
             'route' => '/client/proxies/residential',
             'hero_note' => 'Traffic model is GB-based. This page does not use Mobile API credentials.',
         ],
-        'residential_ipv6' => [
-            'title' => 'Residential IPv6',
-            'subtitle' => 'Residential IPv6 traffic packages for IPv6-compatible targets.',
-            'category_label' => 'Residential IPv6',
-            'route' => '/client/proxies/residential-ipv6',
-            'hero_note' => 'Use only if the target supports IPv6.',
-        ],
         'isp' => [
             'title' => 'ISP Proxy',
             'subtitle' => 'Dedicated ISP IP packages by country, IP count and term.',
@@ -63,7 +56,6 @@ function ppp_category_from_path(string $path): string
     }
     return match ($path) {
         'proxies/residential' => 'residential',
-        'proxies/residential-ipv6' => 'residential_ipv6',
         'proxies/isp' => 'isp',
         default => 'mobile',
     };
@@ -349,6 +341,9 @@ $config = $configs[$category];
 $shop = new ProxyShop();
 $shop->init_db_alias($dbAlias);
 $plans = $shop->proxy_product_plans($category);
+if ($shop->has_used_trial((int)$users->user_id)) {
+    $plans = array_values(array_filter($plans, static fn(array $plan): bool => empty($plan['is_trial'])));
+}
 
 $geoSource = null;
 if ($category === 'mobile') {
@@ -472,9 +467,6 @@ Sogerien::Page()->mainmenu();
         </div>
     </div>
 
-    <?php if ($category === 'residential_ipv6'): ?>
-        <div class="alert alert-warning" role="alert">Use only if target supports IPv6.</div>
-    <?php endif; ?>
     <?php if ($fallbackCatalog): ?>
         <div class="alert alert-warning" role="alert">Provider geos are unavailable. Fallback catalog is shown; checkout still validates item contracts.</div>
     <?php endif; ?>
@@ -513,7 +505,7 @@ Sogerien::Page()->mainmenu();
                 <?php
                 $isTraffic = isset($plan['traffic_gb']);
                 $isSelected = $index === 0;
-                $badge = $isTraffic ? (!empty($plan['is_trial']) ? 'Trial - 1 month' : 'Yearly window') : 'Monthly tier';
+                $badge = !empty($plan['is_trial']) ? 'Trial - 1 month' : ($isTraffic ? 'Yearly window' : 'Monthly tier');
                 $main = $isTraffic ? ppp_s($plan['traffic_gb']) . ' GB' : ppp_s($plan['ip_count'] ?? '') . ' IPs';
                 $price = '$' . ppp_s($plan['price_usd'] ?? '0.00');
                 $meta = $isTraffic
@@ -566,7 +558,7 @@ Sogerien::Page()->mainmenu();
                 <div><strong>IP model</strong><span class="text-muted small">ISP is sold by IP count. It does not appear in GB traffic topup.</span></div>
                 <div><strong>Fulfillment</strong><span class="text-muted small">Package is created after payment and saved as a service.</span></div>
                 <div><strong>Actions</strong><span class="text-muted small">Cancel, uncancel, suspend, resume and deactivate are service actions.</span></div>
-                <div><strong>Traffic</strong><span class="text-muted small">ISP is not counted in `/client/traffic` GB reports.</span></div>
+                <div><strong>Traffic</strong><span class="text-muted small">ISP is not counted in GB traffic reports.</span></div>
             </div>
         <?php else: ?>
             <div class="pm-quick-list">

@@ -1,0 +1,19 @@
+{
+  "format": "local_tools_ftp_multi_v1",
+  "profiles": {
+    "default": {
+      "protocol": "FTP",
+      "host": "",
+      "port": 21,
+      "username": "",
+      "password": "",
+      "timeout": 60,
+      "retries": 3,
+      "local_dir": "",
+      "remote_dir": "",
+      "excluded_dirs_text": ".git\nnode_modules\nvendor\nruntime\ncache",
+      "excluded_exts_text": ".tmp, .log, .bak, .swp"
+    }
+  },
+  "default_profile": "default"
+}

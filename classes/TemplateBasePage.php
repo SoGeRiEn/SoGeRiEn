@@ -132,11 +132,12 @@ final class TemplateBasePage
     }
 
     /**
-     * @return array{label:string,balance:string}
+     * @return array{label:string,email:string,balance:string}
      */
     private function client_topbar_context(): array
     {
         $label = 'Client';
+        $email = '';
         $balance = '$0.00';
 
         $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
@@ -150,9 +151,14 @@ final class TemplateBasePage
 
         $userId = (int)$users->user_id;
         $user = is_array($users->user_data ?? null) ? $users->user_data : [];
-        $name = trim((string)($user['fio'] ?? $user['name'] ?? $user['email'] ?? $user['login'] ?? ''));
+        $email = trim((string)($user['email'] ?? ''));
+        $name = trim((string)($user['fio'] ?? $user['name'] ?? ''));
         if ($name !== '') {
             $label = $name;
+        } elseif ($email !== '') {
+            $label = $email;
+        } elseif (trim((string)($user['login'] ?? '')) !== '') {
+            $label = trim((string)$user['login']);
         } elseif ($userId > 0) {
             $label = 'User #' . (string)$userId;
         }
@@ -163,7 +169,7 @@ final class TemplateBasePage
             $balance = '$' . $shop->get_user_balance_usd($userId);
         }
 
-        return ['label' => $label, 'balance' => $balance];
+        return ['label' => $label, 'email' => $email, 'balance' => $balance];
     }
 
     /**
@@ -178,6 +184,15 @@ final class TemplateBasePage
             $tag = trim((string)($item['tag'] ?? ''));
             if ($label === '' || $url === '') {
                 continue;
+            }
+
+            $labelKey = trim((string)($item['label_key'] ?? ''));
+            $tagKey = trim((string)($item['tag_key'] ?? ''));
+            if ($labelKey !== '') {
+                $label = $this->t($labelKey, $label);
+            }
+            if ($tagKey !== '') {
+                $tag = $this->t($tagKey, $tag);
             }
 
             $active = $this->is_active_url($url) === 'active' ? ' is-active' : '';
@@ -220,38 +235,31 @@ final class TemplateBasePage
         $isAdminSystem = $currentPath === 'admin' || str_starts_with($currentPath, 'admin/');
 
         $homeItems = [
-            ['label' => 'Dashboard', 'url' => '/client/dashboard', 'tag' => 'Client'],
+            ['label' => 'Dashboard', 'label_key' => 'client.nav.dashboard', 'url' => '/client/dashboard', 'tag' => 'Client', 'tag_key' => 'client.tag.client'],
         ];
         $proxyProductItems = [
-            ['label' => 'Order Proxies', 'url' => '/client/all_proxy', 'tag' => 'Order'],
-            ['label' => 'My Services', 'url' => '/client/my/proxies', 'tag' => 'Client'],
-            ['label' => 'Traffic Usage', 'url' => '/client/traffic', 'tag' => 'Stats'],
-            ['label' => 'Access Lists', 'url' => '/client/access-lists', 'tag' => 'Proxy'],
-            ['label' => 'Mobile Proxy', 'url' => '/client/proxies/mobile_proxy', 'tag' => 'GB'],
-            ['label' => 'Residential Proxy', 'url' => '/client/proxies/residential', 'tag' => 'GB'],
-            ['label' => 'Residential IPv6', 'url' => '/client/proxies/residential-ipv6', 'tag' => 'IPv6'],
-            ['label' => 'ISP Proxy', 'url' => '/client/proxies/isp', 'tag' => 'IP'],
+            ['label' => 'Order Proxies', 'label_key' => 'client.nav.order_proxies', 'url' => '/client/all_proxy', 'tag' => 'Order', 'tag_key' => 'client.tag.order'],
+            ['label' => 'My Services', 'label_key' => 'client.nav.my_services', 'url' => '/client/my/proxies', 'tag' => 'Client', 'tag_key' => 'client.tag.client'],
         ];
         $scraperItems = [
-            ['label' => 'Scraper Pricing', 'url' => '/client/scraper/pricing', 'tag' => 'API'],
-            ['label' => 'My Scraper API', 'url' => '/client/scraper/my', 'tag' => 'Client'],
-            ['label' => 'Playground', 'url' => '/client/scraper/playground', 'tag' => 'Tools'],
+            ['label' => 'Scraper Pricing', 'label_key' => 'client.nav.scraper_pricing', 'url' => '/client/scraper/pricing', 'tag' => 'API'],
+            ['label' => 'My Scraper API', 'label_key' => 'client.nav.my_scraper_api', 'url' => '/client/scraper/my', 'tag' => 'Client', 'tag_key' => 'client.tag.client'],
+            ['label' => 'Playground', 'label_key' => 'client.nav.playground', 'url' => '/client/scraper/playground', 'tag' => 'Tools', 'tag_key' => 'client.tag.tools'],
         ];
         $billingItems = [
-            ['label' => 'Add Funds', 'url' => '/client/add-funds', 'tag' => 'Pay'],
-            ['label' => 'Invoices', 'url' => '/client/my/payments', 'tag' => 'Billing'],
-            ['label' => 'Payment Methods', 'url' => '/client/payment-methods', 'tag' => 'Billing'],
+            ['label' => 'Add Funds', 'label_key' => 'client.nav.add_funds', 'url' => '/client/add-funds', 'tag' => 'Pay', 'tag_key' => 'client.tag.pay'],
+            ['label' => 'Invoices', 'label_key' => 'client.nav.invoices', 'url' => '/client/my/payments', 'tag' => 'Billing', 'tag_key' => 'client.tag.billing'],
+            ['label' => 'Payment Methods', 'label_key' => 'client.nav.payment_methods', 'url' => '/client/payment-methods', 'tag' => 'Billing', 'tag_key' => 'client.tag.billing'],
         ];
         $supportItems = [
-            ['label' => 'Tickets', 'url' => '/client/support/tickets', 'tag' => 'Help'],
-            ['label' => 'Manuals', 'url' => '/client/manuals', 'tag' => 'Docs'],
+            ['label' => 'Tickets', 'label_key' => 'client.nav.tickets', 'url' => '/client/support/tickets', 'tag' => 'Help', 'tag_key' => 'client.tag.help'],
+            ['label' => 'Manuals', 'label_key' => 'client.nav.manuals', 'url' => '/client/manuals', 'tag' => 'Docs', 'tag_key' => 'client.tag.docs'],
         ];
         $accountItems = [
-            ['label' => 'Profile', 'url' => '/client/profile', 'tag' => 'Account'],
-            ['label' => 'Change Password', 'url' => '/client/change-password', 'tag' => 'Security'],
-            ['label' => 'Contacts', 'url' => '/client/contacts', 'tag' => 'Account'],
-            ['label' => 'Email History', 'url' => '/client/email-history', 'tag' => 'Account'],
-            ['label' => 'Users', 'url' => '/client/users', 'tag' => 'Team'],
+            ['label' => 'Profile', 'label_key' => 'client.nav.profile', 'url' => '/client/profile', 'tag' => 'Account', 'tag_key' => 'client.tag.account'],
+            ['label' => 'Contacts', 'label_key' => 'client.nav.contacts', 'url' => '/client/contacts', 'tag' => 'Account', 'tag_key' => 'client.tag.account'],
+            ['label' => 'Email History', 'label_key' => 'client.nav.email_history', 'url' => '/client/email-history', 'tag' => 'Account', 'tag_key' => 'client.tag.account'],
+            ['label' => 'Users', 'label_key' => 'client.nav.users', 'url' => '/client/users', 'tag' => 'Team', 'tag_key' => 'client.tag.team'],
         ];
         $accountDropItems = [
             ['label' => 'Account Details', 'url' => '/client/profile', 'icon' => 'ID'],
@@ -260,12 +268,10 @@ final class TemplateBasePage
             ['label' => 'Contacts', 'url' => '/client/contacts', 'icon' => 'CT'],
             ['label' => 'Subscriptions', 'url' => '/client/subscriptions', 'icon' => 'SB'],
             ['label' => 'Email History', 'url' => '/client/email-history', 'icon' => 'EM'],
-            ['label' => 'Change Password', 'url' => '/client/change-password', 'icon' => 'PW'],
-            ['label' => 'Security Settings', 'url' => '/client/change-password', 'icon' => 'SC'],
         ];
         $adminItems = $this->is_admin_user() ? [
             ['label' => 'Proxy Orders', 'url' => '/admin/orders', 'tag' => 'Admin'],
-            ['label' => 'Статистика', 'url' => '/admin/statistics', 'tag' => 'Admin'],
+            ['label' => 'Statistics', 'url' => '/admin/statistics', 'tag' => 'Admin'],
             ['label' => 'Client Services', 'url' => '/admin/services', 'tag' => 'Admin'],
             ['label' => 'Traffic', 'url' => '/admin/traffic', 'tag' => 'Admin'],
             ['label' => 'Access Lists', 'url' => '/admin/access-lists', 'tag' => 'Admin'],
@@ -304,27 +310,27 @@ final class TemplateBasePage
             echo '              </div>';
         } else {
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">' . $h($t('menu.admin', 'Dashboard')) . '</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.home', 'Dashboard')) . '</div>';
             echo                    $this->render_nav_items($homeItems);
             echo '              </div>';
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">Proxy</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.proxy', 'Proxy')) . '</div>';
             echo                    $this->render_nav_items($proxyProductItems);
             echo '              </div>';
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">Scraper</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.scraper', 'Scraper')) . '</div>';
             echo                    $this->render_nav_items($scraperItems);
             echo '              </div>';
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">Billing</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.billing', 'Billing')) . '</div>';
             echo                    $this->render_nav_items($billingItems);
             echo '              </div>';
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">Support</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.support', 'Support')) . '</div>';
             echo                    $this->render_nav_items($supportItems);
             echo '              </div>';
             echo '              <div class="pm-sidebar-section">';
-            echo '                  <div class="pm-sidebar-section-title">Account</div>';
+            echo '                  <div class="pm-sidebar-section-title">' . $h($t('client.section.account', 'Account')) . '</div>';
             echo                    $this->render_nav_items($accountItems);
             echo '              </div>';
         }
@@ -367,8 +373,8 @@ final class TemplateBasePage
         echo '                  </div>';
         if (!$isAdminSystem) {
             $clientTopbar = $this->client_topbar_context();
-            echo '                  <a class="pm-client-add-funds" href="' . $h($this->append_admin_view_user_id('/client/add-funds')) . '">Add Funds</a>';
-            echo '                  <div class="pm-client-balance" title="Account balance"><span>Balance</span><strong>' . $h((string)$clientTopbar['balance']) . '</strong></div>';
+            echo '                  <a class="pm-client-add-funds" href="' . $h($this->append_admin_view_user_id('/client/add-funds')) . '">' . $h($t('client.nav.add_funds', 'Add Funds')) . '</a>';
+            echo '                  <div class="pm-client-balance" title="' . $h($t('client.balance', 'Account balance')) . '"><span>' . $h($t('client.balance_short', 'Balance')) . '</span><strong>' . $h((string)$clientTopbar['balance']) . '</strong></div>';
             echo '                  <div class="dropdown pm-client-icon-dropdown">';
             echo '                      <button class="pm-client-icon-btn" type="button" id="pm_notify_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" aria-label="Notifications">!</button>';
             echo '                      <div class="dropdown-menu dropdown-menu-end pm-client-mini-menu" aria-labelledby="pm_notify_dropdown_toggle">';
@@ -379,9 +385,13 @@ final class TemplateBasePage
             echo '                  <div class="dropdown pm-client-account-dropdown">';
             echo '                      <button class="pm-client-account-btn" type="button" id="pm_personal_dropdown_toggle" data-bs-toggle="dropdown" aria-expanded="false">';
             echo '                          <span class="pm-client-avatar" aria-hidden="true">U</span>';
-            echo '                          <span class="pm-client-account-copy"><span>Personal</span><strong>' . $h((string)$clientTopbar['label']) . '</strong></span>';
+            echo '                          <span class="pm-client-account-copy"><span>Account</span><strong>' . $h($t('client.account.my_profile', 'Мой профиль')) . '</strong></span>';
             echo '                      </button>';
             echo '                      <div class="dropdown-menu dropdown-menu-end pm-client-account-menu" aria-labelledby="pm_personal_dropdown_toggle">';
+            if ((string)$clientTopbar['email'] !== '') {
+                echo '<div class="pm-client-account-email">' . $h((string)$clientTopbar['email']) . '</div>';
+                echo '<div class="dropdown-divider"></div>';
+            }
             foreach ($accountDropItems as $item) {
                 $url = $this->append_admin_view_user_id((string)$item['url']);
                 echo '<a class="dropdown-item pm-client-account-item" href="' . $h($url) . '"><span class="pm-client-menu-icon">' . $h((string)$item['icon']) . '</span><span>' . $h((string)$item['label']) . '</span></a>';
@@ -540,9 +550,3 @@ HTML;
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }
-
-
-
-
-
-

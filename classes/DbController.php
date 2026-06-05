@@ -597,9 +597,9 @@ final class DbController
 //
 //Sogerien::DbController()->DbConfig->DB_HOST    = 'localhost';
 //Sogerien::DbController()->DbConfig->DB_PORT    = '5432';
-//Sogerien::DbController()->DbConfig->DB_NAME    = 'db_proxymint_com';
-//Sogerien::DbController()->DbConfig->DB_USER    = 'db_proxymin_usr';
-//Sogerien::DbController()->DbConfig->DB_PASS    = 'uQ8oxEskC2LZvoyK';
+//Sogerien::DbController()->DbConfig->DB_NAME    = 'sogerien';
+//Sogerien::DbController()->DbConfig->DB_USER    = 'sogerien';
+//Sogerien::DbController()->DbConfig->DB_PASS    = '';
 //Sogerien::DbController()->DbConfig->DB_CHARSET = 'utf8mb4';
 //
 //// держим активный коннект под алиасом 'front'

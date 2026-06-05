@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sogerien Genius Core"
+  short_description: "Universal Sogerien backend architect"
+  default_prompt: "Use $sogerien-genius-core to implement this task with existing Sogerien services and JSONB-first patterns."

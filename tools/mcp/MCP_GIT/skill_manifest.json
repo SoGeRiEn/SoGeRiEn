@@ -1,0 +1,8 @@
+{
+  "skill": "MCP_GIT",
+  "entry": "MCP_GIT.py",
+  "process_name": "MCP_git",
+  "version": 1,
+  "type": "mcp_server",
+  "transport": "stdio"
+}

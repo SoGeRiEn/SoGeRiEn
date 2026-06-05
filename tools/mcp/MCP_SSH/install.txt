@@ -1,0 +1,41 @@
+NAME MCP_SSH
+
+Запуск
+Команда:
+C:\MCP_V3\MCP_SSH\.venv\Scripts\python.exe
+
+Аргументы:
+C:\MCP_V3\MCP_SSH\MCP_SSH.py
+
+Рабочая директория:
+C:\MCP_V3\MCP_SSH
+
+Переменные окружения:
+PYTHONUTF8=1
+PYTHONIOENCODING=utf-8
+
+Опционально:
+SSH_CONFIG_PATH=C:\MCP_V3\MCP_SSH\ssh_konfig.json
+SSH_PROFILE=default
+
+Codex config.toml:
+[mcp_servers.mcp_ssh]
+command = 'C:\MCP_V3\MCP_SSH\.venv\Scripts\python.exe'
+args = ['C:\MCP_V3\MCP_SSH\MCP_SSH.py']
+cwd = 'C:\MCP_V3\MCP_SSH'
+startup_timeout_sec = 20
+tool_timeout_sec = 600
+
+Конфиг:
+- формат только `local_tools_ssh_multi_v1`
+- профили только в `profiles.<profile_name>`
+- активный профиль: аргумент tool `profile`, затем `SSH_PROFILE`, затем `default_profile`
+- старый flat-конфиг не поддерживается
+
+Tools:
+- `ssh_config_show` - показать профиль и список профилей
+- `ssh_config_save` - создать или изменить профиль
+- `ssh_config_delete` - удалить профиль
+- `ssh_connect_test` - проверить TCP connect
+- `ssh_exec` - выполнить одну SSH-команду
+- `ssh_exec_many` - выполнить список SSH-команд

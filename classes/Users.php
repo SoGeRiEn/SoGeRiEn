@@ -171,6 +171,11 @@ final class Users
             return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);
         }
 
+        $row = $this->get_user_by_id($uid);
+        if (is_array($row)) {
+            $this->user_data = $this->normalize_user_table_value($row['table_value'] ?? []);
+        }
+
         $this->user_id = $uid;
         $this->ok();
         return   Sogerien::Debager()->capture_return(true, __CLASS__, __FUNCTION__);

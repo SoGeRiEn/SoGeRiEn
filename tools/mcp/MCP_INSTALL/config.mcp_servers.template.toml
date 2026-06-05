@@ -1,0 +1,209 @@
+﻿# MCP servers template for C:\Users\SoGeRiEn\.codex\config.toml
+# Generated from current C:\MCP_V3 layout
+
+[mcp_servers.mcp_codex_agents]
+args = ['C:\MCP_V3\MCP_CODEX_AGENTS\MCP_CODEX_AGENTS.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_CODEX_AGENTS\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_codex_agents.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_codex_phone]
+args = ['C:\MCP_V3\MCP_CODEX_PHONE\MCP_CODEX_PHONE.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_CODEX_PHONE\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_codex_phone.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_filesystem]
+args = ['C:\MCP_V3\MCP_FILESYSTEM\MCP_FILESYSTEM.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_FILESYSTEM\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_filesystem.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_ftp]
+args = ['C:\MCP_V3\MCP_FTP\MCP_FTP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_FTP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_ftp.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_http]
+args = ['C:\MCP_V3\MCP_HTTP\MCP_HTTP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_HTTP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_http.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_mssql]
+args = ['C:\MCP_V3\MCP_MSSQL\MCP_MSSQL.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_MSSQL\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_mssql.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_mysql]
+args = ['C:\MCP_V3\MCP_MYSQL\MCP_MYSQL.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_MYSQL\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_mysql.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_php]
+args = ['C:\MCP_V3\MCP_PHP\MCP_PHP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_PHP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_php.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_postgres]
+args = ['C:\MCP_V3\MCP_POSTGRES\MCP_POSTGRES.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_POSTGRES\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_postgres.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_pyppeteer]
+args = ['C:\MCP_V3\MCP_PYPPETEER\MCP_PYPPETEER.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_PYPPETEER\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_pyppeteer.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_screenshot]
+args = ['C:\MCP_V3\MCP_SCREENSHOT\MCP_SCREENSHOT.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_SCREENSHOT\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_screenshot.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_smtp]
+args = ['C:\MCP_V3\MCP_SMTP\MCP_SMTP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_SMTP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_smtp.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_ssh]
+args = ['C:\MCP_V3\MCP_SSH\MCP_SSH.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_SSH\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_ssh.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_windows]
+args = ['C:\MCP_V3\MCP_WINDOWS\MCP_WINDOWS.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_WINDOWS\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_windows.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_python]
+args = ['C:\MCP_V3\MCP_PYTHON\MCP_PYTHON.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_PYTHON\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_python.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_telegram]
+args = ['C:\MCP_V3\MCP_TELEGRAM\MCP_TELEGRAM.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_TELEGRAM\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_telegram.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_codex_server]
+args = ['C:\MCP_V3\MCP_CODEX_SERVER\MCP_CODEX_SERVER.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_CODEX_SERVER\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_codex_server.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_mikrotik_api]
+args = ['C:\MCP_V3\MCP_Mikrotik_API\MCP_Mikrotik_API.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_Mikrotik_API\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_mikrotik_api.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_mikrotik_winbox]
+args = ['C:\MCP_V3\MCP_Mikrotik_Winbox\MCP_Mikrotik_Winbox.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_Mikrotik_Winbox\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_mikrotik_winbox.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_chrome_devtools]
+args = ['C:\MCP_V3\MCP_Chrome_DevTools\MCP_Chrome_DevTools.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_Chrome_DevTools\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_chrome_devtools.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_cloudefire]
+args = ['C:\MCP_V3\MCP_CloudeFire\MCP_CloudeFire.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_CloudeFire\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_cloudefire.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_esxi_vcenter]
+args = ['C:\MCP_V3\MCP_ESXIvCenter\MCP_ESXIvCenter.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_ESXIvCenter\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_esxi_vcenter.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_windows_admin]
+args = ['C:\MCP_V3\MCP_WindowsAdmin\MCP_WindowsAdmin.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_WindowsAdmin\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_windows_admin.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"

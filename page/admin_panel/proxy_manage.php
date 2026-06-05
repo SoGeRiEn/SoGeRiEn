@@ -21,6 +21,16 @@ function pm_s(mixed $value): string
     return '';
 }
 
+function pm_t(string $key, string $fallback = ''): string
+{
+    $value = Sogerien::Lang()->get($key);
+    if ($fallback !== '' && $value === $key) {
+        return $fallback;
+    }
+
+    return $value;
+}
+
 $request = Sogerien::InputRequest()->request_post_get_cookie_json;
 $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
 if ($dbAlias === '') {
@@ -99,15 +109,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $userId > 0) {
     if ($serviceId !== '' && $action !== '') {
         if ($action === 'add_traffic' || $action === 'set_traffic_limit') {
             $alertType = 'danger';
-            $alertText = 'Traffic is added only through purchase or admin panel.';
+            $alertText = pm_t('proxy_manage.traffic_purchase_only', 'Traffic is added only through purchase or admin panel.');
         } else {
             $result = $shop->service_action($userId, $serviceId, $action, is_array($request) ? $request : []);
             if (($result['ok'] ?? false) === true) {
                 $alertType = 'success';
-                $alertText = $action === 'generate_proxy_list' ? 'Proxy access list generated.' : 'Action completed.';
+                $alertText = $action === 'generate_proxy_list' ? pm_t('proxy_manage.generated_alert', 'Proxy access list generated.') : pm_t('proxy.action_done', 'Action completed.');
             } else {
                 $alertType = 'danger';
-                $alertText = (string)($result['error'] ?? 'Action failed.');
+                $alertText = (string)($result['error'] ?? pm_t('proxy.action_failed', 'Action failed.'));
             }
         }
     }
@@ -123,7 +133,7 @@ if ($userId > 0 && $serviceId !== '') {
     }
 }
 
-Sogerien::Page()->title = 'Detailed product information';
+Sogerien::Page()->title = pm_t('proxy_manage.page_title', 'Detailed product information');
 Sogerien::Page()->header();
 Sogerien::Page()->mainmenu();
 ?>
@@ -163,9 +173,9 @@ Sogerien::Page()->mainmenu();
     <?php endif; ?>
 
     <?php if ($serviceId === ''): ?>
-        <div class="alert alert-secondary" role="alert">Open this page with `service_id` from My Proxies.</div>
+        <div class="alert alert-secondary" role="alert"><?= pm_h(pm_t('proxy_manage.open_with_service_id', 'Open this page with `service_id` from My Proxies.')) ?></div>
     <?php elseif (!is_array($service)): ?>
-        <div class="alert alert-danger" role="alert">Service not found.</div>
+        <div class="alert alert-danger" role="alert"><?= pm_h(pm_t('proxy_manage.service_not_found', 'Service not found.')) ?></div>
     <?php else: ?>
         <?php $category = strtolower(pm_s($service['provider_pool_category'] ?? '')); ?>
         <?php $isTrafficService = $category === 'mobile' || $category === 'residential' || $category === 'residential_ipv6'; ?>
@@ -188,60 +198,60 @@ Sogerien::Page()->mainmenu();
         <div class="card pm-service-card">
             <div class="card-body">
                 <div class="pm-service-heading">
-                    <h1>Detailed product information</h1>
+                    <h1><?= pm_h(pm_t('proxy_manage.page_title', 'Detailed product information')) ?></h1>
                     <p><?= pm_h($service['title'] ?? '-') ?> - <code><?= pm_h($serviceId) ?></code></p>
                     <div class="pm-service-actions">
                         <?php if ($isTrafficService): ?>
                             <form method="post" action="/client/proxy/manage">
                                 <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                                 <input type="hidden" name="action" value="refresh_traffic">
-                                <button type="submit" class="btn btn-outline-primary">Refresh traffic</button>
+                                <button type="submit" class="btn btn-outline-primary"><?= pm_h(pm_t('proxy_manage.refresh_traffic', 'Refresh traffic')) ?></button>
                             </form>
                         <?php endif; ?>
                         <form method="post" action="/client/proxy/manage">
                             <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                             <input type="hidden" name="action" value="<?= pm_s($service['status'] ?? '') === 'suspended' ? 'resume' : 'suspend' ?>">
-                            <button type="submit" class="btn btn-outline-warning"><?= pm_s($service['status'] ?? '') === 'suspended' ? 'Resume' : 'Suspend' ?></button>
+                            <button type="submit" class="btn btn-outline-warning"><?= pm_h(pm_s($service['status'] ?? '') === 'suspended' ? pm_t('proxy_manage.resume', 'Resume') : pm_t('proxy_manage.suspend', 'Suspend')) ?></button>
                         </form>
                         <form method="post" action="/client/proxy/manage">
                             <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                             <input type="hidden" name="action" value="deactivate">
-                            <button type="submit" class="btn btn-outline-danger">Deactivate</button>
+                            <button type="submit" class="btn btn-outline-danger"><?= pm_h(pm_t('proxy_manage.deactivate', 'Deactivate')) ?></button>
                         </form>
-                        <a class="btn btn-outline-secondary" href="/client/my/proxies">Back to My Proxies</a>
+                        <a class="btn btn-outline-secondary" href="/client/my/proxies"><?= pm_h(pm_t('proxy_manage.back_to_my_proxies', 'Back to My Proxies')) ?></a>
                     </div>
                 </div>
                 <div class="pm-detail-grid">
                     <div>
-                        <div class="label">Product name</div>
+                        <div class="label"><?= pm_h(pm_t('proxy_manage.product_name', 'Product name')) ?></div>
                         <div class="value"><?= pm_h($service['title'] ?? '-') ?></div>
                     </div>
                     <div>
-                        <div class="label">Proxy type</div>
+                        <div class="label"><?= pm_h(pm_t('proxy_manage.proxy_type', 'Proxy type')) ?></div>
                         <div class="value"><?= pm_h(ucfirst($category !== '' ? $category : '-')) ?></div>
                     </div>
                     <div>
-                        <div class="label">Country</div>
+                        <div class="label"><?= pm_h(pm_t('common.country', 'Country')) ?></div>
                         <div class="value"><?= pm_h($service['country'] ?? '-') ?></div>
                     </div>
                     <div>
-                        <div class="label">Status</div>
+                        <div class="label"><?= pm_h(pm_t('common.status', 'Status')) ?></div>
                         <div class="value"><?= pm_h($service['status'] ?? '-') ?></div>
                     </div>
                     <div>
-                        <div class="label">Host</div>
+                        <div class="label"><?= pm_h(pm_t('proxy_manage.host', 'Host')) ?></div>
                         <div class="value"><?= pm_h($service['connection_host'] ?? '-') ?>:<?= pm_h($service['connection_port'] ?? '-') ?></div>
                     </div>
                     <div>
-                        <div class="label">Expires</div>
+                        <div class="label"><?= pm_h(pm_t('client.column.expires', 'Expires')) ?></div>
                         <div class="value"><?= pm_h($service['expires_at'] ?? '-') ?></div>
                     </div>
                     <div>
-                        <div class="label">Auto-renew</div>
-                        <div class="value"><?= !empty($service['auto_renew_request']) ? 'On' : 'Off' ?></div>
+                        <div class="label"><?= pm_h(pm_t('proxy_manage.auto_renew', 'Auto-renew')) ?></div>
+                        <div class="value"><?= pm_h(!empty($service['auto_renew_request']) ? pm_t('proxy_manage.on', 'On') : pm_t('proxy_manage.off', 'Off')) ?></div>
                     </div>
                     <div>
-                        <div class="label"><?= $isStaticIpService ? 'IP count' : 'Last traffic update' ?></div>
+                        <div class="label"><?= pm_h($isStaticIpService ? pm_t('proxy_manage.ip_count', 'IP count') : pm_t('proxy_manage.last_traffic_update', 'Last traffic update')) ?></div>
                         <div class="value"><?= $isStaticIpService ? pm_h($service['ip_count'] ?? '-') : '<span data-pm-local-time="' . pm_h($service['traffic_updated_at'] ?? '') . '">' . pm_h($service['traffic_updated_at'] ?? '-') . '</span>' ?></div>
                     </div>
                 </div>
@@ -249,20 +259,20 @@ Sogerien::Page()->mainmenu();
         </div>
 
         <?php if ($isTrafficService): ?>
-            <section class="card pm-service-card" aria-label="Traffic statistics">
+            <section class="card pm-service-card" aria-label="<?= pm_h(pm_t('proxy_manage.traffic_statistics', 'Traffic statistics')) ?>">
                 <div class="card-body">
                     <div class="pm-usage-header">
-                        <h2>Traffic statistics</h2>
-                        <span class="small text-muted"><?= pm_h(number_format($trafficPercent, 2)) ?>% used</span>
+                        <h2><?= pm_h(pm_t('proxy_manage.traffic_statistics', 'Traffic statistics')) ?></h2>
+                        <span class="small text-muted"><?= pm_h(number_format($trafficPercent, 2)) ?>% <?= pm_h(pm_t('proxy_manage.used_percent_suffix', 'used')) ?></span>
                     </div>
                     <div class="pm-usage-scale"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
                     <div class="pm-usage-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= pm_h($trafficPercent) ?>">
                         <div class="pm-usage-fill" style="width:<?= pm_h($trafficPercent) ?>%"></div>
                     </div>
                     <div class="pm-usage-values">
-                        <div class="pm-usage-stat"><div class="label">Used traffic</div><strong><?= pm_h(number_format($trafficUsed, 2)) ?> GB</strong></div>
-                        <div class="pm-usage-stat"><div class="label">Available</div><strong><?= pm_h(number_format($trafficRemaining, 2)) ?> GB</strong></div>
-                        <div class="pm-usage-stat"><div class="label">Traffic package</div><strong><?= pm_h(number_format($trafficTotal, 2)) ?> GB</strong></div>
+                        <div class="pm-usage-stat"><div class="label"><?= pm_h(pm_t('proxy_manage.used_traffic', 'Used traffic')) ?></div><strong><?= pm_h(number_format($trafficUsed, 2)) ?> GB</strong></div>
+                        <div class="pm-usage-stat"><div class="label"><?= pm_h(pm_t('proxy_manage.available', 'Available')) ?></div><strong><?= pm_h(number_format($trafficRemaining, 2)) ?> GB</strong></div>
+                        <div class="pm-usage-stat"><div class="label"><?= pm_h(pm_t('proxy_manage.traffic_package', 'Traffic package')) ?></div><strong><?= pm_h(number_format($trafficTotal, 2)) ?> GB</strong></div>
                     </div>
                 </div>
             </section>
@@ -270,18 +280,18 @@ Sogerien::Page()->mainmenu();
 
         <?php if ($isStaticIpService): ?>
             <div class="card shadow-sm mb-3">
-                <div class="card-header"><?= $category === 'dc' ? 'Dedicated DC lifecycle' : 'ISP lifecycle' ?></div>
+                <div class="card-header"><?= pm_h($category === 'dc' ? pm_t('proxy_manage.dedicated_dc_lifecycle', 'Dedicated DC lifecycle') : pm_t('proxy_manage.isp_lifecycle', 'ISP lifecycle')) ?></div>
                 <div class="card-body d-flex flex-wrap gap-2">
                     <form method="post" action="/client/proxy/manage">
                         <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                         <input type="hidden" name="action" value="cancel">
-                        <button type="submit" class="btn btn-outline-warning">Cancel renewal</button>
+                        <button type="submit" class="btn btn-outline-warning"><?= pm_h(pm_t('proxy_manage.cancel_renewal', 'Cancel renewal')) ?></button>
                     </form>
                     <?php if ($category === 'isp'): ?>
                         <form method="post" action="/client/proxy/manage">
                             <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                             <input type="hidden" name="action" value="uncancel">
-                            <button type="submit" class="btn btn-outline-primary">Uncancel</button>
+                            <button type="submit" class="btn btn-outline-primary"><?= pm_h(pm_t('proxy_manage.uncancel', 'Uncancel')) ?></button>
                         </form>
                     <?php endif; ?>
                 </div>
@@ -289,24 +299,24 @@ Sogerien::Page()->mainmenu();
         <?php endif; ?>
 
         <?php $proxyLists = isset($service['proxy_lists']) && is_array($service['proxy_lists']) ? $service['proxy_lists'] : []; ?>
-        <section class="card pm-service-card" aria-label="Generated proxy lists">
-            <div class="card-header">Generated proxy lists</div>
+        <section class="card pm-service-card" aria-label="<?= pm_h(pm_t('proxy_manage.generated_proxy_lists', 'Generated proxy lists')) ?>">
+            <div class="card-header"><?= pm_h(pm_t('proxy_manage.generated_proxy_lists', 'Generated proxy lists')) ?></div>
             <div class="card-body">
                 <?php if ($proxyLists === []): ?>
-                    <p class="text-muted mb-0">No proxy lists generated yet.</p>
+                    <p class="text-muted mb-0"><?= pm_h(pm_t('proxy_manage.no_proxy_lists', 'No proxy lists generated yet.')) ?></p>
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-striped align-middle mb-0 pm-list-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Country</th>
-                                    <th>Protocol</th>
-                                    <th>Status</th>
-                                    <th>Used</th>
-                                    <th>Created</th>
-                                    <th>Details</th>
-                                    <th>Actions</th>
+                                    <th><?= pm_h(pm_t('common.name', 'Name')) ?></th>
+                                    <th><?= pm_h(pm_t('common.country', 'Country')) ?></th>
+                                    <th><?= pm_h(pm_t('proxy_manage.protocol', 'Protocol')) ?></th>
+                                    <th><?= pm_h(pm_t('common.status', 'Status')) ?></th>
+                                    <th><?= pm_h(pm_t('proxy_manage.used', 'Used')) ?></th>
+                                    <th><?= pm_h(pm_t('client.column.created', 'Created')) ?></th>
+                                    <th><?= pm_h(pm_t('proxy_manage.details', 'Details')) ?></th>
+                                    <th><?= pm_h(pm_t('common.actions', 'Actions')) ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -333,7 +343,7 @@ Sogerien::Page()->mainmenu();
                                     <td>
                                         <button class="btn btn-sm btn-outline-primary pm-proxy-details-btn" type="button"
                                             data-list-id="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>"
-                                            data-list-name="<?= pm_h($list['name'] ?? '') ?>">Details</button>
+                                            data-list-name="<?= pm_h($list['name'] ?? '') ?>"><?= pm_h(pm_t('proxy_manage.details', 'Details')) ?></button>
                                     </td>
                                     <td>
                                         <?php if (pm_s($list['status'] ?? 'active') === 'active'): ?>
@@ -342,7 +352,7 @@ Sogerien::Page()->mainmenu();
                                                 <input type="hidden" name="action" value="disable_proxy_list">
                                                 <input type="hidden" name="list_id" value="<?= pm_h($list['vendor_list_id'] ?? $list['id'] ?? '') ?>">
                                                 <input type="hidden" name="list_name" value="<?= pm_h($list['name'] ?? '') ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Disable</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"><?= pm_h(pm_t('proxy_manage.disable', 'Disable')) ?></button>
                                             </form>
                                         <?php else: ?>
                                             -
@@ -358,73 +368,73 @@ Sogerien::Page()->mainmenu();
         </section>
 
         <div class="card pm-service-card">
-            <div class="card-header">Generate proxy list</div>
+            <div class="card-header"><?= pm_h(pm_t('proxy_manage.generate_proxy_list', 'Generate proxy list')) ?></div>
             <div class="card-body">
                 <?php if ($isStaticIpService): ?>
-                    <div class="alert alert-secondary mb-0"><?= $category === 'dc' ? 'Dedicated DC' : 'ISP' ?> services are managed as country + IP count. Traffic access lists are not used for this product.</div>
+                    <div class="alert alert-secondary mb-0"><?= pm_h(str_replace('{type}', $category === 'dc' ? 'Dedicated DC' : 'ISP', pm_t('proxy_manage.static_service_notice', '{type} services are managed as country + IP count. Traffic access lists are not used for this product.'))) ?></div>
                 <?php elseif (pm_s($service['vendor_package_key'] ?? '') === ''): ?>
-                    <div class="alert alert-warning mb-0">Provider package is not active yet. Generation will be available after provider activation.</div>
+                    <div class="alert alert-warning mb-0"><?= pm_h(pm_t('proxy_manage.provider_not_active', 'Provider package is not active yet. Generation will be available after provider activation.')) ?></div>
                 <?php else: ?>
                     <form method="post" action="/client/proxy/manage" class="row g-3 align-items-end">
                         <input type="hidden" name="service_id" value="<?= pm_h($serviceId) ?>">
                         <input type="hidden" name="action" value="generate_proxy_list">
                         <div class="col-md-3">
-                            <label class="form-label" for="pmAuthMode">Authorization</label>
+                            <label class="form-label" for="pmAuthMode"><?= pm_h(pm_t('proxy_manage.authorization', 'Authorization')) ?></label>
                             <select class="form-select" id="pmAuthMode" name="auth_mode">
-                                <option value="login_password">Login / password</option>
-                                <option value="ip_whitelist">IP whitelist</option>
+                                <option value="login_password"><?= pm_h(pm_t('proxy_manage.login_password', 'Login / password')) ?></option>
+                                <option value="ip_whitelist"><?= pm_h(pm_t('proxy_manage.ip_whitelist', 'IP whitelist')) ?></option>
                             </select>
                         </div>
                         <div class="col-md-6 pm-auth-ip-field d-none">
-                            <label class="form-label" for="pmListNetwork">IP whitelist</label>
+                            <label class="form-label" for="pmListNetwork"><?= pm_h(pm_t('proxy_manage.ip_whitelist', 'IP whitelist')) ?></label>
                             <input class="form-control" id="pmListNetwork" name="network" placeholder="1.2.3.4, 5.6.7.0/24">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="pmListCountries">Countries</label>
+                            <label class="form-label" for="pmListCountries"><?= pm_h(pm_t('proxy.countries', 'Countries')) ?></label>
                             <select class="form-select" id="pmListCountries" name="countries">
                                 <?php foreach (($geoOptions['countries'] ?? []) as $code => $label): ?>
                                     <?php $selected = strtoupper(pm_s($service['country'] ?? '')) === strtoupper((string)$code) ? ' selected' : ''; ?>
                                     <option value="<?= pm_h($code) ?>"<?= $selected ?>><?= pm_h($code . ' - ' . $label) ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <div class="form-text">Leave empty for World Mix.</div>
+                            <div class="form-text"><?= pm_h(pm_t('proxy_manage.world_mix_hint', 'Leave empty for World Mix.')) ?></div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="pmListRegion">Region</label>
+                            <label class="form-label" for="pmListRegion"><?= pm_h(pm_t('proxy_manage.region', 'Region')) ?></label>
                             <select class="form-select" id="pmListRegion" name="region" disabled>
-                                <option value="">All regions</option>
+                                <option value=""><?= pm_h(pm_t('proxy_manage.all_regions', 'All regions')) ?></option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="pmListCity">City</label>
+                            <label class="form-label" for="pmListCity"><?= pm_h(pm_t('proxy_manage.city', 'City')) ?></label>
                             <select class="form-select" id="pmListCity" name="city" disabled>
-                                <option value="">All cities</option>
+                                <option value=""><?= pm_h(pm_t('proxy_manage.all_cities', 'All cities')) ?></option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label" for="pmRotation">Rotation</label>
+                            <label class="form-label" for="pmRotation"><?= pm_h(pm_t('proxy_manage.rotation', 'Rotation')) ?></label>
                             <select class="form-select" id="pmRotation" name="rotation_period">
-                                <option value="0">Each request</option>
-                                <option value="-1">Sticky</option>
-                                <option value="300">5 minutes</option>
-                                <option value="600">10 minutes</option>
-                                <option value="900">15 minutes</option>
-                                <option value="1200">20 minutes</option>
-                                <option value="1800">30 minutes</option>
-                                <option value="2400">40 minutes</option>
-                                <option value="3000">50 minutes</option>
-                                <option value="3600">60 minutes</option>
+                                <option value="0"><?= pm_h(pm_t('proxy_manage.each_request', 'Each request')) ?></option>
+                                <option value="-1"><?= pm_h(pm_t('proxy_manage.sticky', 'Sticky')) ?></option>
+                                <option value="300">5 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="600">10 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="900">15 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="1200">20 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="1800">30 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="2400">40 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="3000">50 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
+                                <option value="3600">60 <?= pm_h(pm_t('proxy_manage.minutes', 'minutes')) ?></option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label" for="pmRotationMode">Failure mode</label>
+                            <label class="form-label" for="pmRotationMode"><?= pm_h(pm_t('proxy_manage.failure_mode', 'Failure mode')) ?></label>
                             <select class="form-select" id="pmRotationMode" name="rotation_mode">
-                                <option value="0">Instant</option>
-                                <option value="1">5 seconds</option>
+                                <option value="0"><?= pm_h(pm_t('proxy_manage.instant', 'Instant')) ?></option>
+                                <option value="1">5 <?= pm_h(pm_t('proxy_manage.seconds', 'seconds')) ?></option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="pmListFormat">Proxy format</label>
+                            <label class="form-label" for="pmListFormat"><?= pm_h(pm_t('proxy_manage.proxy_format', 'Proxy format')) ?></label>
                             <select class="form-select" id="pmListFormat" name="format">
                                 <option value="3" selected>http://login:password@host:port</option>
                                 <option value="1">login:password@host:port</option>
@@ -436,7 +446,7 @@ Sogerien::Page()->mainmenu();
                             </select>
                         </div>
                         <div class="col-md-3 d-grid">
-                            <button type="submit" class="btn btn-primary">Generate proxy list</button>
+                            <button type="submit" class="btn btn-primary"><?= pm_h(pm_t('proxy_manage.generate_proxy_list', 'Generate proxy list')) ?></button>
                         </div>
                     </form>
                 <?php endif; ?>
@@ -444,32 +454,32 @@ Sogerien::Page()->mainmenu();
         </div>
 
         <?php if ($isTrafficService): ?>
-            <section class="card pm-service-card pm-chart-card" aria-label="Internet speed usage charts">
-                <div class="card-header">Infographic diagrams - internet speed usage</div>
+            <section class="card pm-service-card pm-chart-card" aria-label="<?= pm_h(pm_t('proxy_manage.speed_charts', 'Internet speed usage charts')) ?>">
+                <div class="card-header"><?= pm_h(pm_t('proxy_manage.speed_chart_title', 'Infographic diagrams - internet speed usage')) ?></div>
                 <div class="card-body">
                     <div class="pm-chart-head">
-                        <span class="text-muted small">Average download speed from provider traffic buckets</span>
+                        <span class="text-muted small"><?= pm_h(pm_t('proxy_manage.speed_chart_subtitle', 'Average download speed from provider traffic buckets')) ?></span>
                         <div class="pm-chart-tabs" data-chart-tabs="speed">
-                            <button class="is-active" type="button" data-period="day">Daily</button>
-                            <button type="button" data-period="week">Weekly</button>
-                            <button type="button" data-period="month">Monthly</button>
+                            <button class="is-active" type="button" data-period="day"><?= pm_h(pm_t('proxy_manage.daily', 'Daily')) ?></button>
+                            <button type="button" data-period="week"><?= pm_h(pm_t('proxy_manage.weekly', 'Weekly')) ?></button>
+                            <button type="button" data-period="month"><?= pm_h(pm_t('proxy_manage.monthly', 'Monthly')) ?></button>
                         </div>
                     </div>
-                    <div class="pm-chart" id="pmSpeedChart" aria-label="Internet speed usage chart"></div>
+                    <div class="pm-chart" id="pmSpeedChart" aria-label="<?= pm_h(pm_t('proxy_manage.speed_chart', 'Internet speed usage chart')) ?>"></div>
                 </div>
             </section>
-            <section class="card pm-service-card pm-chart-card" aria-label="Traffic usage charts">
-                <div class="card-header">Infographic diagrams - traffic usage</div>
+            <section class="card pm-service-card pm-chart-card" aria-label="<?= pm_h(pm_t('proxy_manage.traffic_charts', 'Traffic usage charts')) ?>">
+                <div class="card-header"><?= pm_h(pm_t('proxy_manage.traffic_chart_title', 'Infographic diagrams - traffic usage')) ?></div>
                 <div class="card-body">
                     <div class="pm-chart-head">
-                        <span class="text-muted small">Used traffic balance by selected period</span>
+                        <span class="text-muted small"><?= pm_h(pm_t('proxy_manage.traffic_chart_subtitle', 'Used traffic balance by selected period')) ?></span>
                         <div class="pm-chart-tabs" data-chart-tabs="traffic">
-                            <button class="is-active" type="button" data-period="day">Daily</button>
-                            <button type="button" data-period="week">Weekly</button>
-                            <button type="button" data-period="month">Monthly</button>
+                            <button class="is-active" type="button" data-period="day"><?= pm_h(pm_t('proxy_manage.daily', 'Daily')) ?></button>
+                            <button type="button" data-period="week"><?= pm_h(pm_t('proxy_manage.weekly', 'Weekly')) ?></button>
+                            <button type="button" data-period="month"><?= pm_h(pm_t('proxy_manage.monthly', 'Monthly')) ?></button>
                         </div>
                     </div>
-                    <div class="pm-chart" id="pmTrafficChart" aria-label="Traffic usage chart"></div>
+                    <div class="pm-chart" id="pmTrafficChart" aria-label="<?= pm_h(pm_t('proxy_manage.traffic_chart', 'Traffic usage chart')) ?>"></div>
                 </div>
             </section>
         <?php endif; ?>
@@ -479,18 +489,22 @@ Sogerien::Page()->mainmenu();
     <div id="pmDetailsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pmDetailsTitle" data-service-id="<?= pm_h($serviceId) ?>">
         <div class="panel" tabindex="-1">
             <div class="head">
-                <strong id="pmDetailsTitle">Details</strong>
-                <input id="pmDetailsSearch" type="text" placeholder="Start typing..." aria-label="Search">
-                <button class="close" id="pmDetailsClose" type="button" aria-label="Close">Esc</button>
+                <strong id="pmDetailsTitle"><?= pm_h(pm_t('proxy_manage.details', 'Details')) ?></strong>
+                <input id="pmDetailsSearch" type="text" placeholder="<?= pm_h(pm_t('forms.start_typing', 'Start typing...')) ?>" aria-label="<?= pm_h(pm_t('common.search', 'Search')) ?>">
+                <button class="close" id="pmDetailsClose" type="button" aria-label="<?= pm_h(pm_t('common.close', 'Close')) ?>">Esc</button>
             </div>
             <div class="list" id="pmDetailsList" style="padding:10px 12px"></div>
-            <div class="hint" style="padding:8px 12px">Text is selected manually or copied by Copy. Esc - close</div>
+            <div class="hint" style="padding:8px 12px"><?= pm_h(pm_t('proxy_manage.copy_hint', 'Text is selected manually or copied by Copy. Esc - close')) ?></div>
         </div>
     </div>
 </main>
 <?php if (isset($isTrafficService) && $isTrafficService): ?>
 <script>
 (function(){
+    var pmI18n = <?= json_encode([
+        'downloadSpeed' => pm_t('proxy_manage.download_speed', 'Download speed'),
+        'trafficUsed' => pm_t('proxy_manage.traffic_used', 'Traffic used'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     var raw = <?= $trafficDetailsJson !== false ? $trafficDetailsJson : '{}' ?>;
     var speedEl = document.getElementById('pmSpeedChart');
     var trafficEl = document.getElementById('pmTrafficChart');
@@ -534,8 +548,8 @@ Sogerien::Page()->mainmenu();
     }
     function render(period){
         var data = aggregate(period);
-        speedChart.setOption(options('Download speed', data.labels, data.speed, '#397eee', 'Mbps'), true);
-        trafficChart.setOption(options('Traffic used', data.labels, data.usage, '#6b52e5', 'GB'), true);
+        speedChart.setOption(options(pmI18n.downloadSpeed, data.labels, data.speed, '#397eee', 'Mbps'), true);
+        trafficChart.setOption(options(pmI18n.trafficUsed, data.labels, data.usage, '#6b52e5', 'GB'), true);
     }
     document.querySelectorAll('.pm-chart-tabs button').forEach(function(button){
         button.addEventListener('click', function(){
@@ -560,6 +574,23 @@ Sogerien::Page()->mainmenu();
 <?php endif; ?>
 <script>
 (function(){
+    var pmI18n = <?= json_encode([
+        'allCities' => pm_t('proxy_manage.all_cities', 'All cities'),
+        'allRegions' => pm_t('proxy_manage.all_regions', 'All regions'),
+        'copied' => pm_t('proxy_manage.copied', 'Copied'),
+        'copy' => pm_t('proxy_manage.copy', 'Copy'),
+        'details' => pm_t('proxy_manage.details', 'Details'),
+        'error' => pm_t('proxy_manage.error', 'Error'),
+        'http' => 'HTTP',
+        'json' => 'JSON',
+        'loading' => pm_t('common.loading', 'Loading...'),
+        'networkError' => pm_t('common.network_error', 'Network error'),
+        'noProxiesResponse' => pm_t('proxy_manage.no_proxies_response', 'No proxies in response.'),
+        'nothingFound' => pm_t('common.no_results', 'Nothing found'),
+        'proxies' => pm_t('proxy_manage.proxies_count_suffix', 'proxies'),
+        'proxyOutputFormat' => pm_t('proxy_manage.proxy_output_format', 'Proxy output format'),
+        'text' => pm_t('proxy_manage.text', 'Text'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     document.querySelectorAll('[data-pm-local-time]').forEach(function(element){
         var rawTime = element.getAttribute('data-pm-local-time') || '';
         var date = new Date(rawTime);
@@ -627,18 +658,18 @@ Sogerien::Page()->mainmenu();
 
     if (countryInput && regionInput && cityInput) {
         countryInput.addEventListener('change', function(){
-            setGeoOptions(cityInput, [], 'All cities');
-            loadGeo('geo_regions', countryInput.value, '', regionInput, 'All regions');
+            setGeoOptions(cityInput, [], pmI18n.allCities);
+            loadGeo('geo_regions', countryInput.value, '', regionInput, pmI18n.allRegions);
         });
         regionInput.addEventListener('change', function(){
             if (!regionInput.value) {
-                setGeoOptions(cityInput, [], 'All cities');
+                setGeoOptions(cityInput, [], pmI18n.allCities);
                 return;
             }
-            loadGeo('geo_cities', countryInput.value, regionInput.value, cityInput, 'All cities');
+            loadGeo('geo_cities', countryInput.value, regionInput.value, cityInput, pmI18n.allCities);
         });
         if (countryInput.value) {
-            loadGeo('geo_regions', countryInput.value, '', regionInput, 'All regions');
+            loadGeo('geo_regions', countryInput.value, '', regionInput, pmI18n.allRegions);
         }
     }
 
@@ -660,7 +691,7 @@ Sogerien::Page()->mainmenu();
     }
 
     function openModal(name){
-        titleEl.textContent = name ? ('Details - ' + name) : 'Details';
+        titleEl.textContent = name ? (pmI18n.details + ' - ' + name) : pmI18n.details;
         searchEl.value = '';
         modal.setAttribute('aria-hidden', 'false');
         document.documentElement.style.overflow = 'hidden';
@@ -679,7 +710,7 @@ Sogerien::Page()->mainmenu();
         var visible = q ? rows.filter(function(r){ return String(r).toLowerCase().indexOf(q) !== -1; }) : rows;
 
         if (!visible.length){
-            setMessage('<div class="text-muted small p-2">Nothing found.</div>');
+            setMessage('<div class="text-muted small p-2">' + esc(pmI18n.nothingFound) + '</div>');
             return;
         }
         var textValue = visible.join('\n');
@@ -687,14 +718,14 @@ Sogerien::Page()->mainmenu();
         var value = activeTab === 'json' ? jsonValue : textValue;
         listEl.innerHTML =
             '<div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">'
-          + '<div class="btn-group btn-group-sm" role="tablist" aria-label="Proxy output format">'
-          + '<button class="btn ' + (activeTab === 'text' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="text">Text</button>'
-          + '<button class="btn ' + (activeTab === 'json' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="json">JSON</button>'
+          + '<div class="btn-group btn-group-sm" role="tablist" aria-label="' + esc(pmI18n.proxyOutputFormat) + '">'
+          + '<button class="btn ' + (activeTab === 'text' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="text">' + esc(pmI18n.text) + '</button>'
+          + '<button class="btn ' + (activeTab === 'json' ? 'btn-primary' : 'btn-outline-primary') + ' pm-details-tab" type="button" data-tab="json">' + esc(pmI18n.json) + '</button>'
           + '</div>'
-          + '<button class="btn btn-sm btn-outline-primary pm-copy-btn" type="button">Copy</button>'
+          + '<button class="btn btn-sm btn-outline-primary pm-copy-btn" type="button">' + esc(pmI18n.copy) + '</button>'
           + '</div>'
           + '<textarea class="form-control pm-details-textarea" spellcheck="false" rows="18" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.45;white-space:pre;overflow:auto;">' + esc(value) + '</textarea>'
-          + '<div class="text-muted small mt-2">' + visible.length + ' proxies</div>';
+          + '<div class="text-muted small mt-2">' + visible.length + ' ' + esc(pmI18n.proxies) + '</div>';
     }
 
     function proxyLineToObject(line){
@@ -797,7 +828,7 @@ Sogerien::Page()->mainmenu();
         var listName = btn.getAttribute('data-list-name') || '';
 
         openModal(listName);
-        setMessage('<div class="text-muted small p-2">Loading...</div>');
+        setMessage('<div class="text-muted small p-2">' + esc(pmI18n.loading) + '</div>');
         allRows = [];
         activeTab = 'text';
 
@@ -819,25 +850,25 @@ Sogerien::Page()->mainmenu();
             });
         }).then(function(res){
             if (!res.json || res.json.ok === false){
-                var err = (res.json && res.json.error) ? res.json.error : ('HTTP ' + res.status);
+                var err = (res.json && res.json.error) ? res.json.error : (pmI18n.http + ' ' + res.status);
                 setMessage('<div class="alert alert-danger small mb-0">' + esc(err) + '</div><pre class="small mt-2" style="max-height:240px;overflow:auto;background:transparent">' + esc(res.text.slice(0, 4000)) + '</pre>');
                 return;
             }
             allRows = extractRows(res.json);
             if (!allRows.length){
-                setMessage('<div class="alert alert-warning small mb-0">No proxies in response.</div><pre class="small mt-2" style="max-height:320px;overflow:auto;background:transparent">' + esc(JSON.stringify(res.json.response, null, 2)) + '</pre>');
+                setMessage('<div class="alert alert-warning small mb-0">' + esc(pmI18n.noProxiesResponse) + '</div><pre class="small mt-2" style="max-height:320px;overflow:auto;background:transparent">' + esc(JSON.stringify(res.json.response, null, 2)) + '</pre>');
                 return;
             }
             renderRows(allRows, '');
         }).catch(function(err){
-            setMessage('<div class="alert alert-danger small mb-0">Network error: ' + esc(String(err && err.message || err)) + '</div>');
+            setMessage('<div class="alert alert-danger small mb-0">' + esc(pmI18n.networkError) + ': ' + esc(String(err && err.message || err)) + '</div>');
         });
     }
 
     function flash(btn, ok){
         var prev = btn.getAttribute('data-prev') || btn.textContent;
         btn.setAttribute('data-prev', prev);
-        btn.textContent = ok ? 'Copied' : 'Error';
+        btn.textContent = ok ? pmI18n.copied : pmI18n.error;
         window.clearTimeout(btn.__t);
         btn.__t = window.setTimeout(function(){ btn.textContent = prev; }, 1200);
     }

@@ -487,8 +487,8 @@ spl_autoload_register(static function (string $class): void {
 // */
 //Sogerien::DbController()->DbConfig->DB_HOST    = 'localhost';
 //Sogerien::DbController()->DbConfig->DB_PORT    = '5432';
-//Sogerien::DbController()->DbConfig->DB_NAME    = 'db_proxymint_com';
-//Sogerien::DbController()->DbConfig->DB_USER    = 'db_proxymin_usr';
+//Sogerien::DbController()->DbConfig->DB_NAME    = 'sogerien';
+//Sogerien::DbController()->DbConfig->DB_USER    = 'sogerien';
 //Sogerien::DbController()->DbConfig->DB_PASS    = 'your_db_password_here';
 //Sogerien::DbController()->DbConfig->DB_CHARSET = 'utf8mb4';
 //

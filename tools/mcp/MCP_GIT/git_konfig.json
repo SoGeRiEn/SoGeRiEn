@@ -1,0 +1,20 @@
+{
+  "format": "local_tools_git_multi_v1",
+  "profiles": {
+    "default": {
+      "local_dir": "",
+      "remote_url": "",
+      "remote_name": "origin",
+      "branch": "main",
+      "commit_message_template": "auto-update: {ts}",
+      "commit_author_name": "",
+      "commit_author_email": "",
+      "ssh_key_path": "",
+      "ssh_command": "",
+      "excluded_dirs_text": ".git\nnode_modules\nvendor\nruntime\ncache",
+      "excluded_exts_text": ".tmp, .log, .bak, .swp",
+      "debounce_seconds": 5
+    }
+  },
+  "default_profile": "default"
+}

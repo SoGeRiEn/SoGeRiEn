@@ -7,6 +7,18 @@ if (!headers_sent()) {
 
 const DB_ALIAS = 'front';
 
+if (!isset($_GET['lang']) && !isset($_POST['lang']) && !isset($_COOKIE['sogerien_lang']) && !headers_sent()) {
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? '/login');
+    $parts = parse_url($uri);
+    $path = (string)($parts['path'] ?? '/login');
+    $query = [];
+    parse_str((string)($parts['query'] ?? ''), $query);
+    $query['lang'] = 'en';
+    header('Location: ' . $path . '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986), true, 302);
+    Sogerien::markDone();
+    Sogerien::exit();
+}
+
 $lang = Sogerien::Lang();
 $t = static fn(string $key): string => $lang->get($key);
 
@@ -508,6 +520,8 @@ echo '<style>
         max-width: 100% !important;
     }
     .pm-admin-shell .pm-mobile-toggle { display: none !important; }
+    .pm-auth-card form + .text-center.text-muted.small.my-3,
+    .pm-auth-card form + .text-center.text-muted.small.my-3 + a.btn-outline-dark { display: none !important; }
 </style>';
 
 $currentUrlEsc = htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -519,6 +533,37 @@ $formInfoEsc = htmlspecialchars($formInfo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
 $logoutUrlEsc = htmlspecialchars($baseLoginUrl . '?logout=1', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $nextPathEsc = htmlspecialchars($nextPath, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $brandLogoHtml = Sogerien::Page()->brand_logo_html('pm-auth-brand-mark');
+$currentLang = $lang->get_current_lang();
+$currentLangEsc = htmlspecialchars($currentLang, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$buildAuthUrl = static function (string $mode, string $langCode) use ($currentUrl, $nextPath, $resetTokenFromUrl): string {
+    $params = [
+        'mode' => $mode,
+        'lang' => $langCode,
+        'next' => $nextPath,
+    ];
+    if ($mode === 'reset' && $resetTokenFromUrl !== '') {
+        $params['token'] = $resetTokenFromUrl;
+    }
+
+    return $currentUrl . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+};
+$languageLabel = htmlspecialchars($t('menu.language'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$languageOptionsHtml = '';
+foreach ($lang->get_supported_langs() as $langCode) {
+    $langCodeEsc = htmlspecialchars($langCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $langNameEsc = htmlspecialchars($t('lang.' . $langCode), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $langUrlEsc = htmlspecialchars($buildAuthUrl($formMode, $langCode), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $selectedAttr = $langCode === $currentLang ? ' selected' : '';
+    $languageOptionsHtml .= '<option value="' . $langUrlEsc . '"' . $selectedAttr . '>' . strtoupper($langCodeEsc) . ' - ' . $langNameEsc . '</option>';
+}
+$languageSelectorHtml = <<<HTML
+<div class="mb-3">
+    <label class="form-label" for="pm-auth-lang">{$languageLabel}</label>
+    <select id="pm-auth-lang" class="form-select" onchange="if (this.value) { window.location.href = this.value; }">
+        {$languageOptionsHtml}
+    </select>
+</div>
+HTML;
 
 if ($isAuthed) {
     $alreadyLoggedIn = htmlspecialchars($t('auth.already_logged_in'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -528,6 +573,7 @@ if ($isAuthed) {
     echo <<<HTML
 <main class="pm-login-screen pm-login-screen-in-shell">
     <div class="pm-auth-card">
+        {$languageSelectorHtml}
         <div class="pm-auth-brand">
             {$brandLogoHtml}
             <div class="pm-auth-brand-copy">
@@ -562,9 +608,9 @@ $loginTabClassEsc = htmlspecialchars($loginTabClass, ENT_QUOTES | ENT_SUBSTITUTE
 $registerTabClassEsc = htmlspecialchars($registerTabClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $forgotTabClass = $formMode === 'forgot' ? 'btn btn-primary' : 'btn btn-outline-primary';
 $forgotTabClassEsc = htmlspecialchars($forgotTabClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$loginTabUrlEsc = htmlspecialchars($currentUrl . '?mode=login&next=' . rawurlencode($nextPath), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$registerTabUrlEsc = htmlspecialchars($currentUrl . '?mode=register&next=' . rawurlencode($nextPath), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$forgotTabUrlEsc = htmlspecialchars($currentUrl . '?mode=forgot&next=' . rawurlencode($nextPath), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$loginTabUrlEsc = htmlspecialchars($buildAuthUrl('login', $currentLang), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$registerTabUrlEsc = htmlspecialchars($buildAuthUrl('register', $currentLang), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$forgotTabUrlEsc = htmlspecialchars($buildAuthUrl('forgot', $currentLang), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
 $switchLogin = htmlspecialchars($t('auth.sign_in'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $switchRegister = htmlspecialchars($t('auth.register'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -591,6 +637,7 @@ if ($formMode === 'register') {
     echo <<<HTML
 <main class="pm-login-screen pm-login-screen-in-shell">
     <div class="pm-auth-card">
+        {$languageSelectorHtml}
         <div class="pm-auth-brand">
             {$brandLogoHtml}
             <div class="pm-auth-brand-copy">
@@ -609,6 +656,7 @@ if ($formMode === 'register') {
         <form method="post" action="{$currentUrlEsc}">
             <input type="hidden" name="auth_action" value="register">
             <input type="hidden" name="next" value="{$nextPathEsc}">
+            <input type="hidden" name="lang" value="{$currentLangEsc}">
             <div class="mb-3">
                 <label class="form-label">{$labelRegisterLogin}</label>
                 <input name="register_login" type="text" class="form-control" placeholder="{$placeholderRegisterLogin}" value="{$formRegisterLoginEsc}">
@@ -641,6 +689,7 @@ HTML;
     echo <<<HTML
 <main class="pm-login-screen pm-login-screen-in-shell">
     <div class="pm-auth-card">
+        {$languageSelectorHtml}
         <div class="pm-auth-brand">
             {$brandLogoHtml}
             <div class="pm-auth-brand-copy">
@@ -659,6 +708,7 @@ HTML;
         <form method="post" action="{$currentUrlEsc}">
             <input type="hidden" name="auth_action" value="forgot">
             <input type="hidden" name="next" value="{$nextPathEsc}">
+            <input type="hidden" name="lang" value="{$currentLangEsc}">
             <div class="mb-3">
                 <label class="form-label">{$labelResetLogin}</label>
                 <input name="reset_login" type="text" class="form-control" value="{$resetLoginEsc}">
@@ -681,6 +731,7 @@ HTML;
     echo <<<HTML
 <main class="pm-login-screen pm-login-screen-in-shell">
     <div class="pm-auth-card">
+        {$languageSelectorHtml}
         <div class="pm-auth-brand">
             {$brandLogoHtml}
             <div class="pm-auth-brand-copy">
@@ -694,6 +745,7 @@ HTML;
         <form method="post" action="{$currentUrlEsc}">
             <input type="hidden" name="auth_action" value="reset_password">
             <input type="hidden" name="reset_token" value="{$resetTokenEsc}">
+            <input type="hidden" name="lang" value="{$currentLangEsc}">
             <div class="mb-3">
                 <label class="form-label">{$labelNewPassword}</label>
                 <input name="new_password" type="password" class="form-control">
@@ -709,10 +761,14 @@ HTML;
     $labelPassword = htmlspecialchars($t('common.password'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $placeholderPassword = htmlspecialchars($t('auth.enter_password'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $buttonSignIn = htmlspecialchars($t('auth.sign_in'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $labelOr = htmlspecialchars($t('auth.or'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $buttonGoogle = htmlspecialchars($t('auth.google_sign_in'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $googleUrlEsc = htmlspecialchars('/auth/google?' . http_build_query(['next' => $nextPath], '', '&', PHP_QUERY_RFC3986), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
     echo <<<HTML
 <main class="pm-login-screen pm-login-screen-in-shell">
     <div class="pm-auth-card">
+        {$languageSelectorHtml}
         <div class="pm-auth-brand">
             {$brandLogoHtml}
             <div class="pm-auth-brand-copy">
@@ -731,6 +787,7 @@ HTML;
         <form method="post" action="{$currentUrlEsc}">
             <input type="hidden" name="auth_action" value="login">
             <input type="hidden" name="next" value="{$nextPathEsc}">
+            <input type="hidden" name="lang" value="{$currentLangEsc}">
             <div class="mb-3">
                 <label class="form-label">{$labelLogin}</label>
                 <input name="login" type="text" class="form-control" placeholder="{$placeholderLogin}" value="{$formLoginEsc}">
@@ -746,6 +803,11 @@ HTML;
             <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.345 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.655 3.58 9 3.58z"/></svg>
             Авторизация через Google
         </a>
+        <div class="text-center text-muted small my-3">{$labelOr}</div>
+        <a class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2" href="{$googleUrlEsc}">
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.345 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.655 3.58 9 3.58z"/></svg>
+            {$buttonGoogle}
+        </a>
     </div>
 </main>
 HTML;
@@ -753,4 +815,3 @@ HTML;
 
 Sogerien::Page()->footer();
 Sogerien::markDone();
-

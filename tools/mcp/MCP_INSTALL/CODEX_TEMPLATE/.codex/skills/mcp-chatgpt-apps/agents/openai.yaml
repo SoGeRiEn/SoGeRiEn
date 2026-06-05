@@ -1,0 +1,4 @@
+interface:
+  display_name: "MCP ChatGPT Apps"
+  short_description: "Build Apps SDK apps with MCP and widget UI"
+  default_prompt: "Use $mcp-chatgpt-apps to build a ChatGPT Apps SDK app with MCP tools and widget UI."

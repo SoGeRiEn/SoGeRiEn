@@ -1,0 +1,127 @@
+﻿personality = "pragmatic"
+model = "gpt-5.3-codex"
+model_reasoning_effort = "low"
+sandbox_mode = "danger-full-access"
+
+[windows]
+sandbox = "elevated"
+
+[features]
+multi_agent = true
+rmcp_client = true
+
+[[skills.config]]
+path = 'C:\Users\SoGeRiEn\.codex\skills\sogerien-genius-core\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = 'C:\Users\SoGeRiEn\.codex\skills\mcp-security-threat-model\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = 'C:\Users\SoGeRiEn\.codex\skills\mcp-chatgpt-apps\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = 'C:\Users\SoGeRiEn\.codex\skills\MCP\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = 'C:\Users\SoGeRiEn\.codex\skills\winui-app\SKILL.md'
+enabled = false
+
+[projects.'C:\MCP_V2']
+trust_level = "trusted"
+
+[projects.'D:\OneDrive\programmirovanie\proxymint.com']
+trust_level = "trusted"
+
+[projects.'C:\MCP_V3\MCP_FTP']
+trust_level = "trusted"
+
+[projects.'C:\MCP_V3']
+trust_level = "trusted"
+
+[projects.'D:\OneDrive\programmirovanie\api.grace.kiev.ua']
+trust_level = "trusted"
+
+[mcp_servers.mcp_ftp]
+args = ['C:\MCP_V3\MCP_FTP\MCP_FTP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_FTP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_ftp.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_http]
+args = ['C:\MCP_V3\MCP_HTTP\MCP_HTTP.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_HTTP\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_http.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_mysql]
+args = ['C:\MCP_V3\MCP_MYSQL\MCP_MYSQL.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_MYSQL\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_mysql.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_postgres]
+args = ['C:\MCP_V3\MCP_POSTGRES\MCP_POSTGRES.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_POSTGRES\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_postgres.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_pyppeteer]
+args = ['C:\MCP_V3\MCP_PYPPETEER\MCP_PYPPETEER.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_PYPPETEER\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_pyppeteer.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_screenshot]
+args = ['C:\MCP_V3\MCP_SCREENSHOT\MCP_SCREENSHOT.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_SCREENSHOT\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_screenshot.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_ssh]
+args = ['C:\MCP_V3\MCP_SSH\MCP_SSH.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_SSH\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_ssh.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_windows]
+args = ['C:\MCP_V3\MCP_WINDOWS\MCP_WINDOWS.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_WINDOWS\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_windows.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"
+
+[mcp_servers.mcp_python]
+args = ['C:\MCP_V3\MCP_PYTHON\MCP_PYTHON.py', "--transport", "stdio"]
+command = 'C:\MCP_V3\MCP_PYTHON\.venv\Scripts\python.exe'
+enabled = true
+
+[mcp_servers.mcp_python.env]
+PYTHONIOENCODING = "utf-8"
+PYTHONUTF8 = "1"

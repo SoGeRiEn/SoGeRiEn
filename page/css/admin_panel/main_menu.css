@@ -175,6 +175,7 @@ body.pm-cosmic-fallback .pm-admin-bg::before {
     width: var(--pm-nav-w);
     flex: 0 0 var(--pm-nav-w);
     min-height: 100vh;
+    max-height: 100vh;
     padding: 20px 18px;
     border-right: 1px solid var(--sidebar-line, var(--line));
     background: var(--sidebar-tint);
@@ -184,12 +185,15 @@ body.pm-cosmic-fallback .pm-admin-bg::before {
     color: var(--sidebar-text, var(--text));
     position: sticky;
     top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .pm-sidebar-inner {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 40px);
+    min-height: calc(100vh - 40px);
 }
 
 .pm-brand {
@@ -686,6 +690,15 @@ body.pm-theme-midnight .pm-topbar .pm-pill-btn[data-pm-theme="midnight"] {
 .pm-client-account-menu {
     width: 260px;
     padding: 8px;
+}
+
+.pm-client-account-email {
+    padding: 8px 10px 7px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
 }
 
 .pm-client-mini-menu {

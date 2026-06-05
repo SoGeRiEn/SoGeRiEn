@@ -272,6 +272,7 @@ final class Lang
             if ($requested_lang !== $cookie_lang) {
                 $this->write_lang_cookie($requested_lang);
             }
+            $this->persist_user_lang($requested_lang);
             return $requested_lang;
         }
 
@@ -313,6 +314,40 @@ final class Lang
         }
 
         setcookie(self::COOKIE_NAME, $lang, $expires, '/; samesite=Lax', '', $secure, false);
+    }
+
+    private function persist_user_lang(string $lang): void
+    {
+        $lang = $this->normalize_lang($lang);
+        if ($lang === '') {
+            return;
+        }
+
+        try {
+            $users = Sogerien::Users();
+            $db_alias = trim((string)$users->db_alias);
+            if ($db_alias === '') {
+                $db_alias = trim((string)Sogerien::AccessCheck()->db_alias);
+            }
+            if ($db_alias === '') {
+                return;
+            }
+
+            $users->init_db_alias($db_alias);
+            if (!$users->load_identity_from_token() || (int)$users->user_id <= 0) {
+                return;
+            }
+
+            $settings = is_array($users->user_data['settings'] ?? null) ? $users->user_data['settings'] : [];
+            if ((string)($settings['lang'] ?? '') === $lang) {
+                return;
+            }
+
+            $settings['lang'] = $lang;
+            $users->update_user((int)$users->user_id, ['settings' => $settings]);
+        } catch (Throwable) {
+            return;
+        }
     }
 
     private function detect_browser_lang(string $accept_language): string

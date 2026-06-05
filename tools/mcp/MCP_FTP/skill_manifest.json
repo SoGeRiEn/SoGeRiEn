@@ -1,0 +1,8 @@
+﻿{
+  "skill": "MCP_FTP",
+  "entry": "MCP_FTP.py",
+  "process_name": "MCP_ftp",
+  "version": 6,
+  "type": "mcp_server",
+  "transport": "stdio"
+}

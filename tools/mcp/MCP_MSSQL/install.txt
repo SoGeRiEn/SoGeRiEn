@@ -1,0 +1,20 @@
+﻿NAME MCP_MSSQL
+Команда на запуск
+C:\MCP_V3\MCP_MSSQL\.venv\Scripts\python.exe
+Аргументы
+C:\MCP_V3\MCP_MSSQL\MCP_MSSQL.py
+
+Переменные окружения
+PYTHONUTF8=1
+PYTHONIOENCODING=utf-8
+
+Рабочая директория
+C:\MCP_V3\MCP_MSSQL
+
+Codex config.toml
+[mcp_servers.mcp_mssql]
+command = 'C:\MCP_V3\MCP_MSSQL\.venv\Scripts\python.exe'
+args = ['C:\MCP_V3\MCP_MSSQL\MCP_MSSQL.py']
+cwd = 'C:\MCP_V3\MCP_MSSQL'
+startup_timeout_sec = 20
+tool_timeout_sec = 120

@@ -69,16 +69,16 @@ Sogerien::Page()->mainmenu();
 ?>
 <main class="container my-4 sog-ui pm-scraper-pricing-page">
     <style>
-        .pm-scraper-pricing-page{--pm-border:rgba(148,163,184,.32);--pm-muted:rgb(100,116,139);--pm-ink:rgb(16,35,63);--pm-accent:rgb(15,123,143)}
+        .pm-scraper-pricing-page{--pm-border:rgba(148,163,184,.32);--pm-muted:rgb(203,213,225);--pm-ink:rgb(241,245,249);--pm-accent:rgb(56,189,248);--pm-panel:rgba(15,23,42,.42);--pm-panel-strong:rgba(15,23,42,.62)}
         .pm-scraper-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
         .pm-scraper-head h1{font-size:32px;line-height:1.1;margin:0 0 8px;color:rgb(224,242,254);letter-spacing:0}
         .pm-scraper-head p{margin:0;color:rgb(203,213,225);max-width:760px}
-        .pm-scraper-note{border:1px solid var(--pm-border);border-radius:8px;padding:14px;background:rgb(255,255,255);color:var(--pm-ink);max-width:320px}
-        .pm-section{border:1px solid var(--pm-border);border-radius:8px;background:rgb(255,255,255);padding:16px;margin-bottom:16px;color:var(--pm-ink)}
+        .pm-scraper-note{border:1px solid var(--pm-border);border-radius:8px;padding:14px;background:var(--pm-panel);color:var(--pm-ink);max-width:320px}
+        .pm-section{border:1px solid var(--pm-border);border-radius:8px;padding:16px;margin-bottom:16px;color:var(--pm-ink)}
         .pm-section h2{font-size:20px;margin:0 0 12px;color:var(--pm-ink)}
         .pm-plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-        .pm-plan-card{border:1px solid var(--pm-border);border-radius:8px;padding:14px;background:rgb(255,255,255);min-height:170px;display:flex;flex-direction:column;gap:8px}
-        .pm-plan-card.is-selected{border-color:var(--pm-accent);box-shadow:0 0 0 3px rgba(15,123,143,.14)}
+        .pm-plan-card{border:1px solid var(--pm-border);border-radius:8px;padding:14px;min-height:170px;display:flex;flex-direction:column;gap:8px;color:var(--pm-ink)}
+        .pm-plan-card.is-selected{border-color:var(--pm-accent);background:var(--pm-panel-strong);box-shadow:0 0 0 3px rgba(56,189,248,.18)}
         .pm-plan-card button{margin-top:auto}
         .pm-plan-card strong{color:var(--pm-ink)}
         .pm-plan-badge{font-size:12px;font-weight:800;text-transform:uppercase;color:var(--pm-accent)}
@@ -86,12 +86,12 @@ Sogerien::Page()->mainmenu();
         .pm-scraper-order .sog-ui.container-fluid{padding:0}
         .pm-scraper-order .sog-form{margin:0}
         .pm-scraper-order .row{row-gap:12px}
-        .pm-scraper-order label,.pm-scraper-order .form-label{display:block;margin-bottom:6px;color:rgb(51,65,85)!important;font-weight:700}
-        .pm-scraper-pricing-page .text-muted,.pm-scraper-pricing-page .small{color:rgb(71,85,105)!important}
+        .pm-scraper-order label,.pm-scraper-order .form-label{display:block;margin-bottom:6px;color:var(--pm-ink)!important;font-weight:700}
+        .pm-scraper-pricing-page .text-muted,.pm-scraper-pricing-page .small{color:var(--pm-muted)!important}
         .pm-scraper-pricing-page select,.pm-scraper-pricing-page input,.pm-scraper-pricing-page textarea{background:rgb(255,255,255)!important;color:rgb(15,23,42)!important;border:1px solid rgb(203,213,225)!important;border-radius:8px;min-height:42px}
         .pm-scraper-pricing-page input[type=checkbox]{min-height:auto;width:16px;height:16px;accent-color:var(--pm-accent)}
         .pm-scraper-order .sog-form button[type=submit]{background:var(--pm-accent);color:rgb(255,255,255);border:0;border-radius:8px;min-height:42px;font-weight:800;padding:9px 14px}
-        .pm-order-total{border:1px solid var(--pm-border);border-radius:8px;padding:14px;background:rgb(248,250,252)}
+        .pm-order-total{border:1px solid var(--pm-border);border-radius:8px;padding:14px;background:var(--pm-panel)}
         .pm-order-total strong{display:block;font-size:24px;color:var(--pm-ink)}
         @media(max-width:760px){.pm-scraper-head{display:block}.pm-scraper-note{margin-top:12px;max-width:none}.pm-plan-grid{grid-template-columns:1fr}.pm-scraper-head h1{font-size:28px}}
     </style>

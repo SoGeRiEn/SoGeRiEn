@@ -326,9 +326,11 @@ function ar_service_select(array $services, string $name = 'service_id', string 
     return $html . '</select>';
 }
 
-function ar_admin_action_form(string $title, string $action, string $body, string $button = 'Run'): void
+function ar_admin_action_form(string $title, string $action, string $description, string $body, string $button = 'Run'): void
 {
-    echo '<section class="pm-admin-tool"><h3>' . ar_h($title) . '</h3><form method="post" action="/admin/provider">'
+    echo '<section class="pm-admin-tool"><h3>' . ar_h($title) . '</h3>'
+        . '<p class="text-muted small mb-3">' . ar_h($description) . '</p>'
+        . '<form method="post" action="/admin/provider-tools">'
         . '<input type="hidden" name="action" value="' . ar_h($action) . '">'
         . $body
         . '<button class="btn btn-primary btn-sm" type="submit">' . ar_h($button) . '</button>'
@@ -357,6 +359,7 @@ if ($userId <= 0 || !isset($groups['admin'])) {
 
 $path = trim((string)(Sogerien::InputRequest()->url ?? ''), '/');
 $pageKey = match ($path) {
+    'admin/provider-tools' => 'provider_tools',
     'admin/orders' => 'orders',
     'admin/statistics' => 'statistics',
     'admin/services' => 'services',
@@ -430,7 +433,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         'provider_catalog' => true,
         'ip_block_check' => true,
         'ip_unblock' => true,
-        'scraper_test' => true,
         'proxy_test' => true,
         'integration_snippet' => true,
         'client_api_diagnostics' => true,
@@ -450,6 +452,7 @@ $statsDateTo = ar_date_value($_GET['date_to'] ?? '');
 
 $titleMap = [
     'provider' => ['Provider Dashboard', 'Mobile, residential, ISP and reseller available-to-sell state.'],
+    'provider_tools' => ['Provider Operations Console', 'Manual provider tools for rare support and diagnostics tasks.'],
     'orders' => ['Proxy Orders', 'Paid orders, pending fulfillment, provider failures and fulfilled orders.'],
     'statistics' => ['Статистика', 'Сводка по клиентам, статусам и купленным типам прокси.'],
     'services' => ['Client Services', 'All client mobile, residential, ISP and scraper services.'],
@@ -527,6 +530,11 @@ Sogerien::Page()->mainmenu();
             <p><?= ar_h($titleMap[$pageKey][1]) ?></p>
         </div>
         <div class="pm-admin-head-actions">
+            <?php if ($pageKey === 'provider'): ?>
+                <a class="btn btn-outline-primary" href="/admin/provider-tools">Provider operations console</a>
+            <?php elseif ($pageKey === 'provider_tools'): ?>
+                <a class="btn btn-outline-primary" href="/admin/provider">Back to provider dashboard</a>
+            <?php endif; ?>
             <a class="btn btn-outline-primary" href="/admin/statistics">Статистика</a>
             <a class="btn btn-outline-secondary" href="/admin/support/tickets">Support tickets</a>
         </div>
@@ -569,10 +577,11 @@ Sogerien::Page()->mainmenu();
         </section>
     <?php endif; ?>
 
-    <?php if ($pageKey === 'provider'): ?>
+    <?php if ($pageKey === 'provider_tools'): ?>
         <?php
         echo '<section class="pm-admin-section"><h2 class="h5 mb-3">Provider operations console</h2><div class="pm-admin-tools">';
         ar_admin_action_form('Issue traffic package', 'create_traffic_package',
+            'Manual issue of mobile/residential traffic to a client. Use only when checkout/order automation did not create the provider package or support sells traffic outside normal checkout.',
             '<div><label>Client user id</label><input class="form-control" name="client_user_id" type="number" min="1"></div>'
             . '<div><label>Attach service</label>' . ar_service_select($services) . '</div>'
             . '<div><label>Type</label><select class="form-select" name="category"><option value="mobile">mobile</option><option value="residential">residential</option><option value="residential_ipv6">residential_ipv6</option></select></div>'
@@ -583,6 +592,7 @@ Sogerien::Page()->mainmenu();
             'Create'
         );
         ar_admin_action_form('Service lifecycle / traffic / access', 'admin_service_action',
+            'Direct control of an existing provider package: sync traffic, add limit, suspend/resume, generate or remove access lists. Dangerous support tool - not needed for normal sales flow.',
             '<div class="full"><label>Service</label>' . ar_service_select($services) . '</div>'
             . '<div><label>Action</label><select class="form-select" name="provider_action">'
             . '<option value="refresh_traffic">sync now</option><option value="add_traffic">add traffic</option><option value="set_traffic_limit">set traffic limit</option><option value="prolongate">prolongate</option>'
@@ -609,35 +619,33 @@ Sogerien::Page()->mainmenu();
             'Execute'
         );
         ar_admin_action_form('ISP/DC procurement', 'create_static_package',
+            'Manual purchase request for static ISP/DC inventory from the provider. Needed only when issuing static IPs outside the normal catalog checkout.',
             '<div><label>Type</label><select class="form-select" name="category"><option value="isp">isp</option><option value="dc">dc</option></select></div>'
             . '<div><label>Country</label><input class="form-control" name="country" placeholder="US" required></div>'
             . '<div><label>IP count</label><input class="form-control" name="ip_count" type="number" min="1" value="1"></div>',
             'Create'
         );
         ar_admin_action_form('Provider balance / keys', 'provider_balance',
+            'Live provider check for account balance and package keys. Use when dashboard numbers look wrong or after provider-side changes.',
             '<div><label>Type</label><select class="form-select" name="category"><option value="mobile">mobile</option><option value="residential">residential</option><option value="residential_ipv6">residential_ipv6</option><option value="isp">isp</option><option value="dc">dc</option></select></div>',
             'Load'
         );
         ar_admin_action_form('Geo targeting catalog', 'provider_catalog',
+            'Reads provider geo dictionaries: countries, regions, ISP codes, ZIP codes and online nodes. Needed to debug why a country/city/ISP option is unavailable in generated proxy access.',
             '<div><label>Type</label><select class="form-select" name="category"><option value="mobile">mobile</option><option value="residential">residential</option><option value="residential_ipv6">residential_ipv6</option><option value="isp">isp</option><option value="dc">dc</option></select></div>'
             . '<div><label>Method</label><select class="form-select" name="catalog_method"><option value="geos">geos</option><option value="detailed_geos">detailed_geos</option><option value="ipv6_detailed_geos">ipv6_detailed_geos</option><option value="subdivision_codes">subdivision_codes</option><option value="isp_codes">isp_codes</option><option value="zip_codes">zip_codes</option><option value="geo_db">geo_db</option><option value="online_statistics">online_statistics</option><option value="countries">countries</option><option value="online_nodes">online_nodes</option></select></div>'
             . '<div><label>Country for ZIP</label><input class="form-control" name="country" placeholder="US"></div>',
             'Load'
         );
         ar_admin_action_form('IP block diagnostics', 'ip_block_check',
+            'Checks or removes a provider-side block for a specific IP. Use when a client says a residential/mobile endpoint is blocked or unavailable.',
             '<div><label>Type</label><select class="form-select" name="category"><option value="residential">residential</option><option value="mobile">mobile</option></select></div>'
             . '<div><label>IP</label><input class="form-control" name="ip" required></div>'
             . '<div><label>Mode</label><select class="form-select" name="block_action"><option value="ip_block_check">check</option><option value="ip_unblock">unblock</option></select></div>',
             'Run'
         );
-        ar_admin_action_form('Scraper API console', 'scraper_test',
-            '<div><label>Method</label><select class="form-select" name="scraper_method"><option value="scrape">scrape</option><option value="render">render</option><option value="serp">serp</option><option value="chatgpt">chatgpt</option><option value="gemini">gemini</option><option value="perplexity">perplexity</option></select></div>'
-            . '<div><label>URL</label><input class="form-control" name="url" placeholder="https://example.com"></div>'
-            . '<div class="full"><label>Query for AI</label><input class="form-control" name="query"></div>'
-            . '<div class="full"><label>Payload JSON</label><textarea class="form-control" name="payload_json" rows="4"></textarea></div>',
-            'Test'
-        );
         ar_admin_action_form('Proxy health / snippets', 'proxy_test',
+            'Tests whether a generated proxy credential actually reaches a target URL. Use for support diagnostics before blaming billing or access-list generation.',
             '<div><label>Proxy URL</label><input class="form-control" name="proxy_url" placeholder="http://login:pass@host:port"></div>'
             . '<div><label>Target URL</label><input class="form-control" name="target_url" value="http://ip-api.com/json"></div>'
             . '<div><label>Login</label><input class="form-control" name="login"></div>'
@@ -646,6 +654,7 @@ Sogerien::Page()->mainmenu();
             'Test'
         );
         ar_admin_action_form('Curl / integration snippets', 'integration_snippet',
+            'Builds ready curl/client examples for a login/password and geo/session parameters. This is for support replies and docs snippets, not for provisioning.',
             '<div><label>Login</label><input class="form-control" name="login" required></div>'
             . '<div><label>Password</label><input class="form-control" name="password" required></div>'
             . '<div><label>Country</label><input class="form-control" name="country" placeholder="US"></div>'
@@ -654,6 +663,7 @@ Sogerien::Page()->mainmenu();
             'Generate'
         );
         ar_admin_action_form('Client API diagnostics', 'client_api_diagnostics',
+            'Checks the legacy Infatica client API for package/login details. Keep it for migration/debug cases where provider package state differs from local DB.',
             '<div><label>Type</label><select class="form-select" name="category"><option value="residential">residential</option><option value="residential_ipv6">residential_ipv6</option><option value="mobile">mobile</option><option value="dc">dc</option></select></div>'
             . '<div><label>PID/package</label><input class="form-control" name="pid"></div>'
             . '<div><label>Login</label><input class="form-control" name="login"></div>'
@@ -661,6 +671,7 @@ Sogerien::Page()->mainmenu();
             'Check'
         );
         ar_admin_action_form('Raw API allowlist', 'raw_api',
+            'Restricted raw API caller for methods already allowed in code. Use only when adding a temporary diagnostic would be slower than calling a known safe provider method.',
             '<div><label>Scope</label><select class="form-select" name="scope"><option value="mobile">mobile</option><option value="residential">residential</option><option value="residential_ipv6">residential_ipv6</option><option value="isp">isp</option><option value="dc">dc</option></select></div>'
             . '<div><label>Method</label><input class="form-control" name="method_name" placeholder="package_info"></div>'
             . '<div><label>Arg 1</label><input class="form-control" name="arg1" placeholder="package_key"></div>'
@@ -668,8 +679,12 @@ Sogerien::Page()->mainmenu();
             'Call'
         );
         echo '</div></section>';
+        ?>
+    <?php elseif ($pageKey === 'provider'): ?>
+        <?php
 
-        $inventoryRows = $shop->reseller_provider_inventory($services);
+        $refreshProvider = isset($_GET['refresh']) && ar_s($_GET['refresh']) === '1';
+        $inventoryRows = $shop->reseller_provider_inventory($services, $refreshProvider);
         $trafficRows = [];
         $trafficTotals = [
             'provider_limit' => 0.0,
@@ -727,6 +742,9 @@ Sogerien::Page()->mainmenu();
         }
         ?>
         <section class="pm-admin-section" aria-label="Traffic left for resale">
+            <div class="d-flex justify-content-end mb-3">
+                <a class="btn btn-outline-primary btn-sm" href="/admin/provider?refresh=1">Refresh provider now</a>
+            </div>
             <div class="pm-resale-summary">
                 <div class="pm-resale-kpi <?= $trafficTotals['available_to_sell'] <= 0.05 ? 'pm-low' : '' ?>">
                     <div class="pm-resale-kpi-label">Traffic left for resale</div>
@@ -813,20 +831,6 @@ Sogerien::Page()->mainmenu();
             'used' => 'Client used',
             'left' => 'Client left',
             'actions' => 'Password',
-        ]);
-        $auditRows = [];
-        foreach ($shop->provider_audit_log(50) as $audit) {
-            $auditRows[] = [
-                'created' => ar_s($audit['created_at'] ?? '-'),
-                'admin' => ar_s($audit['admin_user_id'] ?? '-'),
-                'action' => ar_s($audit['action'] ?? '-'),
-                'ok' => (($audit['result']['ok'] ?? false) === true) ? 'yes' : 'no',
-                'details_html' => ar_json_block($audit['result'] ?? []),
-            ];
-        }
-        echo '<h2 class="h5 mt-4 mb-3">Provider API audit</h2>';
-        ar_table('admin_provider_audit_grid', $auditRows, ['created', 'admin', 'action', 'ok', 'details_html'], [
-            'details_html' => 'Result',
         ]);
         ?>
     <?php elseif ($pageKey === 'orders'): ?>

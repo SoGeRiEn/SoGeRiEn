@@ -1,0 +1,38 @@
+NAME MCP_FTP
+
+Запуск
+Команда:
+C:\MCP_V3\MCP_FTP\.venv\Scripts\python.exe
+
+Аргументы:
+C:\MCP_V3\MCP_FTP\MCP_FTP.py --transport stdio
+
+Рабочая директория:
+C:\MCP_V3\MCP_FTP
+
+Переменные окружения:
+PYTHONUTF8=1
+PYTHONIOENCODING=utf-8
+
+Опционально:
+FTP_CONFIG_PATH=C:\MCP_V3\MCP_FTP\ftp_konfig.json
+FTP_PROFILE=default
+
+Codex config.toml:
+[mcp_servers.mcp_ftp]
+command = 'C:\MCP_V3\MCP_FTP\.venv\Scripts\python.exe'
+args = ['C:\MCP_V3\MCP_FTP\MCP_FTP.py', "--transport", "stdio"]
+cwd = 'C:\MCP_V3\MCP_FTP'
+startup_timeout_sec = 20
+tool_timeout_sec = 600
+
+Конфиг:
+- формат только `local_tools_ftp_multi_v1`
+- профили только в `profiles.<profile_name>`
+- активный профиль: аргумент tool `profile`, затем `FTP_PROFILE`, затем `default_profile`
+- старый flat-конфиг не поддерживается
+
+Continuous sync:
+- tool `ftp_watchdog` с action `start`, `status`, `stop`
+- watchdog запускается отдельным процессом: `MCP_FTP.py --watchdog --profile <profile>`
+- если watchdog запущен, не запускай ручной `ftp_upload` или `ftp_sync` по тому же профилю

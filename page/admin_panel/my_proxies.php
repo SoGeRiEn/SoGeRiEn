@@ -91,11 +91,7 @@ foreach ($services as $service) {
     $tableRows[] = [
         'title' => mp_s($service['title'] ?? ''),
         'order_id' => mp_s($service['order_id'] ?? ''),
-        'host' => mp_s($service['connection_host'] ?? '-'),
-        'port' => mp_s($service['connection_port'] ?? '-'),
-        'login' => mp_s($service['connection_login'] ?? '-'),
         'password' => mp_s($service['connection_password'] ?? '-'),
-        'public_ip' => mp_s($service['public_ipaddress'] ?? '-'),
         'country' => mp_s($service['country'] ?? '-'),
         'status' => mp_s($service['status'] ?? '-'),
         'expires_at' => mp_s($service['expires_at'] ?? '-'),
@@ -148,14 +144,10 @@ Sogerien::Page()->mainmenu();
             <div class="alert alert-secondary" role="alert">No purchased services yet.</div>
         <?php else: ?>
             <?php
-            $columns = ['actions_html', 'title', 'host', 'port', 'login', 'password', 'public_ip', 'country', 'status', 'expires_at', 'traffic_total', 'traffic_used', 'traffic'];
+            $columns = ['actions_html', 'title', 'password', 'country', 'status', 'expires_at', 'traffic_total', 'traffic_used', 'traffic'];
             $headers = [
                 'title' => 'Title',
-                'host' => 'Host',
-                'port' => 'Port',
-                'login' => 'Login',
                 'password' => 'Password',
-                'public_ip' => 'Public IP',
                 'country' => 'Country',
                 'status' => 'Status',
                 'expires_at' => 'Expires',
@@ -178,10 +170,6 @@ Sogerien::Page()->mainmenu();
 
             $defaultVisibleColumns = [
                 'title' => true,
-                'host' => true,
-                'port' => true,
-                'login' => true,
-                'public_ip' => true,
                 'country' => true,
                 'status' => true,
                 'expires_at' => true,

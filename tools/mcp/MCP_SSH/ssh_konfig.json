@@ -1,0 +1,20 @@
+{
+  "format": "local_tools_ssh_multi_v1",
+  "profiles": {
+    "default": {
+      "host": "",
+      "port": 22,
+      "username": "",
+      "password": "",
+      "key_path": "",
+      "known_hosts_path": "",
+      "strict_host_key_checking": false,
+      "connect_timeout_sec": 20,
+      "command_timeout_sec": 600,
+      "allow_agent": false,
+      "look_for_keys": false,
+      "backend": ""
+    }
+  },
+  "default_profile": "default"
+}

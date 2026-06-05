@@ -66,17 +66,11 @@ $api = Sogerien::API();
 $serviceKey = strtolower($serviceName);
 $dbServiceKeys = ['postgresql', 'postgres', 'pg', 'db', 'sql'];
 if (in_array($serviceKey, $dbServiceKeys, true)) {
-    $dbAlias = 'front';
+    $dbAlias = trim((string)(Sogerien::AccessCheck()->db_alias ?? 'front'));
+    if ($dbAlias === '') {
+        $dbAlias = 'front';
+    }
     try {
-        $db = Sogerien::DbController();
-        $db->DbConfig->DB_HOST = '38.180.192.121';
-        $db->DbConfig->DB_PORT = '5432';
-        $db->DbConfig->DB_NAME = 'db_proxymint_com';
-        $db->DbConfig->DB_USER = 'db_proxymin_usr';
-        $db->DbConfig->DB_PASS = 'uQ8oxEskC2LZvoyK';
-        $db->DbConfig->DB_CHARSET = 'utf8mb4';
-        $db->connect($dbAlias, $db->DbConfig);
-
         $api->Postgresql()->set_db_alias($dbAlias);
     } catch (Throwable $e) {
         $fail('DB_CONNECT_ERROR', ['message' => $e->getMessage()]);

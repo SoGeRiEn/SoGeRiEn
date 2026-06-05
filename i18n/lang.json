@@ -721,10 +721,10 @@
                        "en":  "Days"
                    },
     "proxy.duration_12_months":  {
-                                   "ru":  "12 месяцев",
-                                   "en":  "12 months",
-                                   "de":  "12 Monate"
-                               },
+                                     "ru":  "12 месяцев",
+                                     "en":  "12 months",
+                                     "de":  "12 Monate"
+                                 },
     "proxy.access":  {
                          "ru":  "Доступ",
                          "en":  "Access"
@@ -1380,5 +1380,730 @@
                                      "ru":  "Регистрация не удалась",
                                      "en":  "Registration failed",
                                      "de":  "Registrierung fehlgeschlagen"
-                                 }
+                                 },
+    "client.dashboard.title":  {
+                                   "ru":  "Панель управления",
+                                   "en":  "Dashboard",
+                                   "de":  "Dashboard"
+                               },
+    "client.dashboard.subtitle":  {
+                                      "ru":  "Сводка аккаунта, активные прокси-продукты, платежи и обращения в поддержку.",
+                                      "en":  "Account summary, active proxy products, invoices and support state.",
+                                      "de":  "KontoГјbersicht, aktive Proxy-Produkte, Rechnungen und Supportstatus."
+                                  },
+    "client.user_number":  {
+                               "ru":  "Пользователь #",
+                               "en":  "User #",
+                               "de":  "Benutzer #"
+                           },
+    "client.card.products":  {
+                                 "ru":  "Продукты",
+                                 "en":  "Products",
+                                 "de":  "Produkte"
+                             },
+    "client.card.balance_usd":  {
+                                    "ru":  "Баланс USD",
+                                    "en":  "Balance USD",
+                                    "de":  "Guthaben USD"
+                                },
+    "client.card.payments":  {
+                                 "ru":  "Платежи",
+                                 "en":  "Payments",
+                                 "de":  "Zahlungen"
+                             },
+    "client.card.tickets":  {
+                                "ru":  "Тикеты",
+                                "en":  "Tickets",
+                                "de":  "Tickets"
+                            },
+    "client.action.order_proxies":  {
+                                        "ru":  "Заказать прокси",
+                                        "en":  "Order proxies",
+                                        "de":  "Proxys bestellen"
+                                    },
+    "client.action.add_funds":  {
+                                    "ru":  "Пополнить баланс",
+                                    "en":  "Add funds",
+                                    "de":  "Guthaben aufladen"
+                                },
+    "client.action.open_ticket":  {
+                                      "ru":  "Открыть тикет",
+                                      "en":  "Open ticket",
+                                      "de":  "Ticket Г¶ffnen"
+                                  },
+    "client.action.manuals":  {
+                                  "ru":  "Инструкции",
+                                  "en":  "Manuals",
+                                  "de":  "Anleitungen"
+                              },
+    "client.action.manage":  {
+                                 "ru":  "Управлять",
+                                 "en":  "Manage",
+                                 "de":  "Verwalten"
+                             },
+    "client.action.create_ticket":  {
+                                        "ru":  "Создать тикет",
+                                        "en":  "Create ticket",
+                                        "de":  "Ticket erstellen"
+                                    },
+    "client.table.services":  {
+                                  "ru":  "Продукты и услуги",
+                                  "en":  "Products \u0026 Services",
+                                  "de":  "Produkte und Services"
+                              },
+    "client.table.payments":  {
+                                  "ru":  "Платежи",
+                                  "en":  "Payments",
+                                  "de":  "Zahlungen"
+                              },
+    "client.table.charges":  {
+                                 "ru":  "Списания",
+                                 "en":  "Charges",
+                                 "de":  "Abbuchungen"
+                             },
+    "client.table.tickets":  {
+                                 "ru":  "Обращения в поддержку",
+                                 "en":  "Support tickets",
+                                 "de":  "Support-Tickets"
+                             },
+    "client.no_data_yet":  {
+                               "ru":  "Данных пока нет.",
+                               "en":  "No data yet.",
+                               "de":  "Noch keine Daten."
+                           },
+    "client.column.title":  {
+                                "ru":  "Название",
+                                "en":  "Title",
+                                "de":  "Titel"
+                            },
+    "client.column.status":  {
+                                 "ru":  "Статус",
+                                 "en":  "Status",
+                                 "de":  "Status"
+                             },
+    "client.column.country":  {
+                                  "ru":  "Страна",
+                                  "en":  "Country",
+                                  "de":  "Land"
+                              },
+    "client.column.traffic":  {
+                                  "ru":  "Трафик",
+                                  "en":  "Traffic",
+                                  "de":  "Traffic"
+                              },
+    "client.column.expires":  {
+                                  "ru":  "Истекает",
+                                  "en":  "Expires",
+                                  "de":  "LГ¤uft ab"
+                              },
+    "client.column.actions":  {
+                                  "ru":  "Действия",
+                                  "en":  "Actions",
+                                  "de":  "Aktionen"
+                              },
+    "client.column.created":  {
+                                  "ru":  "Создано",
+                                  "en":  "Created",
+                                  "de":  "Erstellt"
+                              },
+    "client.column.id":  {
+                             "ru":  "ID",
+                             "en":  "ID",
+                             "de":  "ID"
+                         },
+    "client.column.order":  {
+                                "ru":  "Заказ",
+                                "en":  "Order",
+                                "de":  "Bestellung"
+                            },
+    "client.column.amount":  {
+                                 "ru":  "Сумма",
+                                 "en":  "Amount",
+                                 "de":  "Betrag"
+                             },
+    "client.column.subject":  {
+                                  "ru":  "Тема",
+                                  "en":  "Subject",
+                                  "de":  "Betreff"
+                              },
+    "client.column.updated":  {
+                                  "ru":  "Обновлено",
+                                  "en":  "Updated",
+                                  "de":  "Aktualisiert"
+                              },
+    "client.section.home":  {
+                                "ru":  "Главная",
+                                "en":  "Home",
+                                "de":  "Start"
+                            },
+    "client.section.proxy":  {
+                                 "ru":  "Прокси",
+                                 "en":  "Proxy",
+                                 "de":  "Proxy"
+                             },
+    "client.section.scraper":  {
+                                   "ru":  "Скрапер",
+                                   "en":  "Scraper",
+                                   "de":  "Scraper"
+                               },
+    "client.section.billing":  {
+                                   "ru":  "Оплата",
+                                   "en":  "Billing",
+                                   "de":  "Abrechnung"
+                               },
+    "client.section.support":  {
+                                   "ru":  "Поддержка",
+                                   "en":  "Support",
+                                   "de":  "Support"
+                               },
+    "client.section.account":  {
+                                   "ru":  "Аккаунт",
+                                   "en":  "Account",
+                                   "de":  "Konto"
+                               },
+    "client.nav.dashboard":  {
+                                 "ru":  "Панель управления",
+                                 "en":  "Dashboard",
+                                 "de":  "Dashboard"
+                             },
+    "client.nav.order_proxies":  {
+                                     "ru":  "Заказать прокси",
+                                     "en":  "Order Proxies",
+                                     "de":  "Proxys bestellen"
+                                 },
+    "client.nav.my_services":  {
+                                   "ru":  "Мои услуги",
+                                   "en":  "My Services",
+                                   "de":  "Meine Services"
+                               },
+    "client.nav.scraper_pricing":  {
+                                       "ru":  "Цены скрапера",
+                                       "en":  "Scraper Pricing",
+                                       "de":  "Scraper-Preise"
+                                   },
+    "client.nav.my_scraper_api":  {
+                                      "ru":  "Мой Scraper API",
+                                      "en":  "My Scraper API",
+                                      "de":  "Meine Scraper API"
+                                  },
+    "client.nav.playground":  {
+                                  "ru":  "Песочница",
+                                  "en":  "Playground",
+                                  "de":  "Playground"
+                              },
+    "client.nav.add_funds":  {
+                                 "ru":  "Пополнить баланс",
+                                 "en":  "Add Funds",
+                                 "de":  "Guthaben aufladen"
+                             },
+    "client.nav.invoices":  {
+                                "ru":  "Счета",
+                                "en":  "Invoices",
+                                "de":  "Rechnungen"
+                            },
+    "client.nav.payment_methods":  {
+                                       "ru":  "Способы оплаты",
+                                       "en":  "Payment Methods",
+                                       "de":  "Zahlungsmethoden"
+                                   },
+    "client.nav.tickets":  {
+                               "ru":  "Тикеты",
+                               "en":  "Tickets",
+                               "de":  "Tickets"
+                           },
+    "client.nav.manuals":  {
+                               "ru":  "Инструкции",
+                               "en":  "Manuals",
+                               "de":  "Anleitungen"
+                           },
+    "client.nav.profile":  {
+                               "ru":  "Профиль",
+                               "en":  "Profile",
+                               "de":  "Profil"
+                           },
+    "client.nav.contacts":  {
+                                "ru":  "Контакты",
+                                "en":  "Contacts",
+                                "de":  "Kontakte"
+                            },
+    "client.nav.email_history":  {
+                                     "ru":  "История писем",
+                                     "en":  "Email History",
+                                     "de":  "E-Mail-Verlauf"
+                                 },
+    "client.nav.users":  {
+                             "ru":  "Пользователи",
+                             "en":  "Users",
+                             "de":  "Benutzer"
+                         },
+    "client.tag.client":  {
+                              "ru":  "Клиент",
+                              "en":  "Client",
+                              "de":  "Kunde"
+                          },
+    "client.tag.order":  {
+                             "ru":  "Заказ",
+                             "en":  "Order",
+                             "de":  "Bestellung"
+                         },
+    "client.tag.tools":  {
+                             "ru":  "Инструменты",
+                             "en":  "Tools",
+                             "de":  "Tools"
+                         },
+    "client.tag.pay":  {
+                           "ru":  "Оплата",
+                           "en":  "Pay",
+                           "de":  "Zahlen"
+                       },
+    "client.tag.billing":  {
+                               "ru":  "Биллинг",
+                               "en":  "Billing",
+                               "de":  "Abrechnung"
+                           },
+    "client.tag.help":  {
+                            "ru":  "Помощь",
+                            "en":  "Help",
+                            "de":  "Hilfe"
+                        },
+    "client.tag.docs":  {
+                            "ru":  "Документы",
+                            "en":  "Docs",
+                            "de":  "Docs"
+                        },
+    "client.tag.account":  {
+                               "ru":  "Аккаунт",
+                               "en":  "Account",
+                               "de":  "Konto"
+                           },
+    "client.tag.team":  {
+                            "ru":  "Команда",
+                            "en":  "Team",
+                            "de":  "Team"
+                        },
+    "client.balance":  {
+                           "ru":  "Баланс аккаунта",
+                           "en":  "Account balance",
+                           "de":  "Kontostand"
+                       },
+    "client.balance_short":  {
+                                 "ru":  "Баланс",
+                                 "en":  "Balance",
+                                 "de":  "Guthaben"
+                             },
+    "proxy_manage.page_title":  {
+                                    "ru":  "Подробная информация о продукте",
+                                    "en":  "Detailed product information",
+                                    "de":  "Detaillierte Produktinformationen"
+                                },
+    "proxy_manage.traffic_purchase_only":  {
+                                               "ru":  "Трафик добавляется только через покупку или админ-панель.",
+                                               "en":  "Traffic is added only through purchase or admin panel.",
+                                               "de":  "Traffic wird nur per Kauf oder Admin-Panel hinzugefügt."
+                                           },
+    "proxy_manage.generated_alert":  {
+                                         "ru":  "Список доступа к прокси создан.",
+                                         "en":  "Proxy access list generated.",
+                                         "de":  "Proxy-Zugriffsliste erstellt."
+                                     },
+    "proxy_manage.open_with_service_id":  {
+                                              "ru":  "Откройте эту страницу с `service_id` из раздела Мои прокси.",
+                                              "en":  "Open this page with `service_id` from My Proxies.",
+                                              "de":  "Öffnen Sie diese Seite mit `service_id` aus Meine Proxys."
+                                          },
+    "proxy_manage.service_not_found":  {
+                                           "ru":  "Услуга не найдена.",
+                                           "en":  "Service not found.",
+                                           "de":  "Service nicht gefunden."
+                                       },
+    "proxy_manage.refresh_traffic":  {
+                                         "ru":  "Обновить трафик",
+                                         "en":  "Refresh traffic",
+                                         "de":  "Traffic aktualisieren"
+                                     },
+    "proxy_manage.resume":  {
+                                "ru":  "Возобновить",
+                                "en":  "Resume",
+                                "de":  "Fortsetzen"
+                            },
+    "proxy_manage.suspend":  {
+                                 "ru":  "Приостановить",
+                                 "en":  "Suspend",
+                                 "de":  "Pausieren"
+                             },
+    "proxy_manage.deactivate":  {
+                                    "ru":  "Деактивировать",
+                                    "en":  "Deactivate",
+                                    "de":  "Deaktivieren"
+                                },
+    "proxy_manage.back_to_my_proxies":  {
+                                            "ru":  "Назад к моим прокси",
+                                            "en":  "Back to My Proxies",
+                                            "de":  "Zurück zu Meine Proxys"
+                                        },
+    "proxy_manage.product_name":  {
+                                      "ru":  "Название продукта",
+                                      "en":  "Product name",
+                                      "de":  "Produktname"
+                                  },
+    "proxy_manage.proxy_type":  {
+                                    "ru":  "Тип прокси",
+                                    "en":  "Proxy type",
+                                    "de":  "Proxy-Typ"
+                                },
+    "proxy_manage.host":  {
+                              "ru":  "Хост",
+                              "en":  "Host",
+                              "de":  "Host"
+                          },
+    "proxy_manage.auto_renew":  {
+                                    "ru":  "Автопродление",
+                                    "en":  "Auto-renew",
+                                    "de":  "Automatische Verlängerung"
+                                },
+    "proxy_manage.on":  {
+                            "ru":  "Вкл",
+                            "en":  "On",
+                            "de":  "Ein"
+                        },
+    "proxy_manage.off":  {
+                             "ru":  "Выкл",
+                             "en":  "Off",
+                             "de":  "Aus"
+                         },
+    "proxy_manage.ip_count":  {
+                                  "ru":  "Количество IP",
+                                  "en":  "IP count",
+                                  "de":  "IP-Anzahl"
+                              },
+    "proxy_manage.last_traffic_update":  {
+                                             "ru":  "Последнее обновление трафика",
+                                             "en":  "Last traffic update",
+                                             "de":  "Letzte Traffic-Aktualisierung"
+                                         },
+    "proxy_manage.traffic_statistics":  {
+                                            "ru":  "Статистика трафика",
+                                            "en":  "Traffic statistics",
+                                            "de":  "Traffic-Statistik"
+                                        },
+    "proxy_manage.used_percent_suffix":  {
+                                             "ru":  "использовано",
+                                             "en":  "used",
+                                             "de":  "verwendet"
+                                         },
+    "proxy_manage.used_traffic":  {
+                                      "ru":  "Использованный трафик",
+                                      "en":  "Used traffic",
+                                      "de":  "Verwendeter Traffic"
+                                  },
+    "proxy_manage.available":  {
+                                   "ru":  "Доступно",
+                                   "en":  "Available",
+                                   "de":  "Verfügbar"
+                               },
+    "proxy_manage.traffic_package":  {
+                                         "ru":  "Пакет трафика",
+                                         "en":  "Traffic package",
+                                         "de":  "Traffic-Paket"
+                                     },
+    "proxy_manage.dedicated_dc_lifecycle":  {
+                                                "ru":  "Жизненный цикл выделенного DC",
+                                                "en":  "Dedicated DC lifecycle",
+                                                "de":  "Dedicated-DC-Lifecycle"
+                                            },
+    "proxy_manage.isp_lifecycle":  {
+                                       "ru":  "Жизненный цикл ISP",
+                                       "en":  "ISP lifecycle",
+                                       "de":  "ISP-Lifecycle"
+                                   },
+    "proxy_manage.cancel_renewal":  {
+                                        "ru":  "Отменить продление",
+                                        "en":  "Cancel renewal",
+                                        "de":  "Verlängerung kündigen"
+                                    },
+    "proxy_manage.uncancel":  {
+                                  "ru":  "Вернуть продление",
+                                  "en":  "Uncancel",
+                                  "de":  "Kündigung aufheben"
+                              },
+    "proxy_manage.generated_proxy_lists":  {
+                                               "ru":  "Созданные списки прокси",
+                                               "en":  "Generated proxy lists",
+                                               "de":  "Erstellte Proxy-Listen"
+                                           },
+    "proxy_manage.no_proxy_lists":  {
+                                        "ru":  "Списки прокси еще не созданы.",
+                                        "en":  "No proxy lists generated yet.",
+                                        "de":  "Noch keine Proxy-Listen erstellt."
+                                    },
+    "proxy_manage.protocol":  {
+                                  "ru":  "Протокол",
+                                  "en":  "Protocol",
+                                  "de":  "Protokoll"
+                              },
+    "proxy_manage.used":  {
+                              "ru":  "Использовано",
+                              "en":  "Used",
+                              "de":  "Verwendet"
+                          },
+    "proxy_manage.details":  {
+                                 "ru":  "Детали",
+                                 "en":  "Details",
+                                 "de":  "Details"
+                             },
+    "proxy_manage.disable":  {
+                                 "ru":  "Отключить",
+                                 "en":  "Disable",
+                                 "de":  "Deaktivieren"
+                             },
+    "proxy_manage.generate_proxy_list":  {
+                                             "ru":  "Создать список прокси",
+                                             "en":  "Generate proxy list",
+                                             "de":  "Proxy-Liste erstellen"
+                                         },
+    "proxy_manage.static_service_notice":  {
+                                               "ru":  "Услуги {type} управляются как страна + количество IP. Списки доступа с трафиком для этого продукта не используются.",
+                                               "en":  "{type} services are managed as country + IP count. Traffic access lists are not used for this product.",
+                                               "de":  "{type}-Services werden als Land + IP-Anzahl verwaltet. Traffic-Zugriffslisten werden für dieses Produkt nicht verwendet."
+                                           },
+    "proxy_manage.provider_not_active":  {
+                                             "ru":  "Пакет провайдера еще не активен. Генерация будет доступна после активации у провайдера.",
+                                             "en":  "Provider package is not active yet. Generation will be available after provider activation.",
+                                             "de":  "Das Anbieterpaket ist noch nicht aktiv. Die Erstellung ist nach der Aktivierung beim Anbieter verfügbar."
+                                         },
+    "proxy_manage.authorization":  {
+                                       "ru":  "Авторизация",
+                                       "en":  "Authorization",
+                                       "de":  "Autorisierung"
+                                   },
+    "proxy_manage.login_password":  {
+                                        "ru":  "Логин / пароль",
+                                        "en":  "Login / password",
+                                        "de":  "Login / Passwort"
+                                    },
+    "proxy_manage.ip_whitelist":  {
+                                      "ru":  "IP whitelist",
+                                      "en":  "IP whitelist",
+                                      "de":  "IP-Whitelist"
+                                  },
+    "proxy_manage.world_mix_hint":  {
+                                        "ru":  "Оставьте пустым для World Mix.",
+                                        "en":  "Leave empty for World Mix.",
+                                        "de":  "Für World Mix leer lassen."
+                                    },
+    "proxy_manage.region":  {
+                                "ru":  "Регион",
+                                "en":  "Region",
+                                "de":  "Region"
+                            },
+    "proxy_manage.all_regions":  {
+                                     "ru":  "Все регионы",
+                                     "en":  "All regions",
+                                     "de":  "Alle Regionen"
+                                 },
+    "proxy_manage.city":  {
+                              "ru":  "Город",
+                              "en":  "City",
+                              "de":  "Stadt"
+                          },
+    "proxy_manage.all_cities":  {
+                                    "ru":  "Все города",
+                                    "en":  "All cities",
+                                    "de":  "Alle Städte"
+                                },
+    "proxy_manage.rotation":  {
+                                  "ru":  "Ротация",
+                                  "en":  "Rotation",
+                                  "de":  "Rotation"
+                              },
+    "proxy_manage.each_request":  {
+                                      "ru":  "Каждый запрос",
+                                      "en":  "Each request",
+                                      "de":  "Jede Anfrage"
+                                  },
+    "proxy_manage.sticky":  {
+                                "ru":  "Sticky",
+                                "en":  "Sticky",
+                                "de":  "Sticky"
+                            },
+    "proxy_manage.minutes":  {
+                                 "ru":  "минут",
+                                 "en":  "minutes",
+                                 "de":  "Minuten"
+                             },
+    "proxy_manage.failure_mode":  {
+                                      "ru":  "Режим сбоя",
+                                      "en":  "Failure mode",
+                                      "de":  "Fehlermodus"
+                                  },
+    "proxy_manage.instant":  {
+                                 "ru":  "Мгновенно",
+                                 "en":  "Instant",
+                                 "de":  "Sofort"
+                             },
+    "proxy_manage.seconds":  {
+                                 "ru":  "секунд",
+                                 "en":  "seconds",
+                                 "de":  "Sekunden"
+                             },
+    "proxy_manage.proxy_format":  {
+                                      "ru":  "Формат прокси",
+                                      "en":  "Proxy format",
+                                      "de":  "Proxy-Format"
+                                  },
+    "proxy_manage.speed_charts":  {
+                                      "ru":  "Графики скорости интернета",
+                                      "en":  "Internet speed usage charts",
+                                      "de":  "Diagramme zur Internetgeschwindigkeit"
+                                  },
+    "proxy_manage.speed_chart_title":  {
+                                           "ru":  "Инфографика - использование скорости интернета",
+                                           "en":  "Infographic diagrams - internet speed usage",
+                                           "de":  "Infografik - Nutzung der Internetgeschwindigkeit"
+                                       },
+    "proxy_manage.speed_chart_subtitle":  {
+                                              "ru":  "Средняя скорость загрузки по бакетам трафика провайдера",
+                                              "en":  "Average download speed from provider traffic buckets",
+                                              "de":  "Durchschnittliche Downloadgeschwindigkeit aus Traffic-Buckets des Anbieters"
+                                          },
+    "proxy_manage.speed_chart":  {
+                                     "ru":  "График скорости интернета",
+                                     "en":  "Internet speed usage chart",
+                                     "de":  "Diagramm zur Internetgeschwindigkeit"
+                                 },
+    "proxy_manage.traffic_charts":  {
+                                        "ru":  "Графики использования трафика",
+                                        "en":  "Traffic usage charts",
+                                        "de":  "Diagramme zur Traffic-Nutzung"
+                                    },
+    "proxy_manage.traffic_chart_title":  {
+                                             "ru":  "Инфографика - использование трафика",
+                                             "en":  "Infographic diagrams - traffic usage",
+                                             "de":  "Infografik - Traffic-Nutzung"
+                                         },
+    "proxy_manage.traffic_chart_subtitle":  {
+                                                "ru":  "Баланс использованного трафика за выбранный период",
+                                                "en":  "Used traffic balance by selected period",
+                                                "de":  "Verwendeter Traffic nach ausgewähltem Zeitraum"
+                                            },
+    "proxy_manage.traffic_chart":  {
+                                       "ru":  "График использования трафика",
+                                       "en":  "Traffic usage chart",
+                                       "de":  "Diagramm zur Traffic-Nutzung"
+                                   },
+    "proxy_manage.daily":  {
+                               "ru":  "По дням",
+                               "en":  "Daily",
+                               "de":  "Täglich"
+                           },
+    "proxy_manage.weekly":  {
+                                "ru":  "По неделям",
+                                "en":  "Weekly",
+                                "de":  "Wöchentlich"
+                            },
+    "proxy_manage.monthly":  {
+                                 "ru":  "По месяцам",
+                                 "en":  "Monthly",
+                                 "de":  "Monatlich"
+                             },
+    "proxy_manage.copy_hint":  {
+                                   "ru":  "Текст можно выделить вручную или скопировать кнопкой Копировать. Esc - закрыть",
+                                   "en":  "Text is selected manually or copied by Copy. Esc - close",
+                                   "de":  "Text manuell markieren oder mit Kopieren kopieren. Esc - schließen"
+                               },
+    "proxy_manage.download_speed":  {
+                                        "ru":  "Скорость загрузки",
+                                        "en":  "Download speed",
+                                        "de":  "Downloadgeschwindigkeit"
+                                    },
+    "proxy_manage.traffic_used":  {
+                                      "ru":  "Использованный трафик",
+                                      "en":  "Traffic used",
+                                      "de":  "Verwendeter Traffic"
+                                  },
+    "proxy_manage.copied":  {
+                                "ru":  "Скопировано",
+                                "en":  "Copied",
+                                "de":  "Kopiert"
+                            },
+    "proxy_manage.copy":  {
+                              "ru":  "Копировать",
+                              "en":  "Copy",
+                              "de":  "Kopieren"
+                          },
+    "proxy_manage.error":  {
+                               "ru":  "Ошибка",
+                               "en":  "Error",
+                               "de":  "Fehler"
+                           },
+    "proxy_manage.no_proxies_response":  {
+                                             "ru":  "В ответе нет прокси.",
+                                             "en":  "No proxies in response.",
+                                             "de":  "Keine Proxys in der Antwort."
+                                         },
+    "proxy_manage.proxies_count_suffix":  {
+                                              "ru":  "прокси",
+                                              "en":  "proxies",
+                                              "de":  "Proxys"
+                                          },
+    "proxy_manage.proxy_output_format":  {
+                                             "ru":  "Формат вывода прокси",
+                                             "en":  "Proxy output format",
+                                             "de":  "Proxy-Ausgabeformat"
+                                         },
+    "proxy_manage.text":  {
+                              "ru":  "Текст",
+                              "en":  "Text",
+                              "de":  "Text"
+                          },
+    "client.payment_methods.card_holder":  {
+                                               "ru":  "Держатель карты",
+                                               "en":  "Card holder",
+                                               "de":  "Karteninhaber"
+                                           },
+    "client.payment_methods.expires":  {
+                                           "ru":  "Срок действия",
+                                           "en":  "Expires",
+                                           "de":  "Gültig bis"
+                                       },
+    "client.payment_methods.default_badge":  {
+                                                 "ru":  "По умолчанию",
+                                                 "en":  "Default",
+                                                 "de":  "Standard"
+                                             },
+    "client.payment_methods.default_action":  {
+                                                  "ru":  "Сделать основной",
+                                                  "en":  "Set default",
+                                                  "de":  "Als Standard festlegen"
+                                              },
+    "common.remove":  {
+                          "ru":  "Удалить",
+                          "en":  "Remove",
+                          "de":  "Entfernen"
+                      },
+    "client.payment_methods.empty":  {
+                                         "ru":  "Сохраненных способов оплаты пока нет.",
+                                         "en":  "No saved payment methods yet.",
+                                         "de":  "Noch keine gespeicherten Zahlungsmethoden."
+                                     },
+    "client.payment_methods.add_title":  {
+                                             "ru":  "Добавить способ оплаты",
+                                             "en":  "Add Payment Method",
+                                             "de":  "Zahlungsmethode hinzufügen"
+                                         },
+    "client.payment_methods.stripe_hint":  {
+                                               "ru":  "Visa и Mastercard добавляются через Stripe. ProxyMint хранит только id способа оплаты Stripe, бренд, последние 4 цифры и срок действия.",
+                                               "en":  "Visa and Mastercard are added through Stripe. ProxyMint stores only the Stripe payment method id, brand, last4 and expiry.",
+                                               "de":  "Visa und Mastercard werden über Stripe hinzugefügt. ProxyMint speichert nur die Stripe-Zahlungsmethoden-ID, Marke, die letzten 4 Ziffern und das Ablaufdatum."
+                                           },
+    "client.payment_methods.add_card_stripe":  {
+                                                   "ru":  "Добавить карту в Stripe",
+                                                   "en":  "Add card in Stripe",
+                                                   "de":  "Karte in Stripe hinzufügen"
+                                               },
+    "client.payment_methods.autopay_hint":  {
+                                                "ru":  "Сохраненные карты можно использовать для автопродления и заказанных услуг, подтвержденных клиентом.",
+                                                "en":  "Saved cards can be used for automatic renewals and client-approved ordered services.",
+                                                "de":  "Gespeicherte Karten können für automatische Verlängerungen und vom Kunden bestätigte bestellte Dienste verwendet werden."
+                                            }
 }

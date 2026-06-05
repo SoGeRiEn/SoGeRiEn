@@ -68,6 +68,8 @@ $users = Sogerien::Users();
 $users->init_db_alias($dbAlias);
 $users->load_identity_from_token();
 $userId = (int)$users->user_id;
+$adminViewUserIdRaw = trim((string)($_GET['user_id'] ?? ''));
+$isAdminClientPreview = preg_match('/^[1-9]\d*$/', $adminViewUserIdRaw) === 1;
 
 $stripe = Sogerien::API()->Stripe();
 $stripe->debug_enabled = false;
@@ -97,6 +99,14 @@ pc_log_write('proxy_checkout page hit', [
 
 if ($userId <= 0) {
     $errorMessage = 'You need to sign in before buying proxy.';
+}
+
+if ($errorMessage === '' && $isAdminClientPreview && !$isSuccessPage && !$isCancelPage && $method === 'POST') {
+    $errorMessage = 'Checkout is disabled in admin client preview. Sign in as the client to create a payment.';
+    pc_log_write('checkout rejected in admin client preview', [
+        'user_id' => $userId,
+        'requested_user_id' => $adminViewUserIdRaw,
+    ]);
 }
 
 if ($errorMessage === '' && $isCancelPage) {

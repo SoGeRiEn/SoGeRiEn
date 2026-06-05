@@ -1,0 +1,8 @@
+﻿{
+  "skill": "MCP_MYSQL",
+  "entry": "MCP_MYSQL.py",
+  "process_name": "MCP_mysql",
+  "version": 3,
+  "type": "mcp_server",
+  "transport": "stdio"
+}

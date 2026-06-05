@@ -129,7 +129,24 @@ final class ProxyShop
         }
 
         if (in_array($category, ['isp', 'dc'], true)) {
-            $pricing = Sogerien::API()->InfaticaIo()->Catalog()->retail_pricing();
+            $api = Sogerien::API()->InfaticaIo()->Catalog();
+            $trial = $api->trial_retail_pricing();
+            if (isset($trial[$category]) && is_array($trial[$category])) {
+                $ipCount = (int)($trial[$category]['traffic'] ?? 0);
+                $price = (float)($trial[$category]['price'] ?? 0);
+                if ($ipCount > 0 && $price > 0.0) {
+                    $plans[] = [
+                        'id' => $category . '-trial-ip' . (string)$ipCount,
+                        'category' => $category,
+                        'ip_count' => (string)$ipCount,
+                        'days' => (string)((int)($trial[$category]['days'] ?? 30)),
+                        'price_per_ip' => number_format($price / max(1, $ipCount), 2, '.', ''),
+                        'price_usd' => number_format($price, 2, '.', ''),
+                        'is_trial' => true,
+                    ];
+                }
+            }
+            $pricing = $api->retail_pricing();
             $tiers = isset($pricing[$category]) && is_array($pricing[$category]) ? $pricing[$category] : [];
             ksort($tiers, SORT_NUMERIC);
             foreach ($tiers as $ipCount => $pricePerIp) {
@@ -338,6 +355,7 @@ final class ProxyShop
             'provider_cost_usd' => $cost > 0.0 ? number_format($cost, 2, '.', '') : '',
             'profit_usd' => $cost > 0.0 ? number_format($price - $cost, 2, '.', '') : '',
             'is_auto_renewal_possible' => $isTrial ? '0' : '1',
+            'is_trial' => $isTrial ? '1' : '0',
         ];
     }
 
@@ -359,9 +377,30 @@ final class ProxyShop
             return null;
         }
 
-        $price = $this->price_static_ip_item($category, $ipCount, $days);
-        if ($price === null) {
-            return null;
+        $api = Sogerien::API()->InfaticaIo()->Catalog();
+        $trial = $api->trial_retail_pricing();
+        $trialCost = $api->trial_cost_pricing();
+        $trialOffer = isset($trial[$category]) && is_array($trial[$category]) ? $trial[$category] : null;
+        $isTrial = is_array($trialOffer)
+            && $days === (int)($trialOffer['days'] ?? 0)
+            && $ipCount === (int)($trialOffer['traffic'] ?? 0);
+        if ($isTrial) {
+            $trialPrice = (float)$trialOffer['price'];
+            $cost = isset($trialCost[$category]) && is_array($trialCost[$category])
+                ? (float)($trialCost[$category]['price'] ?? 0)
+                : 0.0;
+            $price = [
+                'price_per_ip' => number_format($trialPrice / max(1, $ipCount), 2, '.', ''),
+                'price_usd' => number_format($trialPrice, 2, '.', ''),
+                'provider_unit_price_usd' => $cost > 0.0 ? number_format($cost / max(1, $ipCount), 2, '.', '') : '',
+                'provider_cost_usd' => $cost > 0.0 ? number_format($cost, 2, '.', '') : '',
+                'profit_usd' => $cost > 0.0 ? number_format($trialPrice - $cost, 2, '.', '') : '',
+            ];
+        } else {
+            $price = $this->price_static_ip_item($category, $ipCount, $days);
+            if ($price === null) {
+                return null;
+            }
         }
         $title = $category === 'dc' ? 'Dedicated DC proxy ' : 'ISP proxy ';
 
@@ -380,7 +419,8 @@ final class ProxyShop
             'provider_unit_price_usd' => $price['provider_unit_price_usd'],
             'provider_cost_usd' => $price['provider_cost_usd'],
             'profit_usd' => $price['profit_usd'],
-            'is_auto_renewal_possible' => '1',
+            'is_auto_renewal_possible' => $isTrial ? '0' : '1',
+            'is_trial' => $isTrial ? '1' : '0',
         ];
     }
 
@@ -442,6 +482,15 @@ final class ProxyShop
         if ($user_id <= 0) {
             return ['ok' => false, 'error' => 'User is required.'];
         }
+        $trialItems = 0;
+        foreach ($items as $item) {
+            if (is_array($item) && $this->str($item['is_trial'] ?? '') === '1') {
+                $trialItems++;
+            }
+        }
+        if ($trialItems > 1 || ($trialItems === 1 && $this->has_used_trial($user_id))) {
+            return ['ok' => false, 'error' => 'Trial package can be ordered only once per account.'];
+        }
 
         $orderId = 'pm_' . date('YmdHis') . '_' . bin2hex(random_bytes(4));
         $paymentId = 'pay_' . bin2hex(random_bytes(8));
@@ -475,6 +524,30 @@ final class ProxyShop
         }
 
         return ['ok' => true, 'order_id' => $orderId, 'payment_id' => $paymentId];
+    }
+
+    public function has_used_trial(int $user_id): bool
+    {
+        foreach ($this->list_user_services($user_id) as $service) {
+            if (is_array($service) && $this->str($service['is_trial'] ?? '') === '1') {
+                return true;
+            }
+        }
+        foreach ($this->list_all_orders() as $order) {
+            if (!is_array($order) || (int)($order['user_id'] ?? 0) !== $user_id) {
+                continue;
+            }
+            foreach (($order['items'] ?? []) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $itemId = $this->str($item['id'] ?? '');
+                if ($this->str($item['is_trial'] ?? '') === '1' || str_contains($itemId, '-trial-')) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -870,7 +943,7 @@ final class ProxyShop
      * @param array<int,array<string,mixed>> $services
      * @return array<int,array<string,mixed>>
      */
-    public function reseller_provider_inventory(array $services = []): array
+    public function reseller_provider_inventory(array $services = [], bool $refreshProvider = false): array
     {
         if ($services === []) {
             $services = $this->list_all_services();
@@ -910,7 +983,7 @@ final class ProxyShop
 
         $rows = [];
         foreach ($labels as $category => $label) {
-            $provider = $this->provider_inventory_for_category($category);
+            $provider = $this->provider_inventory_for_category($category, $refreshProvider);
             $clientSold = (float)($client[$category]['sold_gb'] ?? 0.0);
             $clientLeft = (float)($client[$category]['left_gb'] ?? 0.0);
             $providerLimit = (float)($provider['limit_gb'] ?? 0.0);
@@ -2143,6 +2216,9 @@ final class ProxyShop
             'price_per_ip' => $this->str($item['price_per_ip'] ?? ''),
             'provider_cost_usd' => $this->str($item['provider_cost_usd'] ?? ''),
             'profit_usd' => $this->str($item['profit_usd'] ?? ''),
+            'days' => (string)$days,
+            'billing_period' => $this->str($item['is_trial'] ?? '') === '1' ? 'trial' : 'month',
+            'is_trial' => $this->str($item['is_trial'] ?? '') === '1' ? '1' : '0',
             'expires_at' => $expires,
             'auto_renew_request' => !empty($item['auto_renew']),
             'provider_raw_json' => $providerRaw,
@@ -3111,7 +3187,37 @@ final class ProxyShop
     /**
      * @return array<string,mixed>
      */
-    private function provider_inventory_for_category(string $category): array
+    private function provider_inventory_for_category(string $category, bool $refresh = false): array
+    {
+        $category = strtolower($this->str($category));
+        $cacheFile = 'proxy_shop/provider_inventory_' . $category . '.json';
+        $cache = Sogerien::Cache();
+        $updatedAt = null;
+        $cached = $cache->load($cacheFile, $updatedAt);
+
+        if (!$refresh && is_array($cached) && !$cache->is_interval_elapsed($cacheFile, 300)) {
+            return $cached;
+        }
+
+        $provider = $this->load_provider_inventory_for_category($category);
+        if (($provider['ok'] ?? false) === true) {
+            $cache->save($provider, $cacheFile, time());
+            return $provider;
+        }
+
+        if (is_array($cached)) {
+            $cached['state'] = trim((string)($cached['state'] ?? '') . '; stale cache', '; ');
+            $cached['message'] = (string)($provider['message'] ?? 'Provider refresh failed');
+            return $cached;
+        }
+
+        return $provider;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function load_provider_inventory_for_category(string $category): array
     {
         $category = strtolower($this->str($category));
         if ($category === 'mobile') {

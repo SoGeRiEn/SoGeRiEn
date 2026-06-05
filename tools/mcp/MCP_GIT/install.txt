@@ -1,0 +1,20 @@
+MCP_GIT installation
+
+1) Зависимости (Python 3.10+):
+   pip install watchdog
+
+2) Регистрация в Claude Desktop (claude_desktop_config.json):
+   "mcp_git": {
+     "command": "C:\\MCP_V3\\Python3143\\python.exe",
+     "args": ["C:\\MCP_V3\\MCP_GIT\\MCP_GIT.py", "--transport", "stdio"]
+   }
+
+3) Профили в git_konfig.json должны указывать на локальные репозитории и SSH ключ.
+   Пример (см. git_konfig.json в этой папке).
+
+4) Запуск автосинка (watchdog) для профиля:
+   через тулзу: git_watchdog action=start profile=<name>
+   вручную:    python MCP_GIT.py --watchdog --profile <name>
+
+5) Остановка:
+   через тулзу: git_watchdog action=stop profile=<name>

@@ -5,6 +5,18 @@ if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
 }
 
+if (!isset($_GET['lang']) && !isset($_POST['lang']) && !isset($_COOKIE['sogerien_lang']) && !headers_sent()) {
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? '/login');
+    $parts = parse_url($uri);
+    $path = (string)($parts['path'] ?? '/login');
+    $query = [];
+    parse_str((string)($parts['query'] ?? ''), $query);
+    $query['lang'] = 'en';
+    header('Location: ' . $path . '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986), true, 302);
+    Sogerien::markDone();
+    Sogerien::exit();
+}
+
 $t = static function (string $key, string $fallback = ''): string {
     $value = Sogerien::Lang()->get($key);
     if ($fallback !== '' && $value === $key) {
@@ -13,8 +25,13 @@ $t = static function (string $key, string $fallback = ''): string {
 
     return $value;
 };
-
 $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+$mode = trim((string)($_GET['mode'] ?? $_POST['mode'] ?? 'login'));
+if (in_array($mode, ['forgot', 'reset'], true)) {
+    require dirname(__DIR__) . '/BasePage/login_form.php';
+    Sogerien::exit();
+}
 
 $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
 if ($dbAlias === '') {
@@ -27,6 +44,26 @@ if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')
     $next = '/';
 }
 
+$currentLang = Sogerien::Lang()->get_current_lang();
+$languageUrl = static function (string $langCode) use ($next): string {
+    return '/login?' . http_build_query([
+        'lang' => $langCode,
+        'next' => $next,
+    ], '', '&', PHP_QUERY_RFC3986);
+};
+$forgotUrl = '/login?' . http_build_query([
+    'mode' => 'forgot',
+    'lang' => $currentLang,
+    'next' => $next,
+], '', '&', PHP_QUERY_RFC3986);
+$registerUrl = '/register?' . http_build_query([
+    'lang' => $currentLang,
+    'next' => $next,
+], '', '&', PHP_QUERY_RFC3986);
+$googleUrl = '/auth/google?' . http_build_query([
+    'next' => $next,
+], '', '&', PHP_QUERY_RFC3986);
+
 if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
     $login = trim((string)($_POST['login'] ?? ''));
     $password = (string)($_POST['password'] ?? '');
@@ -38,7 +75,7 @@ if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
         $users->init_db_alias($dbAlias);
         $row = str_contains($login, '@') ? $users->get_user_by_email($login) : $users->get_user_by_login($login);
         $tableValue = is_array($row) && isset($row['table_value']) && is_array($row['table_value']) ? $row['table_value'] : [];
-        $passHash = is_array($tableValue) ? (string)($tableValue['pass_hash'] ?? '') : '';
+        $passHash = (string)($tableValue['pass_hash'] ?? '');
 
         if ($passHash === '' || !password_verify($password, $passHash)) {
             $loginError = $t('auth.invalid_login_or_password', 'Invalid login or password');
@@ -69,17 +106,26 @@ if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="<?= $h(Sogerien::Lang()->get_current_lang()) ?>">
+<html lang="<?= $h($currentLang) ?>">
 <head>
     <meta charset="UTF-8">
     <title><?= $h($t('auth.title_login', 'Authorization')) ?></title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-
 <div id="app" class="d-flex justify-content-center align-items-center vh-100">
     <div class="card shadow p-4" style="min-width: 300px; max-width: 400px; width: 100%;">
+        <div class="mb-3">
+            <label class="form-label" for="auth-lang"><?= $h($t('menu.language', 'Language')) ?></label>
+            <select id="auth-lang" class="form-select" onchange="if (this.value) { window.location.href = this.value; }">
+                <?php foreach (Sogerien::Lang()->get_supported_langs() as $langCode): ?>
+                    <option value="<?= $h($languageUrl($langCode)) ?>"<?= $langCode === $currentLang ? ' selected' : '' ?>>
+                        <?= $h(strtoupper($langCode) . ' - ' . $t('lang.' . $langCode, strtoupper($langCode))) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
         <h4 class="mb-3 text-center"><?= $h($t('auth.login_to_system', 'Login to system')) ?></h4>
         <?php if ($loginError !== ''): ?>
             <div class="alert alert-danger" role="alert"><?= $h($loginError) ?></div>
@@ -87,6 +133,7 @@ if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
 
         <form method="post">
             <input type="hidden" name="next" value="<?= $h($next) ?>">
+            <input type="hidden" name="lang" value="<?= $h($currentLang) ?>">
             <div class="mb-3">
                 <label class="form-label"><?= $h($t('common.login', 'Login')) ?></label>
                 <input name="login" type="text" class="form-control" value="<?= $h((string)($_POST['login'] ?? '')) ?>" placeholder="<?= $h($t('auth.enter_login', 'Enter login')) ?>">
@@ -97,17 +144,20 @@ if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
             </div>
             <button type="submit" class="btn btn-primary w-100"><?= $h($t('auth.sign_in', 'Sign in')) ?></button>
         </form>
-        <div class="text-center text-muted small my-3">— или —</div>
-        <a class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2" href="/auth/google?next=<?= $h(rawurlencode($next)) ?>">
-            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.345 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.655 3.58 9 3.58z"/></svg>
-            Авторизация через Google
+
+        <div class="text-center small mt-3">
+            <a href="<?= $h($forgotUrl) ?>"><?= $h($t('auth.forgot_password', 'Forgot password')) ?></a>
+        </div>
+        <div class="text-center text-muted small my-3"><?= $h($t('auth.or', 'OR')) ?></div>
+        <a class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2" href="<?= $h($googleUrl) ?>">
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.345 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.655 3.58 9 3.58z"/></svg>
+            <?= $h($t('auth.google_sign_in', 'Sign in with Google')) ?>
         </a>
         <div class="text-center small mt-3">
-            <a href="/register?next=<?= $h(rawurlencode($next)) ?>">Create account</a>
+            <a href="<?= $h($registerUrl) ?>"><?= $h($t('auth.create_account', 'Create account')) ?></a>
         </div>
     </div>
 </div>
-
 </body>
 </html>
 <?php

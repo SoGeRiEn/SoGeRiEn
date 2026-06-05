@@ -1,0 +1,17 @@
+*.key
+*.pem
+*.env
+*.log
+*.pyc
+*.pyo
+__pycache__/
+node_modules/
+.venv/
+venv/
+config/local.php
+config/*.local.php
+database/*.dump
+database/*.backup
+runtime/
+cache/
+

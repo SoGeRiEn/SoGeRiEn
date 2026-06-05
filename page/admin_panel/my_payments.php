@@ -10,6 +10,39 @@ function mpay_h(mixed $value): string
     return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/**
+ * @param array<int,array<string,mixed>> $payments
+ * @return array<int,array<string,mixed>>
+ */
+function mpay_paid_payments(array $payments): array
+{
+    $rows = [];
+    foreach ($payments as $payment) {
+        $status = strtolower(trim((string)($payment['payment_status'] ?? $payment['status'] ?? '')));
+        if ($status === 'paid') {
+            $rows[] = $payment;
+        }
+    }
+    return $rows;
+}
+
+/**
+ * @param array<int,array<string,mixed>> $charges
+ * @return array<int,array<string,mixed>>
+ */
+function mpay_paid_charges(array $charges): array
+{
+    $rows = [];
+    foreach ($charges as $charge) {
+        $checkoutStatus = strtolower(trim((string)($charge['checkout_status'] ?? '')));
+        $fulfillmentStatus = strtolower(trim((string)($charge['fulfillment_status'] ?? '')));
+        if ($checkoutStatus === 'paid' || in_array($fulfillmentStatus, ['fulfilled', 'provider_failed'], true)) {
+            $rows[] = $charge;
+        }
+    }
+    return $rows;
+}
+
 $dbAlias = trim((string)Sogerien::AccessCheck()->db_alias);
 if ($dbAlias === '') {
     $dbAlias = 'front';
@@ -19,6 +52,7 @@ $users = Sogerien::Users();
 $users->init_db_alias($dbAlias);
 $users->load_identity_from_token();
 $userId = (int)$users->user_id;
+$userEmail = trim((string)($users->user_data['email'] ?? ''));
 
 if ($userId <= 0) {
     $requestUri = (string)($_SERVER['REQUEST_URI'] ?? '/client/my/payments');
@@ -41,7 +75,9 @@ $shop->init_db_alias($dbAlias);
 
 $balanceUsd = $userId > 0 ? $shop->get_user_balance_usd($userId) : '0.00';
 $payments = $userId > 0 ? $shop->list_user_payments($userId) : [];
+$payments = mpay_paid_payments($payments);
 $charges = $userId > 0 ? $shop->list_user_charges($userId) : [];
+$charges = mpay_paid_charges($charges);
 
 Sogerien::Page()->title = 'My Payments';
 Sogerien::Page()->header();
@@ -54,7 +90,8 @@ Sogerien::Page()->mainmenu();
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <div class="text-muted small">Client</div>
-                        <div class="h5 mb-0">User #<?= (int)$userId ?></div>
+                        <div class="h5 mb-0">мой профиль</div>
+                        <div class="small text-muted"><?= mpay_h($userEmail !== '' ? $userEmail : ('User #' . (int)$userId)) ?></div>
                     </div>
                     <div>
                         <div class="text-muted small">Balance USD</div>

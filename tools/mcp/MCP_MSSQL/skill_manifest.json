@@ -1,0 +1,8 @@
+﻿{
+  "skill": "MCP_MSSQL",
+  "entry": "MCP_MSSQL.py",
+  "process_name": "MCP_mssql",
+  "version": 3,
+  "type": "mcp_server",
+  "transport": "stdio"
+}

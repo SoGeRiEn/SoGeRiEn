@@ -1,0 +1,9 @@
+﻿{
+  "host": "",
+  "port": 3306,
+  "database": "",
+  "username": "",
+  "password": "",
+  "charset": "utf8mb4",
+  "connect_timeout_sec": 10
+}

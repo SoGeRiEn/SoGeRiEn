@@ -1,0 +1,8 @@
+﻿{
+  "skill": "MCP_PHP",
+  "entry": "MCP_PHP.py",
+  "process_name": "MCP_php",
+  "version": 3,
+  "type": "mcp_server",
+  "transport": "stdio"
+}
