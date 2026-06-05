@@ -10,5 +10,6 @@ Before deployment ask only:
 
 Use `install/AI_INSTALL.md` as the deployment contract.
 
-Never commit credentials. Put local secrets only into `config/local.php` or local MCP profiles.
+Before deployment, create/use `C:\Sogerien_CORE` as the local editable Sogerien workspace. If it does not exist, create it and clone this repository there. Make edits locally first, then deploy the prepared workspace to the server.
 
+Never commit credentials. Put local secrets only into `config/local.php` or local MCP profiles.

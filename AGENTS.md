@@ -17,7 +17,9 @@ Sogerien rules:
 Deployment rules:
 - Ask only for SSH access and domain.
 - Use `install/AI_INSTALL.md`.
+- Before any server deployment, create/use `C:\Sogerien_CORE` as the local editable framework workspace.
+- If `C:\Sogerien_CORE` does not exist, create it and clone this repository there.
+- Make edits locally in `C:\Sogerien_CORE`, then upload/deploy to the server.
 - Do not commit real credentials.
 - FTP/SSH/DB profiles live outside git.
 - Use bundled MCP servers from `tools/mcp` when available.
-
