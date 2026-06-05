@@ -2,34 +2,39 @@
 
 This repository is prepared for Codex and Claude.
 
-Ask the human only:
+Ask the human:
+- Local folder where the repository must be installed and edited.
 - SSH access to the target server.
 - Domain name.
 
 Mandatory local workspace:
-- On Windows, always create `C:\Sogerien_CORE`.
-- This folder is the local editable Sogerien framework workspace.
-- AI must copy/clone this repository into `C:\Sogerien_CORE` before server deployment.
-- AI reads and modifies files in `C:\Sogerien_CORE` first.
+- AI must ask the user for the local install folder before deployment.
+- Recommended default on Windows: `C:\Sogerien_CORE`.
+- The chosen folder is the local editable Sogerien framework workspace.
+- AI must copy/clone this repository into the chosen local folder before server deployment.
+- AI reads and modifies files in the chosen local folder first.
 - Server upload/deploy is made only after local edits and checks.
-- Do not skip this step. If `C:\Sogerien_CORE` does not exist, create it.
+- Do not skip this step. If the chosen local folder does not exist, create it.
+- Do not edit files directly on the server as the main workflow.
 
 Windows bootstrap:
 ```powershell
-if ((Test-Path "C:\Sogerien_CORE") -and !(Test-Path "C:\Sogerien_CORE\.git")) {
-    $backup = "C:\Sogerien_CORE_backup_" + (Get-Date -Format "yyyyMMdd_HHmmss")
-    Move-Item "C:\Sogerien_CORE" $backup
+$LocalRepo = "C:\Sogerien_CORE" # replace with the folder provided by the user
+if ((Test-Path $LocalRepo) -and !(Test-Path (Join-Path $LocalRepo ".git"))) {
+    $backup = $LocalRepo.TrimEnd("\") + "_backup_" + (Get-Date -Format "yyyyMMdd_HHmmss")
+    Move-Item $LocalRepo $backup
 }
-if (!(Test-Path "C:\Sogerien_CORE")) {
-    git clone https://github.com/SoGeRiEn/SoGeRiEn.git "C:\Sogerien_CORE"
+if (!(Test-Path $LocalRepo)) {
+    git clone https://github.com/SoGeRiEn/SoGeRiEn.git $LocalRepo
 }
-Set-Location "C:\Sogerien_CORE"
+Set-Location $LocalRepo
 Copy-Item "config\config.example.php" "config\local.php" -Force
 ```
 
-If `C:\Sogerien_CORE` already contains a clone:
+If the chosen local folder already contains a clone:
 ```powershell
-Set-Location "C:\Sogerien_CORE"
+$LocalRepo = "C:\Sogerien_CORE" # replace with the folder provided by the user
+Set-Location $LocalRepo
 git pull --ff-only
 if (!(Test-Path "config\local.php")) {
     Copy-Item "config\config.example.php" "config\local.php" -Force
@@ -38,11 +43,11 @@ if (!(Test-Path "config\local.php")) {
 
 Then deploy with this order:
 - Install PHP 8.2+, PostgreSQL, nginx/apache on the target server.
-- Prepare/edit the project locally in `C:\Sogerien_CORE`.
-- Fill only local/server-specific values in `C:\Sogerien_CORE\config\local.php`.
+- Prepare/edit the project locally in the user-selected local repository folder.
+- Fill only local/server-specific values in `<LOCAL_REPO>\config\local.php`.
 - Create PostgreSQL database and user on the server.
 - Run `psql -d <db> -f database/bootstrap.sql` on the server or through SSH.
-- Upload/sync the prepared `C:\Sogerien_CORE` project to the server web root.
+- Upload/sync the prepared local repository folder to the server web root.
 - Point the domain document root to the uploaded project root.
 - Open `/elements` for smoke test.
 
