@@ -6,6 +6,8 @@ declare(strict_types=1);
  */
 final class Forms
 {
+    use SogerienClassHelp;
+
     private array $form = [
         'id' => 'form1',
         'class' => 'sog-form',

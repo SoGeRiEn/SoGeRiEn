@@ -3,6 +3,8 @@ declare(strict_types=1);
 /* Routes.php */
 final class Routes
 {
+    use SogerienClassHelp;
+
     /** @var array<string,string> url => absolute_path */
     private array $templates = [];
 

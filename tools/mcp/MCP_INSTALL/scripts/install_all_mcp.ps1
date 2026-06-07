@@ -1,5 +1,5 @@
 ﻿param(
-  [string]$CodexHome = "C:\Users\SoGeRiEn\.codex",
+  [string]$CodexHome = (Join-Path $env:USERPROFILE ".codex"),
   [string]$ProjectRoot = "C:\MCP_V3",
   [string]$InstallRoot = "C:\MCP_V3\MCP_INSTALL"
 )
@@ -66,11 +66,11 @@ Copy-Item $configPath "$configPath.$stamp.bak" -Force
 $text = Get-Content -Raw $configPath
 
 $skillPaths = @(
-  "C:\Users\SoGeRiEn\.codex\skills\sogerien-genius-core\SKILL.md",
-  "C:\Users\SoGeRiEn\.codex\skills\mcp-security-threat-model\SKILL.md",
-  "C:\Users\SoGeRiEn\.codex\skills\mcp-chatgpt-apps\SKILL.md",
-  "C:\Users\SoGeRiEn\.codex\skills\MCP\SKILL.md",
-  "C:\Users\SoGeRiEn\.codex\skills\winui-app\SKILL.md"
+  (Join-Path $CodexHome "skills\sogerien-genius-core\SKILL.md"),
+  (Join-Path $CodexHome "skills\mcp-security-threat-model\SKILL.md"),
+  (Join-Path $CodexHome "skills\mcp-chatgpt-apps\SKILL.md"),
+  (Join-Path $CodexHome "skills\MCP\SKILL.md"),
+  (Join-Path $CodexHome "skills\winui-app\SKILL.md")
 )
 
 foreach ($sp in $skillPaths) {

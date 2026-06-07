@@ -20,8 +20,8 @@ MCP server для MySQL через stdio JSON-RPC (MCP).
     "host": "127.0.0.1",
     "port": 3306,
     "database": "app",
-    "username": "root",
-    "password": "secret",
+    "username": "",
+    "password": "",
     "charset": "utf8mb4",
     "connect_timeout_sec": 10
   }

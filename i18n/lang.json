@@ -1381,6 +1381,231 @@
                                      "en":  "Registration failed",
                                      "de":  "Registrierung fehlgeschlagen"
                                  },
+    "admin.provider.title":  {
+                                 "ru":  "Панель провайдера",
+                                 "en":  "Provider Dashboard",
+                                 "de":  "Provider-Dashboard"
+                             },
+    "admin.provider.subtitle":  {
+                                    "ru":  "Состояние доступных к продаже мобильных, резидентских, ISP и реселлерских услуг.",
+                                    "en":  "Mobile, residential, ISP and reseller available-to-sell state.",
+                                    "de":  "Status der verfügbaren Mobile-, Residential-, ISP- und Reseller-Dienste."
+                                },
+    "admin.provider.operations_console":  {
+                                             "ru":  "Консоль операций провайдера",
+                                             "en":  "Provider operations console",
+                                             "de":  "Provider-Operationskonsole"
+                                         },
+    "admin.provider.back_to_dashboard":  {
+                                            "ru":  "Назад к панели провайдера",
+                                            "en":  "Back to provider dashboard",
+                                            "de":  "Zurück zum Provider-Dashboard"
+                                        },
+    "admin.provider_tools.title":  {
+                                      "ru":  "Консоль операций провайдера",
+                                      "en":  "Provider Operations Console",
+                                      "de":  "Provider-Operationskonsole"
+                                  },
+    "admin.provider_tools.subtitle":  {
+                                         "ru":  "Ручные инструменты провайдера для редких задач поддержки и диагностики.",
+                                         "en":  "Manual provider tools for rare support and diagnostics tasks.",
+                                         "de":  "Manuelle Provider-Tools für seltene Support- und Diagnoseaufgaben."
+                                     },
+    "admin.orders.title":  {
+                              "ru":  "Заказы прокси",
+                              "en":  "Proxy Orders",
+                              "de":  "Proxy-Bestellungen"
+                          },
+    "admin.orders.subtitle":  {
+                                 "ru":  "Оплаченные заказы, ожидание выдачи, ошибки провайдера и выполненные заказы.",
+                                 "en":  "Paid orders, pending fulfillment, provider failures and fulfilled orders.",
+                                 "de":  "Bezahlte Bestellungen, ausstehende Bereitstellung, Provider-Fehler und erfüllte Bestellungen."
+                             },
+    "admin.statistics.title":  {
+                                  "ru":  "Статистика",
+                                  "en":  "Statistics",
+                                  "de":  "Statistik"
+                              },
+    "admin.statistics.subtitle":  {
+                                     "ru":  "Сводка по клиентам, статусам и купленным типам прокси.",
+                                     "en":  "Client, status and purchased proxy type summary.",
+                                     "de":  "Übersicht nach Kunden, Status und gekauften Proxy-Typen."
+                                 },
+    "admin.services.title":  {
+                                "ru":  "Услуги клиентов",
+                                "en":  "Client Services",
+                                "de":  "Kundendienste"
+                            },
+    "admin.services.subtitle":  {
+                                   "ru":  "Все клиентские мобильные, резидентские, ISP и scraper-услуги.",
+                                   "en":  "All client mobile, residential, ISP and scraper services.",
+                                   "de":  "Alle Mobile-, Residential-, ISP- und Scraper-Dienste der Kunden."
+                               },
+    "admin.traffic.title":  {
+                               "ru":  "Трафик",
+                               "en":  "Traffic",
+                               "de":  "Traffic"
+                           },
+    "admin.traffic.subtitle":  {
+                                  "ru":  "Данные графиков использования, скорость расхода и состояние cron-синхронизации.",
+                                  "en":  "Usage graph source data, consumption speed and cron sync state.",
+                                  "de":  "Quelldaten der Nutzungsdiagramme, Verbrauchsgeschwindigkeit und Cron-Sync-Status."
+                              },
+    "admin.access.title":  {
+                              "ru":  "Списки доступа",
+                              "en":  "Access Lists",
+                              "de":  "Zugriffslisten"
+                          },
+    "admin.access.subtitle":  {
+                                 "ru":  "Все созданные логины прокси и ID списков у провайдера.",
+                                 "en":  "All generated proxy logins and provider list ids.",
+                                 "de":  "Alle generierten Proxy-Logins und Provider-Listen-IDs."
+                             },
+    "admin.billing.title":  {
+                               "ru":  "Биллинг",
+                               "en":  "Billing",
+                               "de":  "Abrechnung"
+                           },
+    "admin.billing.subtitle":  {
+                                  "ru":  "Выручка клиентов, стоимость провайдера, прибыль, пополнения и продления.",
+                                  "en":  "Client revenue, provider cost, profit, topups and renewals.",
+                                  "de":  "Kundenumsatz, Provider-Kosten, Gewinn, Aufladungen und Verlängerungen."
+                              },
+    "admin.guard.title":  {
+                             "ru":  "Защита",
+                             "en":  "Guard",
+                             "de":  "Schutz"
+                         },
+    "admin.guard.subtitle":  {
+                                "ru":  "Защита от перепродажи сверх лимита, автостоп, авторезюмирование и ошибки API провайдера.",
+                                "en":  "Oversell protection, auto suspend, auto resume and provider API errors.",
+                                "de":  "Oversell-Schutz, automatische Sperrung, automatische Reaktivierung und Provider-API-Fehler."
+                            },
+    "admin.support_tickets":  {
+                                 "ru":  "Тикеты поддержки",
+                                 "en":  "Support tickets",
+                                 "de":  "Support-Tickets"
+                             },
+    "admin.kpi.services":  {
+                               "ru":  "Услуги",
+                               "en":  "Services",
+                               "de":  "Dienste"
+                           },
+    "admin.kpi.revenue":  {
+                              "ru":  "Выручка",
+                              "en":  "Revenue",
+                              "de":  "Umsatz"
+                          },
+    "admin.kpi.provider_cost":  {
+                                    "ru":  "Стоимость провайдера",
+                                    "en":  "Provider cost",
+                                    "de":  "Provider-Kosten"
+                                },
+    "admin.kpi.profit":  {
+                             "ru":  "Прибыль",
+                             "en":  "Profit",
+                             "de":  "Gewinn"
+                         },
+    "admin.provider.refresh_now":  {
+                                      "ru":  "Обновить провайдера сейчас",
+                                      "en":  "Refresh provider now",
+                                      "de":  "Provider jetzt aktualisieren"
+                                  },
+    "admin.provider.traffic_left_for_resale":  {
+                                                  "ru":  "Трафик для перепродажи",
+                                                  "en":  "Traffic left for resale",
+                                                  "de":  "Traffic für den Wiederverkauf"
+                                              },
+    "admin.provider.safe_capacity_note":  {
+                                             "ru":  "Безопасная емкость после проданных клиентских лимитов",
+                                             "en":  "Safe capacity after sold client limits",
+                                             "de":  "Sichere Kapazität nach verkauften Kundenlimits"
+                                         },
+    "admin.provider.traffic_bought":  {
+                                         "ru":  "Купленный трафик провайдера",
+                                         "en":  "Provider traffic bought",
+                                         "de":  "Gekaufter Provider-Traffic"
+                                     },
+    "admin.provider.live_stats_total":  {
+                                           "ru":  "Итого из live API /stats",
+                                           "en":  "Live API /stats total",
+                                           "de":  "Summe aus Live API /stats"
+                                       },
+    "admin.provider.traffic_left":  {
+                                       "ru":  "Остаток трафика провайдера",
+                                       "en":  "Provider traffic left",
+                                       "de":  "Verbleibender Provider-Traffic"
+                                   },
+    "admin.provider.traffic_used":  {
+                                       "ru":  "Использованный трафик провайдера",
+                                       "en":  "Provider traffic used",
+                                       "de":  "Genutzter Provider-Traffic"
+                                   },
+    "admin.provider.used":  {
+                               "ru":  "Использовано",
+                               "en":  "Used",
+                               "de":  "Genutzt"
+                           },
+    "admin.provider.client_ordered_traffic":  {
+                                                 "ru":  "Заказанный клиентами трафик",
+                                                 "en":  "Client ordered traffic",
+                                                 "de":  "Von Kunden bestellter Traffic"
+                                             },
+    "admin.provider.all_sold_limits":  {
+                                          "ru":  "Все проданные клиентские лимиты",
+                                          "en":  "All sold client limits",
+                                          "de":  "Alle verkauften Kundenlimits"
+                                      },
+    "admin.provider.client_traffic_used":  {
+                                             "ru":  "Использованный клиентами трафик",
+                                             "en":  "Client traffic used",
+                                             "de":  "Von Kunden genutzter Traffic"
+                                         },
+    "admin.provider.client_left":  {
+                                      "ru":  "Остаток клиента",
+                                      "en":  "Client left",
+                                      "de":  "Kundenrest"
+                                  },
+    "admin.provider.for_resale":  {
+                                     "ru":  "для перепродажи",
+                                     "en":  "for resale",
+                                     "de":  "für den Wiederverkauf"
+                                 },
+    "admin.provider.provider_bought_short":  {
+                                                "ru":  "Куплено у провайдера",
+                                                "en":  "Provider bought",
+                                                "de":  "Beim Provider gekauft"
+                                            },
+    "admin.provider.provider_left_short":  {
+                                              "ru":  "Остаток провайдера",
+                                              "en":  "Provider left",
+                                              "de":  "Provider-Rest"
+                                          },
+    "admin.provider.provider_used_short":  {
+                                              "ru":  "Использовано у провайдера",
+                                              "en":  "Provider used",
+                                              "de":  "Beim Provider genutzt"
+                                          },
+    "admin.provider.client_ordered_short":  {
+                                               "ru":  "Заказано клиентом",
+                                               "en":  "Client ordered",
+                                               "de":  "Vom Kunden bestellt"
+                                           },
+    "admin.provider.client_used_short":  {
+                                            "ru":  "Использовано клиентом",
+                                            "en":  "Client used",
+                                            "de":  "Vom Kunden genutzt"
+                                        },
+    "admin.provider.provider_package":  {
+                                           "ru":  "Пакет провайдера",
+                                           "en":  "Provider package",
+                                           "de":  "Provider-Paket"
+                                       },
+    "admin.provider.client_traffic_by_service":  {
+                                                    "ru":  "Клиентский трафик по услугам",
+                                                    "en":  "Client traffic by service",
+                                                    "de":  "Kundentraffic nach Dienst"
+                                                },
     "client.dashboard.title":  {
                                    "ru":  "Панель управления",
                                    "en":  "Dashboard",

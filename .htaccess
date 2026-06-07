@@ -1,0 +1,24 @@
+Options -Indexes
+DirectoryIndex index.php index.html
+ErrorDocument 404 /index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Preserve Authorization header for PHP.
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # Avoid rewrite loop.
+  RewriteRule ^index\.php$ - [L]
+
+  # Any missing *.php must be handled by index.php.
+  RewriteCond %{REQUEST_URI} \.php$ [NC]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L,QSA]
+
+  # Front controller: all non-file/non-dir requests go to index.php.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [L,QSA]
+</IfModule>

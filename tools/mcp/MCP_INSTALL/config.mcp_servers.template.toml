@@ -1,4 +1,4 @@
-﻿# MCP servers template for C:\Users\SoGeRiEn\.codex\config.toml
+﻿# MCP servers template for %USERPROFILE%\.codex\config.toml
 # Generated from current C:\MCP_V3 layout
 
 [mcp_servers.mcp_codex_agents]
@@ -207,3 +207,5 @@ enabled = true
 [mcp_servers.mcp_windows_admin.env]
 PYTHONIOENCODING = "utf-8"
 PYTHONUTF8 = "1"
+
+

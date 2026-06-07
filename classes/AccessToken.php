@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class AccessToken
 {
+    use SogerienClassHelp;
+
     public string $COOKIE_NAME = 'access_token';
     public string $COOKIE_NAME_SERVER = 'access_server_token';
     public string $COOKIE_NAME_IMPERSONATE = 'impersonate_access_token';

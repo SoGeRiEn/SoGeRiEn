@@ -14,4 +14,9 @@ database/*.dump
 database/*.backup
 runtime/
 cache/
+dist/
+tools/mcp/Python*/
+tools/mcp/**/.venv/
+tools/mcp/**/.idea/
+tools/mcp/**/__pycache__/
 

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class SupportTickets
 {
+    use SogerienClassHelp;
+
     private string $db_alias = 'front';
 
     public function init_db_alias(string $db_alias): void

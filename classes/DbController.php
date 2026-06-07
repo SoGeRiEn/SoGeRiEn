@@ -5,6 +5,8 @@ declare(strict_types=1);
 
 final class DbConfig
 {
+    use SogerienClassHelp;
+
     // Пустой конфиг по умолчанию - заполняешь в index.php
     public string $DB_HOST = '';
     public string $DB_PORT = '5432';
@@ -19,6 +21,8 @@ final class DbConfig
 
 final class DbController
 {
+    use SogerienClassHelp;
+
     /** Один общий объект конфига - ты его перезаписываешь в index.php */
     public DbConfig $DbConfig;
 

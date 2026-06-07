@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 final class User
 {
+    use SogerienClassHelp;
+
     public string $fio = '';
 
     /** @var string[] */
@@ -69,6 +71,8 @@ final class User
 
 final class Users
 {
+    use SogerienClassHelp;
+
     public bool $status = false;
     public string $error = '';
 

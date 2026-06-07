@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class API
 {
+    use SogerienClassHelp;
+
     private ?APICyberyozh $Cyberyozh = null;
     private ?APIInfaticaIo $InfaticaIo = null;
     private ?APIInfaticaIo_mobile $InfaticaIo_mobile = null;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 final class TemplateBlog
 {
+    use SogerienClassHelp;
+
     public function __construct(private Template $template)
     {
     }

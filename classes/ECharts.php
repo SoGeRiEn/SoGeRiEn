@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 final class ECharts
 {
+    use SogerienClassHelp;
+
     /**
      * HTML-экранирование.
      */

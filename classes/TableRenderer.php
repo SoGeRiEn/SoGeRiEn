@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 final class SetParams
 {
+    use SogerienClassHelp;
+
     public function __construct(array $params = [])
     {
         foreach ($params as $key => $value) {
@@ -99,6 +101,8 @@ final class SetParams
 
 final class TableRenderer
 {
+    use SogerienClassHelp;
+
     public SetParams $set_params;
 
     /** @var array<int,string> */
@@ -688,6 +692,8 @@ final class TableRenderer
             $type  = strtolower((string)($fx['type'] ?? 'buttons'));
             $match = strtolower((string)($fx['match'] ?? 'exact'));
             $slot = strtolower((string)($fx['slot'] ?? ($fx['placement'] ?? 'main')));
+            $default = $fx['default'] ?? ($fx['selected'] ?? null);
+            $defaultAttr = is_array($default) || is_scalar($default) ? $this->jsonAttr($default) : '';
             $dropdownSearch = !empty($fx['search']);
 
             if ($col === '' || !in_array($col, $this->columnsFinal, true)) {
@@ -728,10 +734,11 @@ final class TableRenderer
 
             ob_start();
             ?>
-            <div class="<?= self::h($facetClassAttr) ?>"
-                 data-col="<?= self::h($col) ?>"
-                 data-type="<?= self::h($type) ?>"
-                 data-match="<?= self::h($match) ?>">
+                <div class="<?= self::h($facetClassAttr) ?>"
+                     data-col="<?= self::h($col) ?>"
+                     data-type="<?= self::h($type) ?>"
+                     data-match="<?= self::h($match) ?>"
+                     data-default="<?= self::h($defaultAttr) ?>">
                 <div class="small text-muted"><?= self::h($title) ?></div>
 
                 <?php if ($type === 'range_number'):
@@ -888,6 +895,8 @@ final class TableRenderer
                                 $type  = strtolower((string)($fx['type'] ?? 'buttons')); // buttons | dropdown_multi | range_number | range_date
                                 $match = strtolower((string)($fx['match'] ?? 'exact')); // exact | csv_token | contains
                                 $slot = strtolower((string)($fx['slot'] ?? ($fx['placement'] ?? 'main')));
+                                $default = $fx['default'] ?? ($fx['selected'] ?? null);
+                                $defaultAttr = is_array($default) || is_scalar($default) ? $this->jsonAttr($default) : '';
                                 $dropdownSearch = !empty($fx['search']);
 
                                 if ($col === '') continue;
@@ -926,7 +935,8 @@ final class TableRenderer
                                 <div class="<?= self::h($facetClassAttr) ?>"
                                      data-col="<?= self::h($col) ?>"
                                      data-type="<?= self::h($type) ?>"
-                                     data-match="<?= self::h($match) ?>">
+                                     data-match="<?= self::h($match) ?>"
+                                     data-default="<?= self::h($defaultAttr) ?>">
                                     <div class="small text-muted"><?= self::h($title) ?></div>
 
                                     <?php if ($type === 'range_number'):
@@ -1265,4 +1275,3 @@ final class TableRenderer
 //$tr->set_params->columnsOrder = $columns;
 //
 //$tr->render();
-

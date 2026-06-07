@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 final class Template
 {
+    use SogerienClassHelp;
+
     public string $title = '';
     public string $description = '';
     public string $keywords = '';

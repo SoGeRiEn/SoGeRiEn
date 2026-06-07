@@ -47,7 +47,9 @@ Then deploy with this order:
 - Fill only local/server-specific values in `<LOCAL_REPO>\config\local.php`.
 - Create PostgreSQL database and user on the server.
 - Run `psql -d <db> -f database/bootstrap.sql` on the server or through SSH.
-- Upload/sync the prepared local repository folder to the server web root.
+- Build a clean server package: `powershell -ExecutionPolicy Bypass -File install\build_server_package.ps1`.
+- Upload/sync only `dist\server_package` to the server web root.
+- Never upload `AGENTS.md`, `CLAUDE.md`, `.git`, `tools/mcp`, local configs or agent instructions to the server.
 - Point the domain document root to the uploaded project root.
 - Open `/elements` for smoke test.
 
@@ -59,8 +61,14 @@ Change it immediately after first login.
 
 Core rules:
 - Sogerien is Universal Engine, not MVC.
+- Sogerien is built for AI agents. Agents use classes through `help()` first.
+- Every framework class must provide `help()`.
+- Agents read internals only when `help()` is not enough.
+- After changing class behavior/API, update the reflected/manual help contract.
 - Use existing classes first.
 - Extend universal reusable classes before creating new entities.
+- Code that does not fit Sogerien style is forbidden.
+- Do not add MVC clones, controllers, repositories, service layers or extra abstractions unless this exact pattern already exists in Sogerien.
 - Keep reusable code in core.
 - Keep one-off code in `page/`.
 - Use universal table `sogerien`.
@@ -70,6 +78,8 @@ Core rules:
 
 MCP tools:
 - Bundled servers are in `tools/mcp`.
+- Required DevOps MCP set: FTP, GIT, HTTP, SSH, PHP, MySQL, MSSQL.
+- Use bundled MCP tools before manual server operations when available.
 - Create profiles with empty/default credentials first.
 - Never commit real credentials.
 - FTP deploy uses one-file upload mode only.

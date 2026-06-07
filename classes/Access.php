@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class Access
 {
+    use SogerienClassHelp;
+
     public bool $status = true;
     public string $error = '';
 

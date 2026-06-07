@@ -57,8 +57,8 @@ MCP server для выполнения SSH-команд через stdio JSON-RP
   "patch": {
     "host": "1.2.3.4",
     "port": 22,
-    "username": "root",
-    "password": "secret",
+    "username": "",
+    "password": "",
     "backend": "paramiko",
     "connect_timeout_sec": 20,
     "command_timeout_sec": 600

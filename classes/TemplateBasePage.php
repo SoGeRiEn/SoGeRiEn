@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 final class TemplateBasePage
 {
+    use SogerienClassHelp;
+
     private Template $template;
     private bool $shellOpened = false;
 
@@ -53,6 +55,11 @@ final class TemplateBasePage
     {
         $domain = $this->get_sogerien_domain();
         $effectsJs = Affects::get_head_js_urls($domain);
+        $tableRendererJsVersion = (string)@filemtime(Sogerien::$SOGERIEN_DIR . '/page/js/BasePage/table_renderer.js');
+        $tableRendererJsUrl = $domain . '/page/js/BasePage/table_renderer.js';
+        if ($tableRendererJsVersion !== '') {
+            $tableRendererJsUrl .= '?v=' . rawurlencode($tableRendererJsVersion . '-facet-default-1');
+        }
 
         return array_merge([
             ['src' => 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js', 'defer' => false],
@@ -70,7 +77,7 @@ final class TemplateBasePage
         ], $effectsJs, [
             ['src' => $domain . '/page/js/admin_panel/main_menu.js', 'defer' => true],
             ['src' => $domain . '/page/js/BasePage/forms.js', 'defer' => true],
-            ['src' => $domain . '/page/js/BasePage/table_renderer.js', 'defer' => true],
+            ['src' => $tableRendererJsUrl, 'defer' => true],
         ]);
     }
 
@@ -270,17 +277,19 @@ final class TemplateBasePage
             ['label' => 'Email History', 'url' => '/client/email-history', 'icon' => 'EM'],
         ];
         $adminItems = $this->is_admin_user() ? [
-            ['label' => 'Proxy Orders', 'url' => '/admin/orders', 'tag' => 'Admin'],
-            ['label' => 'Statistics', 'url' => '/admin/statistics', 'tag' => 'Admin'],
-            ['label' => 'Client Services', 'url' => '/admin/services', 'tag' => 'Admin'],
-            ['label' => 'Traffic', 'url' => '/admin/traffic', 'tag' => 'Admin'],
-            ['label' => 'Access Lists', 'url' => '/admin/access-lists', 'tag' => 'Admin'],
-            ['label' => 'Billing', 'url' => '/admin/billing', 'tag' => 'Admin'],
-            ['label' => 'Guard', 'url' => '/admin/guard', 'tag' => 'Admin'],
-            ['label' => 'Tickets', 'url' => '/admin/support/tickets', 'tag' => 'Admin'],
+            ['label' => 'Proxy Orders', 'label_key' => 'admin.orders.title', 'url' => '/admin/orders', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Statistics', 'label_key' => 'admin.statistics.title', 'url' => '/admin/statistics', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Client Services', 'label_key' => 'admin.services.title', 'url' => '/admin/services', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Traffic', 'label_key' => 'admin.traffic.title', 'url' => '/admin/traffic', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Access Lists', 'label_key' => 'admin.access.title', 'url' => '/admin/access-lists', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Guard', 'label_key' => 'admin.guard.title', 'url' => '/admin/guard', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Tickets', 'label_key' => 'admin.support_tickets', 'url' => '/admin/support/tickets', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Users', 'url' => '/admin/users', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Access Groups', 'label_key' => 'menu.rules', 'url' => '/admin/access_groups', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
+            ['label' => 'Access Rights', 'label_key' => 'menu.rules_access', 'url' => '/admin/access_list', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
         ] : [];
         $adminHomeItems = [
-            ['label' => 'Provider Dashboard', 'url' => '/admin/provider', 'tag' => 'Admin'],
+            ['label' => 'Provider Dashboard', 'label_key' => 'admin.provider.title', 'url' => '/admin/provider', 'tag' => 'Admin', 'tag_key' => 'menu.admin'],
         ];
 
         echo '<div class="pm-admin-app">';

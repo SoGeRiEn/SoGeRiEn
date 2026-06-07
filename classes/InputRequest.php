@@ -9,6 +9,8 @@ declare(strict_types=1);
  */
 final class InputRequest
 {
+    use SogerienClassHelp;
+
     // ====== CLIENT ======
     public string $fingerprint_md5 = ''; // уникальный отпечаток браузера взяты самые уникальные параметры
     public string $HTTP_SEC_CH_UA = '';

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class ClientDashboardPages
 {
+    use SogerienClassHelp;
+
     private string $db_alias = 'front';
     /** @var array{ok:bool,message:string}|null */
     private ?array $password_notice = null;

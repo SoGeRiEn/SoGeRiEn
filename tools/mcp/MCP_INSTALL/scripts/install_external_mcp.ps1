@@ -1,5 +1,5 @@
 param(
-  [string]$CodexHome = "C:\Users\SoGeRiEn\.codex",
+  [string]$CodexHome = (Join-Path $env:USERPROFILE ".codex"),
   [string]$ProjectRoot = "C:\MCP_V3",
   [switch]$EnableSafe,
   [switch]$InstallPythonDeps,

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class APICyberyozh
 {
+    use SogerienClassHelp;
+
     public bool $status = false;
     public string $error = '';
 

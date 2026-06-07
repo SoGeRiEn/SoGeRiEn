@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 final class TableRendererCache
 {
+    use SogerienClassHelp;
+
     public bool $status = false;
     public string $error = '';
 
     /**
      * Directory for cache files.
-     * Example: /var/www/proxymint_co_usr/data/www/cesh
+     * Example: /var/www/example.com/cache
      */
     public string $patch = '';
 

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class Debager
 {
+    use SogerienClassHelp;
+
     public function start(bool $clear = true): self
     {
         Sogerien::$debag = true;

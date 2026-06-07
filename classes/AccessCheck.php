@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 final class AccessCheck
 {
+    use SogerienClassHelp;
+
     public string $db_alias = '';
     public string $errors = '';
 

@@ -239,6 +239,8 @@ if (!is_dir(__DIR__ . '/classes')) {
     throw new RuntimeException('SOGERIEN_ROOT/classes not found: ' . __DIR__ . '/classes');
 }
 
+require_once __DIR__ . '/classes/SogerienHelp.php';
+
 $selfUpdaterPath = __DIR__ . '/self_update.php';
 if (is_file($selfUpdaterPath)) {
     require_once $selfUpdaterPath;
@@ -253,6 +255,8 @@ if (is_file($selfUpdaterPath)) {
 
 final class Sogerien
 {
+    use SogerienClassHelp;
+
     private static bool $done = false;
 
     public static string $patch_to_cookies_keyFile = '';
@@ -473,7 +477,7 @@ spl_autoload_register(static function (string $class): void {
 //ini_set('display_startup_errors', '1');
 //error_reporting(E_ALL);
 //
-//$path = '/var/www/proxymint_co_usr/data/www/proxymint.com/sogerien/Sogerien.php';
+//$path = '/var/www/example.com/sogerien/Sogerien.php';
 //
 //if (!is_file($path)) { http_response_code(500); echo "BOOT FAIL - no file: {$path}"; exit; }
 //if (!is_readable($path)) { http_response_code(500); echo "BOOT FAIL - not readable: {$path}"; exit; }
@@ -489,7 +493,7 @@ spl_autoload_register(static function (string $class): void {
 //Sogerien::DbController()->DbConfig->DB_PORT    = '5432';
 //Sogerien::DbController()->DbConfig->DB_NAME    = 'sogerien';
 //Sogerien::DbController()->DbConfig->DB_USER    = 'sogerien';
-//Sogerien::DbController()->DbConfig->DB_PASS    = 'your_db_password_here';
+//Sogerien::DbController()->DbConfig->DB_PASS    = '';
 //Sogerien::DbController()->DbConfig->DB_CHARSET = 'utf8mb4';
 //
 //Sogerien::InputRequest()->domain = 'https://proxymint.com'; // явно указываем где хранится CSS и JS стили
