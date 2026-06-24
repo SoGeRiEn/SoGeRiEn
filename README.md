@@ -2,6 +2,8 @@
 
 SoGeRiEn is a Universal Engine for AI-agent development with Codex and Claude.
 
+License: Apache-2.0
+
 Core rules:
 - Use framework classes through `help()` first.
 - Use existing classes before adding new code.
